@@ -1,0 +1,446 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>一世仙途 · 文字修仙人生</title>
+<style>
+  :root{
+    --bg:#0e1117; --panel:#161b26; --line:#2a3245; --ink:#d8d2c4;
+    --dim:#8a8f9c; --gold:#d4af37; --jade:#7ec8a9; --red:#c96a6a; --blue:#7aa5d8;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{
+    background:var(--bg); color:var(--ink);
+    font-family:"KaiTi","STKaiti","楷体","Noto Serif SC",serif;
+    min-height:100vh; display:flex; justify-content:center;
+  }
+  #app{width:min(860px,96vw); padding:18px 12px 40px;}
+  header{text-align:center; margin:10px 0 22px;}
+  header h1{font-size:34px; letter-spacing:10px; color:var(--gold); font-weight:600;}
+  header p{color:var(--dim); margin-top:6px; letter-spacing:2px;}
+  .panel{background:var(--panel); border:1px solid var(--line); border-radius:10px; padding:18px; margin-bottom:14px;}
+  .panel h2{font-size:18px; color:var(--gold); margin-bottom:12px; letter-spacing:3px;}
+  .row{display:flex; gap:10px; flex-wrap:wrap; align-items:center;}
+  input[type=text]{
+    background:#0d1017; border:1px solid var(--line); color:var(--ink);
+    padding:9px 12px; border-radius:6px; font-size:16px; font-family:inherit; width:200px;
+  }
+  button{
+    background:#20283a; color:var(--ink); border:1px solid var(--line);
+    padding:9px 18px; border-radius:6px; cursor:pointer; font-family:inherit;
+    font-size:15px; letter-spacing:2px; transition:.15s;
+  }
+  button:hover{border-color:var(--gold); color:var(--gold);}
+  button:disabled{opacity:.35; cursor:not-allowed;}
+  button.primary{background:#3a2f14; border-color:var(--gold); color:var(--gold);}
+  .hint{color:var(--dim); font-size:14px;}
+  /* 天赋卡 */
+  #talentGrid{display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:8px; margin-top:10px;}
+  .tcard{
+    border:1px solid var(--line); border-radius:8px; padding:10px; cursor:pointer;
+    background:#10141d; transition:.12s; position:relative;
+  }
+  .tcard .tname{font-size:15px; font-weight:600;}
+  .tcard .tdesc{font-size:12.5px; color:var(--dim); margin-top:5px; line-height:1.5;}
+  .tcard .grade{font-size:11px; letter-spacing:1px;}
+  .tcard.g1 .grade{color:#9aa3b2;} .tcard.g1.sel{border-color:#9aa3b2;}
+  .tcard.g2 .grade{color:var(--blue);} .tcard.g2.sel{border-color:var(--blue);}
+  .tcard.g3 .grade{color:#b48ae0;} .tcard.g3.sel{border-color:#b48ae0;}
+  .tcard.g4 .grade{color:var(--gold);} .tcard.g4.sel{border-color:var(--gold); box-shadow:0 0 10px rgba(212,175,55,.25);}
+  .tcard.sel{background:#1c2334;}
+  .tcard.sel::after{content:"✓"; position:absolute; top:6px; right:9px; color:inherit;}
+  /* 方向卡 */
+  #pathGrid{display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:8px;}
+  .pcard{border:1px solid var(--line); border-radius:8px; padding:12px; cursor:pointer; background:#10141d; transition:.12s;}
+  .pcard .pname{font-size:17px; color:var(--jade); font-weight:600;}
+  .pcard .pdesc{font-size:12.5px; color:var(--dim); margin-top:6px; line-height:1.55;}
+  .pcard.sel{border-color:var(--jade); background:#14201c;}
+  /* 状态栏 */
+  #status{
+    display:flex; flex-wrap:wrap; gap:8px 16px; align-items:center;
+    background:var(--panel); border:1px solid var(--line); border-radius:10px;
+    padding:10px 16px; margin-bottom:10px; font-size:14.5px; position:sticky; top:8px; z-index:5;
+  }
+  #status b{color:var(--gold);}
+  .chip{background:#1d2434; border-radius:20px; padding:2px 10px; font-size:13px; color:var(--ink);}
+  /* 日志 */
+  #log{
+    background:var(--panel); border:1px solid var(--line); border-radius:10px;
+    padding:18px 20px; min-height:300px; max-height:62vh; overflow-y:auto;
+    line-height:1.9; font-size:15.5px;
+  }
+  .entry{margin-bottom:10px; animation:fadein .4s;}
+  .entry .yr{color:var(--dim); font-size:13px; margin-right:8px;}
+  .entry .et{color:var(--jade); margin-right:6px;}
+  .entry.brk{
+    text-align:center; color:var(--gold); letter-spacing:4px; margin:18px 0;
+    border-top:1px dashed var(--line); border-bottom:1px dashed var(--line); padding:8px 0;
+  }
+  .entry.fill .et{color:var(--dim);}
+  .choice{border:1px solid var(--gold); border-radius:10px; padding:14px 16px; margin:14px 0; background:#1c1a12; animation:fadein .4s;}
+  .choice .ctitle{color:var(--gold); font-size:16px; letter-spacing:2px; margin-bottom:8px;}
+  .choice .ctext{font-size:14.5px; margin-bottom:12px; line-height:1.8; color:var(--ink);}
+  .choice .cbtn{display:block; width:100%; text-align:left; margin-bottom:8px; padding:10px 14px; line-height:1.6; font-size:14.5px; background:#12141d;}
+  .choice .cbtn:last-child{margin-bottom:0;}
+  .choice .cbtn::before{content:"◆ "; color:var(--gold);}
+  .choice .cbtn:hover{border-color:var(--gold); color:var(--gold);}
+  @keyframes fadein{from{opacity:0; transform:translateY(4px);} to{opacity:1;}}
+  #controls{display:flex; gap:8px; margin-top:10px; flex-wrap:wrap;}
+  /* 结局 */
+  #ending{
+    position:fixed; inset:0; background:rgba(8,10,15,.92); z-index:20;
+    display:flex; align-items:center; justify-content:center; padding:20px;
+  }
+  #ending .card{
+    background:var(--panel); border:1px solid var(--gold); border-radius:14px;
+    max-width:560px; width:100%; padding:34px 30px; text-align:center;
+    max-height:88vh; overflow-y:auto;
+  }
+  #ending .etag{color:var(--dim); letter-spacing:4px; font-size:14px;}
+  #ending h2{font-size:32px; color:var(--gold); letter-spacing:8px; margin:14px 0 20px;}
+  #ending .edesc{white-space:pre-line; line-height:2; font-size:16px; text-align:left; margin-bottom:20px;}
+  #ending .estat{color:var(--dim); font-size:14px; margin-bottom:24px; line-height:1.9;}
+  ::-webkit-scrollbar{width:8px;} ::-webkit-scrollbar-thumb{background:#2a3245; border-radius:4px;}
+  .hidden{display:none !important;}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1>一世仙途</h1>
+    <p>选天赋 · 择方向 · 余生自有天数</p>
+  </header>
+
+  <!-- ========== 开局设置 ========== -->
+  <section id="setup">
+    <div class="panel">
+      <h2>一 · 道名</h2>
+      <div class="row">
+        <input type="text" id="nameInput" maxlength="8" placeholder="道友名讳…">
+        <button id="randName">随机</button>
+        <span class="hint">此名将载入族谱与碑文</span>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>二 · 天赋 <span class="hint">（抽取十项，择其三）</span></h2>
+      <div class="row">
+        <button id="drawBtn">抽取天赋</button>
+        <span class="hint" id="talentHint">尚未抽取</span>
+      </div>
+      <div id="talentGrid"></div>
+    </div>
+
+    <div class="panel">
+      <h2>三 · 修行方向</h2>
+      <div id="pathGrid"></div>
+    </div>
+
+    <div class="row" style="justify-content:center; margin-top:18px;">
+      <button id="startBtn" class="primary" disabled style="font-size:18px; padding:12px 46px;">踏入仙途</button>
+    </div>
+  </section>
+
+  <!-- ========== 游戏进行 ========== -->
+  <section id="game" class="hidden">
+    <div id="status"></div>
+    <div id="log"></div>
+    <div id="controls">
+      <button id="pauseBtn">暂停</button>
+      <button id="slowBtn">慢速</button>
+      <button id="fastBtn">快速</button>
+      <button id="turboBtn">极快</button>
+      <button id="restartBtn">重新开局</button>
+    </div>
+  </section>
+</div>
+
+<!-- ========== 结局 ========== -->
+<div id="ending" class="hidden">
+  <div class="card">
+    <div class="etag">—— 此生终局 ——</div>
+    <h2 id="endName"></h2>
+    <div class="edesc" id="endDesc"></div>
+    <div class="estat" id="endStat"></div>
+    <button id="againBtn" class="primary">再入轮回</button>
+  </div>
+</div>
+
+<script src="./script.js"></script>
+<script>
+"use strict";
+/* ================= 引擎：数据驱动，剧情全部来自 script.js ================= */
+const S = window.XIUXIAN_SCRIPT;
+const $ = id => document.getElementById(id);
+
+const GRADE_NAME = {1:"普通",2:"罕见",3:"史诗",4:"传说"};
+const GRADE_W    = {1:100, 2:38, 3:11, 4:4};
+const ATTR_KEYS  = ["悟性","根骨","心境","机缘","声望","善恶","金铢"];
+
+const FILLERS = {
+  mortal:  ["你替家里砍柴挑水，日子平淡如水。","村口的老槐树又绿了一茬。","你仰头看云，幻想云上住着神仙。","私塾先生罚你抄了十遍《千字文》。"],
+  lianqi:  ["打坐吐纳，灵气在经脉中缓缓流转。","你为宗门浇了三个月灵田。","藏经阁整理书卷，顺便偷看了几页。","师父让你挑水，说是磨炼心境。"],
+  zhuji:   ["闭关苦修，法力日臻圆满。","你下山斩了一头作乱的三阶妖狼。","坊市淘宝，与摊主讨价还价半日。","你在洞府中炼器，炸了三次炉。"],
+  jindan:  ["丹田内金丹缓缓旋转，温养不休。","你游历四方，斩恶扶弱，薄有声名。","你与友人道友论道三日三夜。","你化作一道遁光，横渡了大漠。"],
+  yuanying:["元婴出窍，遨游云海之上。","你收了两名弟子，倾囊相授。","你在东海之滨观潮百年，若有所悟。","正邪两道的大事里，都有了你的名字。"],
+  huashen: ["神游太虚，与天地共鸣。","你枯坐山巅，看云卷云舒一甲子。","你一念之间，移山填海。","世间已渐渐流传你的传说。"],
+  dujie:   ["雷云在头顶盘旋，你闭目养神。","你将毕生所悟整理成册，传于后人。","你静静地擦拭着伴随一生的兵器。","天地寂静，暴风雨前的宁静。"],
+};
+
+/* ---------------- 通用 ---------------- */
+function wpick(items, wfn){
+  let sum = 0;
+  for(const it of items) sum += Math.max(0, wfn(it));
+  let r = Math.random() * sum;
+  for(const it of items){ r -= Math.max(0, wfn(it)); if(r <= 0) return it; }
+  return items[items.length - 1];
+}
+const rnd = a => a[Math.floor(Math.random()*a.length)];
+
+/* ---------------- 开局界面 ---------------- */
+const SURNAMES = "林萧叶顾沈云苏楚洛秦谢陆白慕燕";
+const GIVEN = ["青尘","无涯","惊鸿","若愚","听雨","斩秋","望舒","承影","怀瑾","孤舟","拂雪","归远","知白","照夜","长歌","静笃"];
+let drawnTalents = [], pickedTalents = [], pickedPath = null;
+
+$("randName").onclick = () => {
+  $("nameInput").value = rnd([...SURNAMES]) + rnd(GIVEN);
+};
+$("randName").onclick();
+
+function renderPaths(){
+  const g = $("pathGrid"); g.innerHTML = "";
+  S.PATHS.forEach(p => {
+    const d = document.createElement("div");
+    d.className = "pcard";
+    d.innerHTML = `<div class="pname">${p.name}</div><div class="pdesc">${p.desc}</div>`;
+    d.onclick = () => { pickedPath = p; document.querySelectorAll(".pcard").forEach(x=>x.classList.remove("sel")); d.classList.add("sel"); checkReady(); };
+    g.appendChild(d);
+  });
+}
+$("drawBtn").onclick = () => {
+  const pool = [...S.TALENTS], got = [];
+  while(got.length < 10 && pool.length){
+    const t = wpick(pool, x => GRADE_W[x.grade]);
+    got.push(t); pool.splice(pool.indexOf(t), 1);
+  }
+  drawnTalents = got; pickedTalents = [];
+  const g = $("talentGrid"); g.innerHTML = "";
+  got.forEach(t => {
+    const d = document.createElement("div");
+    d.className = `tcard g${t.grade}`;
+    d.innerHTML = `<span class="grade">〔${GRADE_NAME[t.grade]}〕</span><div class="tname">${t.name}</div><div class="tdesc">${t.desc}</div>`;
+    d.onclick = () => {
+      if(pickedTalents.includes(t)) pickedTalents = pickedTalents.filter(x=>x!==t);
+      else if(pickedTalents.length < 3) pickedTalents.push(t);
+      document.querySelectorAll(".tcard").forEach(x=>x.classList.remove("sel"));
+      pickedTalents.forEach(p => g.children[got.indexOf(p)].classList.add("sel"));
+      $("talentHint").textContent = `已选 ${pickedTalents.length} / 3`;
+      checkReady();
+    };
+    g.appendChild(d);
+  });
+  $("talentHint").textContent = "已选 0 / 3";
+  checkReady();
+};
+function checkReady(){
+  const name = $("nameInput").value.trim();
+  $("startBtn").disabled = !(name && pickedTalents.length === 3 && pickedPath);
+}
+$("nameInput").oninput = checkReady;
+renderPaths();
+
+/* ---------------- 游戏状态 ---------------- */
+let st = null, timer = null, speed = 700;
+
+function newState(){
+  const attrs = {}; ATTR_KEYS.forEach(k => attrs[k] = 0);
+  const flags = {};
+  const apply = eff => {
+    if(!eff) return;
+    if(eff.attr || eff.flag){ Object.entries(eff.attr||{}).forEach(([k,v])=>attrs[k]=(attrs[k]||0)+v); Object.entries(eff.flag||{}).forEach(([k,v])=>flags[k]=(flags[k]||0)+v); return; }
+    Object.entries(eff).forEach(([k,v]) => {
+      if(k.startsWith("flag")) flags[k.slice(4)] = (flags[k.slice(4)]||0) + v;
+      else attrs[k] = (attrs[k]||0) + v;
+    });
+  };
+  pickedTalents.forEach(t => apply(t.effects));
+  apply(pickedPath.effects);
+  return {
+    name: $("nameInput").value.trim(), path: pickedPath,
+    attrs, flags, age: S.CONFIG.startAge, stageIdx: -1, yearsLeft: 0,
+    lifespan: S.CONFIG.baseLifespan, used: {}, finished: false, paused: false,
+  };
+}
+
+/* ---------------- 条件与结算 ---------------- */
+function evalCond(c){
+  const m = c.match(/^(flag)?\s*([^><=!]+?)\s*(>=|<=|>|<|==)\s*(-?\d+)$/);
+  if(!m) return true;
+  const v = m[1] ? (st.flags[m[2].trim()]||0) : (st.attrs[m[2].trim()]||0);
+  const n = parseInt(m[4]);
+  return m[3] === ">=" ? v>=n : m[3] === "<=" ? v<=n : m[3] === ">" ? v>n : m[3] === "<" ? v<n : v===n;
+}
+function endingBy(idOrTrigger){
+  return S.ENDINGS.find(e => e.id === idOrTrigger || e.trigger === idOrTrigger);
+}
+function resolveEnding(){
+  const hit = S.ENDINGS.filter(e => !e.trigger)
+    .sort((a,b) => b.priority - a.priority)
+    .find(e => e.cond.every(evalCond));
+  finish(hit || endingBy("end_death"));
+}
+function finish(ending){
+  if(st.finished) return;
+  st.finished = true; stopTimer();
+  const stage = S.STAGES[Math.max(0, Math.min(st.stageIdx, S.STAGES.length-1))];
+  addLog(null, null, "……", "brk");
+  $("endName").textContent = ending.name;
+  $("endDesc").textContent = ending.desc;
+  const at = ATTR_KEYS.filter(k => k!=="金铢").map(k => `${k} ${st.attrs[k]}`).join("　");
+  $("endStat").innerHTML = `${st.name} · ${st.path.name} · 终年<strong>${st.age}</strong>岁<br>最终境界：${stage.name}　|　${at}`;
+  $("ending").classList.remove("hidden");
+}
+
+/* ---------------- 日志 ---------------- */
+function addLog(yearInfo, title, text, cls){
+  const d = document.createElement("div");
+  d.className = "entry" + (cls ? " " + cls : "");
+  if(cls === "brk") d.textContent = text;
+  else d.innerHTML = (yearInfo ? `<span class="yr">【${yearInfo}】</span>` : "") + (title ? `<span class="et">${title}</span>` : "") + text;
+  const log = $("log");
+  log.appendChild(d); log.scrollTop = log.scrollHeight;
+}
+function renderStatus(){
+  const stage = st.stageIdx < 0 ? "未生" : (st.stageIdx >= S.STAGES.length ? S.STAGES[S.STAGES.length-1].name : S.STAGES[st.stageIdx].name);
+  const chips = ATTR_KEYS.map(k => `<span class="chip">${k} ${st.attrs[k]}</span>`).join(" ");
+  $("status").innerHTML =
+    `<span><b>${st.name}</b></span><span>${st.path.name}</span>` +
+    `<span>境界 <b>${stage}</b></span><span>年龄 <b>${st.age}</b> / 寿元 ${st.lifespan}</span>` +
+    `<span style="flex-basis:100%;">${chips}</span>`;
+}
+
+/* ---------------- 推演主循环 ---------------- */
+function breakthroughChance(){
+  let p = 0.66 + (st.attrs["悟性"] + st.attrs["心境"]) * 0.025 + st.attrs["根骨"] * 0.015;
+  if(st.flags["完美道基"]) p += 0.08;
+  if(st.flags["神婴"])     p += 0.05;
+  if(st.flags["裂基"])     p -= 0.15;
+  return Math.max(0.35, Math.min(0.88, p));
+}
+function enterStage(){
+  st.stageIdx++;
+  const stage = S.STAGES[st.stageIdx];
+  // 突破瓶颈：道行不足者止步于此，提前迎来此生终局
+  if(st.stageIdx > 0){
+    const p = breakthroughChance();
+    if(Math.random() > p){
+      addLog(null, null, `岁月如流，你终究没能迈过【${S.STAGES[st.stageIdx-1].name}】这道坎，止步于此……`, "brk");
+      renderStatus();
+      resolveEnding();
+      return;
+    }
+  }
+  st.lifespan += (S.CONFIG.lifespanBonus[stage.id] || 0);
+  st.yearsLeft = S.CONFIG.yearsPerStage[stage.id];
+  addLog(null, null, st.stageIdx === 0
+    ? `— ${st.name} 降世，故事从 ${st.age} 岁那年开始 —`
+    : `— 突破！踏入【${stage.name}期】 寿元增至 ${st.lifespan} 载 —`, "brk");
+  renderStatus();
+}
+function afterStage(){
+  // 凡人期结束：若从未踏上道途
+  if(st.stageIdx === 0 && !(st.flags["入宗"]||st.flags["拜师"]||st.flags["散人"]||st.flags["得功法"])){
+    finish(endingBy("end_mortal")); return;
+  }
+}
+function applyBranch(br){
+  if(br.attr) Object.entries(br.attr).forEach(([k,v]) => st.attrs[k] = Math.max(k==="金铢"?0:-999, (st.attrs[k]||0)+v));
+  if(br.flag) Object.entries(br.flag).forEach(([k,v]) => st.flags[k] = (st.flags[k]||0)+v);
+}
+function showChoice(stage, ev){
+  st.waiting = true;
+  const log = $("log");
+  const cands = ev.choices.filter(c => !c.cond_flag || st.flags[c.cond_flag]);
+  const box = document.createElement("div");
+  box.className = "choice";
+  box.innerHTML = `<div class="ctitle">⚡ ${ev.title} —— 此事须你亲自定夺</div><div class="ctext">${ev.text}</div>`;
+  cands.forEach(c => {
+    const b = document.createElement("button");
+    b.className = "cbtn"; b.textContent = c.label;
+    b.onclick = () => {
+      st.waiting = false;
+      const outcome = wpick(c.outcomes, o => o.p);
+      applyBranch(outcome);
+      addLog(`${st.age}岁·${stage.name}`, `【${ev.title}】`, `▶ 你的抉择：${c.label}<br>${outcome.text}`);
+      box.remove();
+      if(outcome.jump){ renderStatus(); finish(endingBy(outcome.jump)); return; }
+      st.age++; st.yearsLeft--; renderStatus();
+    };
+    box.appendChild(b);
+  });
+  log.appendChild(box); log.scrollTop = log.scrollHeight;
+}
+function yearStep(){
+  const stage = S.STAGES[st.stageIdx];
+  if(st.age > st.lifespan){ resolveEnding(); return; }
+
+  const pool = (S.EVENTS[stage.id]||[]).filter(e => !st.used[e.id] && (e.cond||[]).every(evalCond));
+  let title, text, isFill = false;
+
+  if(pool.length === 0){
+    title = ""; text = rnd(FILLERS[stage.id] || FILLERS.mortal); isFill = true;
+  } else {
+    const ev = wpick(pool, e => e.weight);
+    st.used[ev.id] = true;
+    let cands = ev.branches.filter(b => !b.cond_flag || st.flags[b.cond_flag]);
+    if(cands.length === 0) cands = ev.branches;
+    if(ev.ask && ev.choices){ showChoice(stage, ev); return; }
+    const br = wpick(cands, b => b.p);
+    applyBranch(br);
+    title = `【${ev.title}】`; text = br.text;
+    if(br.jump){ addLog(`${st.age}岁·${stage.name}`, title, text); renderStatus(); finish(endingBy(br.jump)); return; }
+  }
+  addLog(`${st.age}岁·${stage.name}`, title, text, isFill ? "fill" : "");
+  st.age++; st.yearsLeft--;
+  renderStatus();
+}
+function tick(){
+  if(!st || st.finished || st.paused || st.waiting) return;
+  if(st.yearsLeft <= 0){
+    afterStage();
+    if(st.finished) return;
+    if(st.stageIdx + 1 >= S.STAGES.length){ resolveEnding(); return; }
+    enterStage();
+    return;
+  }
+  yearStep();
+}
+function stopTimer(){ if(timer){ clearInterval(timer); timer = null; } }
+function startTimer(){ stopTimer(); timer = setInterval(tick, speed); }
+
+/* ---------------- 控制 ---------------- */
+$("startBtn").onclick = () => {
+  st = newState();
+  $("setup").classList.add("hidden");
+  $("game").classList.remove("hidden");
+  $("log").innerHTML = "";
+  const tnames = pickedTalents.map(t=>t.name).join("、");
+  addLog(null, null, `天赋〔${tnames}〕 · 立志〔${st.path.name}〕`, "brk");
+  enterStage();
+  startTimer();
+};
+$("pauseBtn").onclick = () => {
+  if(!st) return;
+  st.paused = !st.paused;
+  $("pauseBtn").textContent = st.paused ? "继续" : "暂停";
+};
+[["slowBtn",700],["fastBtn",380],["turboBtn",110]].forEach(([id,sp]) => {
+  $(id).onclick = () => { speed = sp; if(timer) startTimer(); };
+});
+const reboot = () => { stopTimer(); st = null; $("ending").classList.add("hidden"); $("game").classList.add("hidden"); $("setup").classList.remove("hidden"); };
+$("restartBtn").onclick = reboot;
+$("againBtn").onclick = reboot;
+</script>
+</body>
+</html>
