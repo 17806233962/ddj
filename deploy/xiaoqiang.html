@@ -169,21 +169,19 @@ const rnd = n => Math.floor(Math.random()*n);
 const pick = arr => arr[rnd(arr.length)];
 
 function priceOf(item){ return item.base + rnd(item.range + 1); }
-function newMarket(){ return ITEMS.map(it => ({ id:it.id, price:S.prices[it.id] })); }
-function rollPrices(){ // 初始价格
+function newMarket(city){ city = city || S.city; return ITEMS.map(it => ({ id:it.id, price:S.prices[city][it.id] })); }
+function rollPrices(){ // 单城初始价格
   const p = {};
   for (const it of ITEMS) p[it.id] = priceOf(it);
   return p;
 }
-function driftPrices(){ // 换城价格漂移：在上次价格基础上 ±25% 波动，不再全盘重掷
-  const p = {};
+function driftPrices(city){ // 该城价格在其自身上次价格基础上 ±25% 漂移
+  const p = S.prices[city];
   for (const it of ITEMS){
-    const old = S.prices[it.id] || priceOf(it);
-    let np = Math.round(old * (0.75 + rnd(51)/100)); // 0.75 ~ 1.25 倍
-    const maxP = (it.base + it.range) * 2;           // 封顶两倍上限
+    let np = Math.round(p[it.id] * (0.75 + rnd(51)/100));
+    const maxP = (it.base + it.range) * 2;
     p[it.id] = Math.max(1, Math.min(maxP, np));
   }
-  return p;
 }
 function newSpecialPrices(){ // 特殊货在各城的出手价每天浮动：0.6~1.7 倍基准
   const p = {};
@@ -197,7 +195,7 @@ function initState(){
     day: 1, city: "青岛", cash: 2000, debt: 5500, health: 100,
     bag: {}, // itemId -> {qty, avg}（普通商品 id 为数字，特殊货为字符串）
     capacity: 100,
-    prices: rollPrices(),
+    prices: {}, // 各城独立价格：城市 -> 商品id -> 价格
     market: [],
     specialPrices: newSpecialPrices(),
     npcUnlocked: {}, // 已付费解锁的黑市：城市名 -> true
@@ -245,9 +243,10 @@ function travel(dest){
     S.debt += interest;
     if (interest > 0) log(`村长托人带话：欠款利息 +${interest}，现在欠 ${S.debt} 元。`, "warn");
   }
-  // 价格连续漂移 + 特殊货行情刷新
-  S.prices = driftPrices();
-  S.market = newMarket();
+  // 各城价格独立漂移 + 特殊货行情刷新
+  if (!S.prices[dest]) S.prices[dest] = rollPrices(); // 首次到达的城，掷初始价
+  driftPrices(dest);
+  S.market = newMarket(dest);
   S.specialPrices = newSpecialPrices();
   // 成就：白手起家（落魄过又爬起来）
   if (S.cash < 100) S.wasBroke = true;
@@ -274,7 +273,7 @@ function travel(dest){
     const item = ITEMS.find(i => i.id === ev.item);
     if (ev.mul) q.price = Math.round(q.price * ev.mul);
     else q.price = Math.max(1, Math.round(q.price / ev.div));
-    S.prices[ev.item] = q.price; // 事件价记入价格基线，下城漂移以此为起点
+    S.prices[S.city][ev.item] = q.price; // 事件价记入本城价格基线
     log(`📰 ${ev.text}（${item.name} 现价 ${q.price}）`, "warn");
   }
 
@@ -306,7 +305,7 @@ function travel(dest){
   render();
 }
 
-// ======== 价格辅助：难度来自买卖差价（黑市收货 +15%，出手 -10%）========
+// ======== 价格辅助：难度来自买卖差价（黑市收货 +8%，出手 -10%）========
 function findSpecial(id){
   for (const c in NPCS){ const g = NPCS[c].goods.find(g => g.id === id); if (g) return g; }
   return null;
@@ -314,12 +313,12 @@ function findSpecial(id){
 function buyUnitPrice(id){
   if (typeof id === "string") return findSpecial(id).buy;       // 特殊货：NPC 固定价
   const q = S.market.find(m => m.id === id);
-  return Math.ceil(q.price * 1.15);                              // 普通货：加价 15% 收
+  return Math.ceil(q.price * 1.08);                              // 普通货：加价 8% 收
 }
 function sellUnitPrice(id){
   if (typeof id === "string") return S.specialPrices[id] || 0;   // 特殊货：每日浮动行情
   const q = S.market.find(m => m.id === id);
-  return Math.floor(q.price * 0.9);                              // 普通货：出手打 9 折
+  return Math.floor(q.price * 0.95);                              // 普通货：出手 95 折
 }
 
 function buy(id, qty){
@@ -640,7 +639,7 @@ function render(){
   };
   for (const q of S.market){
     const it = ITEMS.find(i => i.id === q.id);
-    const bu = Math.ceil(q.price * 1.15);
+    const bu = Math.ceil(q.price * 1.08);
     h += rowOf(q.id, `<span title="${esc(it.desc)}">${it.name}</span>`, `收 ${bu} / 出 ${Math.floor(q.price*0.9)}`, bu);
   }
   // 特殊货：任何城市都能按当日行情出手
@@ -652,7 +651,7 @@ function render(){
       canBuy ? g.buy : Infinity);
   }
   h += `</table></div>`;
-  h += `<span class="dim">⭐特殊货：找对应城市的NPC付费开黑市才能进货；行情每天浮动，可在任意城市出手。"收"是黑市要价(+15%)，"出"是出手价(9折)</span>`;
+  h += `<span class="dim">⭐特殊货：找对应城市的NPC付费开黑市才能进货；行情每天浮动，可在任意城市出手。"收"是黑市要价(+15%)，"出"是出手价(95折)</span>`;
   document.getElementById("market").innerHTML = h;
 
   let a = `<h2>赶路（每天只能去一个城市）</h2>`;
@@ -692,6 +691,7 @@ function render(){
 
 // ==================== 开局 ====================
 S = initState();
+for (const c of CITIES) S.prices[c] = rollPrices(); // 各城掷独立初始价
 S.market = newMarket();
 log("2000 年，小强揣着 2000 块在青岛站下了火车，口袋里还装着欠村长的 5500 块欠条。", "warn");
 log("从青岛出发，沿线五城倒货 40 天，赚钱、保命、还债——这是小强的浮生记。");
