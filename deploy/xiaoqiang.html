@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>小强浮生记</title>
+<title>小强倒爷记</title>
 <style>
   :root { --bg:#0d0f0c; --fg:#b8c9a8; --dim:#5c6b52; --good:#8fd67a; --bad:#e07a5f; --warn:#e6c86e; --accent:#88b04b; }
   * { box-sizing:border-box; }
@@ -41,7 +41,7 @@
 </head>
 <body>
 <div id="wrap">
-  <h1>小强浮生记 —— 六城倒货 40 天</h1>
+  <h1>小强倒爷记 —— 五城倒货 40 天</h1>
   <div id="status"></div>
   <div id="log"></div>
   <div id="market"></div>
@@ -61,7 +61,34 @@ const ITEMS = [
   { id:7, name:"斐济杯",              base:3000, range:4000, desc:"昂贵，行情极端" },
   { id:8, name:"黄油碟片",            base:800,  range:1500, desc:"灰色生意，波动剧烈" },
 ];
-const CITIES = ["北京","廊坊","德州","济南","青岛","南京"];
+const CITIES = ["青岛","廊坊","德州","济南","南京"];
+
+// ==================== 排行榜配置（jsonblob 全服共享榜）====================
+// 使用方法（一次性）：
+//   1. 用浏览器打开游戏页面，按 F12 打开控制台，粘贴运行 createBlob() （游戏里已内置该函数）
+//   2. 控制台会输出一串 blob ID，填到下面引号里并保存重新部署
+//   3. 如果打不开 jsonblob（网络问题），排行榜自动降级为"本机榜"，不影响游戏
+const LEADER_BLOB_ID = "";
+const LEADER_API = id => `https://jsonblob.com/api/jsonBlob/${id}`;
+// 特殊 NPC 黑市：付费解锁，只卖不买（货可以带到任何城市卖）
+const NPCS = {
+  "青岛": { name:"陈润刚", fee:2000, goods:[
+    { id:"q1", name:"群勃龙",         buy:1200, sellBase:2400 },
+    { id:"q2", name:"康力龙",         buy:800,  sellBase:1700 },
+  ]},
+  "德州": { name:"王胜举", fee:2500, goods:[
+    { id:"d1", name:"黄金炒茄子",     buy:1800, sellBase:4200 },
+    { id:"d2", name:"无线收音机",     buy:2600, sellBase:5400 },
+  ]},
+  "济南": { name:"张震", fee:3000, goods:[
+    { id:"j1", name:"绝版迈腾子",     buy:3000, sellBase:6200 },
+    { id:"j2", name:"稀有的牙",       buy:2200, sellBase:4600 },
+  ]},
+  "南京": { name:"禹发", fee:4000, goods:[
+    { id:"n1", name:"夫子庙夜明珠",   buy:5000, sellBase:10500 },
+    { id:"n2", name:"明孝陵金砖",     buy:4000, sellBase:9000 },
+  ]},
+};
 const PRICE_EVENTS = [
   { text:"德州站前广场排起长队，扒鸡被抢购一空！",        item:2, mul:3 },
   { text:"美食博主探店把子肉，济南把子肉全网爆火！",      item:3, mul:4 },
@@ -93,13 +120,21 @@ const pick = arr => arr[rnd(arr.length)];
 
 function priceOf(item){ return item.base + rnd(item.range + 1); }
 function newMarket(){ return ITEMS.map(it => ({ id:it.id, price:priceOf(it) })); }
+function newSpecialPrices(){ // 特殊货在各城的出手价每天浮动：0.6~1.7 倍基准
+  const p = {};
+  for (const c in NPCS) for (const g of NPCS[c].goods)
+    p[g.id] = Math.round(g.sellBase * (0.6 + rnd(110)/100));
+  return p;
+}
 
 function initState(){
   return {
-    day: 1, city: "北京", cash: 2000, debt: 5500, health: 100,
-    bag: {}, // itemId -> {qty, avg}
+    day: 1, city: "青岛", cash: 2000, debt: 5500, health: 100,
+    bag: {}, // itemId -> {qty, avg}（普通商品 id 为数字，特殊货为字符串）
     capacity: 100,
     market: newMarket(),
+    specialPrices: newSpecialPrices(),
+    npcUnlocked: {}, // 已付费解锁的黑市：城市名 -> true
     ended: false, journal: [],
   };
 }
@@ -124,11 +159,25 @@ function travel(dest){
   S.market = newMarket();
   log(`小强坐上了去${dest}的车……`, "dim");
 
-  // 债务利息
+  // 债务利息（难度上调：日息 15%）
   if (S.debt > 0){
-    const interest = Math.floor(S.debt / 10);
+    const interest = Math.floor(S.debt * 15 / 100);
     S.debt += interest;
     if (interest > 0) log(`村长托人带话：欠款利息 +${interest}，现在欠 ${S.debt} 元。`, "warn");
+  }
+  // 特殊货行情刷新
+  S.specialPrices = newSpecialPrices();
+
+  // 火车站安检：黑市货（⭐特殊货）有 15% 几率被整批查获
+  for (const id of Object.keys(S.bag)){
+    if (typeof id !== "string") continue;
+    if (rnd(100) < 15){
+      const g = findSpecial(id);
+      const e = S.bag[id];
+      const loss = (S.specialPrices[id] || g.sellBase) * e.qty;
+      delete S.bag[id];
+      log(`🚔 火车站安检口被拦下！${e.qty} 件${g.name}被查获没收（价值约 ${loss} 元），小强眼睁睁看着货被搬走……`, "bad");
+    }
   }
 
   // 商业事件（60% 概率）
@@ -169,25 +218,50 @@ function travel(dest){
   render();
 }
 
+// ======== 价格辅助：难度来自买卖差价（黑市收货 +15%，出手 -10%）========
+function findSpecial(id){
+  for (const c in NPCS){ const g = NPCS[c].goods.find(g => g.id === id); if (g) return g; }
+  return null;
+}
+function buyUnitPrice(id){
+  if (typeof id === "string") return findSpecial(id).buy;       // 特殊货：NPC 固定价
+  const q = S.market.find(m => m.id === id);
+  return Math.ceil(q.price * 1.15);                              // 普通货：加价 15% 收
+}
+function sellUnitPrice(id){
+  if (typeof id === "string") return S.specialPrices[id] || 0;   // 特殊货：每日浮动行情
+  const q = S.market.find(m => m.id === id);
+  return Math.floor(q.price * 0.9);                              // 普通货：出手打 9 折
+}
+
 function buy(id, qty){
   if (qty <= 0) return;
-  const q = S.market.find(m => m.id === id);
-  const item = ITEMS.find(i => i.id === id);
+  let unit, name;
+  if (typeof id === "string"){ // 特殊货：只能在货主城市、且已解锁黑市时购买
+    const npc = NPCS[S.city];
+    const g = npc && npc.goods.find(g => g.id === id);
+    if (!g){ log("这里没人卖这个货。", "bad"); return; }
+    if (!S.npcUnlocked[S.city]){ log(`先找到${npc.name}付钱开黑市。`, "bad"); return; }
+    unit = g.buy; name = g.name;
+  } else {
+    unit = buyUnitPrice(id);
+    name = ITEMS.find(i => i.id === id).name;
+  }
   const free = S.capacity - bagUsed();
-  const maxAffordable = Math.floor(S.cash / q.price);
+  const maxAffordable = Math.floor(S.cash / unit);
   const maxQty = Math.min(free, maxAffordable);
   if (qty > maxQty){
-    if (maxQty <= 0){ log(maxQty === 0 && free === 0 ? "背包满了。" : "现金不够。", "bad"); return; }
+    if (maxQty <= 0){ log(free === 0 ? "背包满了。" : "现金不够。", "bad"); return; }
     qty = maxQty;
     log(`数量超出上限，自动改为买 ${qty} 件（受${free < maxAffordable ? "背包格数" : "现金"}限制）。`, "warn");
   }
-  const cost = q.price * qty;
+  const cost = unit * qty;
   const e = S.bag[id] || { qty:0, avg:0 };
-  e.avg = Math.round((e.avg*e.qty + q.price*qty) / (e.qty+qty));
+  e.avg = Math.round((e.avg*e.qty + unit*qty) / (e.qty+qty));
   e.qty += qty;
   S.bag[id] = e;
   S.cash -= cost;
-  log(`买了 ${qty} 件${item.name}，花 ${cost} 元（均价 ${e.avg}）。`);
+  log(`买了 ${qty} 件${name}，单价 ${unit}，花 ${cost} 元（均价 ${e.avg}）。`);
   render();
 }
 
@@ -195,14 +269,14 @@ function sell(id, qty){
   const e = S.bag[id];
   if (!e || qty <= 0) return;
   if (qty > e.qty) qty = e.qty;
-  const q = S.market.find(m => m.id === id);
-  const item = ITEMS.find(i => i.id === id);
-  const earn = q.price * qty;
-  const profit = (q.price - e.avg) * qty;
+  const unit = sellUnitPrice(id);
+  const item = findSpecial(id) || ITEMS.find(i => i.id === id);
+  const earn = unit * qty;
+  const profit = (unit - e.avg) * qty;
   e.qty -= qty;
   if (e.qty === 0) delete S.bag[id];
   S.cash += earn;
-  log(`卖出 ${qty} 件${item.name}，收入 ${earn} 元，${profit>=0?"赚":"亏"} ${Math.abs(profit)}。`, profit>=0?"good":"bad");
+  log(`卖出 ${qty} 件${item.name}，单价 ${unit}，收入 ${earn} 元，${profit>=0?"赚":"亏"} ${Math.abs(profit)}。`, profit>=0?"good":"bad");
   render();
 }
 
@@ -249,6 +323,75 @@ function repay(amt){ // 还债：不耗天数，还多少少多少，日息按�
   render();
 }
 
+function unlockNpc(){ // 付费解锁当地 NPC 黑市
+  const npc = NPCS[S.city];
+  if (!npc || S.npcUnlocked[S.city]) return;
+  if (S.cash < npc.fee){ log(`${npc.name}撇撇嘴："${npc.fee} 块都拿不出来，谈什么生意？"`, "bad"); return; }
+  S.cash -= npc.fee;
+  S.npcUnlocked[S.city] = true;
+  log(`🤝 付了 ${npc.fee} 元，${npc.name}终于松口："以后我的货，你随便拿。" ${S.city}黑市解锁！`, "good");
+  render();
+}
+
+// ==================== 排行榜 ====================
+const LB_KEY = "daoye:localScores";
+const localBoard = () => { try { return JSON.parse(localStorage.getItem(LB_KEY)) || []; } catch(e){ return []; } };
+const saveLocalBoard = list => localStorage.setItem(LB_KEY, JSON.stringify(list.sort((a,b)=>b.wealth-a.wealth).slice(0,50)));
+const validBoard = list => Array.isArray(list) ? list.filter(e => e && typeof e.wealth === "number") : [];
+
+async function boardFetch(){ // 云榜优先，失败退回本机榜
+  if (LEADER_BLOB_ID){
+    try {
+      const r = await fetch(LEADER_API(LEADER_BLOB_ID), { cache:"no-store" });
+      if (r.ok) return validBoard(await r.json());
+    } catch(e){}
+  }
+  return localBoard();
+}
+
+async function boardPush(rec){
+  const lb = localBoard(); lb.push(rec); saveLocalBoard(lb); // 本机永远留一份
+  if (!LEADER_BLOB_ID) return "本机榜（未配置云存储）";
+  try {
+    const r0 = await fetch(LEADER_API(LEADER_BLOB_ID), { cache:"no-store" });
+    if (!r0.ok) throw 0;
+    const list = validBoard(await r0.json());
+    list.push(rec);
+    const r1 = await fetch(LEADER_API(LEADER_BLOB_ID), {
+      method:"PUT", headers:{ "Content-Type":"application/json", "Accept":"application/json" },
+      body: JSON.stringify(list.slice(-200)),
+    });
+    if (r1.ok) return "全服必玩榜";
+    throw 0;
+  } catch(e){ return "本机榜（云端暂不可达）"; }
+}
+
+function uploadScore(reason, wealth){
+  const name = prompt("混完了！留下大名上必玩榜（留空则匿名）：", "") || "无名小强";
+  const rec = { name, wealth, day:S.day, city:S.city, died:reason==="died", at:new Date().toISOString() };
+  boardPush(rec).then(where => log(`🏆 成绩已记入${where}。`, "dim"));
+}
+
+async function createBlob(){ // 在浏览器控制台运行一次，输出 blob ID 填进 LEADER_BLOB_ID
+  try {
+    const r = await fetch("https://jsonblob.com/api/jsonBlob", { method:"POST", headers:{"Content-Type":"application/json"}, body:"[]" });
+    const loc = r.headers.get("Location") || "";
+    const id = (loc.match(/[^/]+\/?$/) || [""])[0];
+    console.log("blob ID = " + JSON.stringify(id));
+    return id;
+  } catch(e){ console.log("创建失败（网络不通），排行榜将使用本机榜"); return ""; }
+}
+
+async function showBoard(){
+  const list = (await boardFetch()).sort((a,b)=>b.wealth-a.wealth).slice(0,10);
+  let text = "🏆 倒爷必玩榜 TOP10 🏆\n" + (LEADER_BLOB_ID ? "" : "（本机榜：未配置云存储）\n");
+  if (!list.length) text += "（还没人上榜，你就是第一个传奇）";
+  list.forEach((e,i) => {
+    text += `${String(i+1).padStart(2)}. ${String(e.name).slice(0,12)}  ${e.wealth} 元  第${e.day}天·${e.city}${e.died?"（客死）":""}\n`;
+  });
+  alert(text);
+}
+
 function endGame(reason){
   S.ended = true;
   const wealth = S.cash - S.debt;
@@ -263,6 +406,7 @@ function endGame(reason){
   log(`${title}`, "end");
   log(`最终资产 = 现金 ${S.cash} - 债务 ${S.debt} = ${wealth} 元`, "end");
   log(`存活 ${S.day} 天。`, "dim");
+  uploadScore(reason, wealth);
   render();
 }
 
@@ -280,22 +424,36 @@ function render(){
   if (S.ended){
     document.getElementById("market").innerHTML = "";
     document.getElementById("actions").innerHTML =
-      `<button onclick="location.reload()">再来一局</button><button onclick="location.href='../'">返回大厅</button>`;
+      `<button onclick="location.reload()">再来一局</button><button onclick="showBoard()">🏆 必玩榜</button><button onclick="location.href='./'">返回大厅</button>`;
     return;
   }
 
-  let h = `<h2>本地市场 —— ${esc(S.city)}黑市</h2><div class="tblwrap"><table><tr><th>商品</th><th>现价</th><th>持有</th><th>买入</th><th>卖出</th></tr>`;
+  let h = `<h2>本地市场 —— ${esc(S.city)}黑市</h2><div class="tblwrap"><table><tr><th>商品</th><th>行情</th><th>持有</th><th>买入</th><th>卖出</th></tr>`;
   const free = S.capacity - bagUsed();
+  const rowOf = (id, displayName, priceText, unit) => {
+    const e = S.bag[id];
+    const maxBuy = unit === Infinity ? 0 : Math.max(0, Math.min(free, Math.floor(S.cash / unit)));
+    const qid = typeof id === "string" ? JSON.stringify(id) : id;
+    return `<tr><td>${displayName}</td><td>${priceText}</td>
+      <td>${e ? e.qty+"件(均价"+e.avg+")" : '<span class="dim">-</span>'}</td>
+      <td><input type="number" id="b${id}" min="1" max="${maxBuy}" ${maxBuy>0?`value="${Math.min(10,maxBuy)}"`:'value="0" disabled'}><button onclick="buy(${qid},+document.getElementById('b${id}').value)" ${maxBuy<=0?"disabled":""}>买</button><span class="dim"> ≤${maxBuy}</span></td>
+      <td>${e ? `<input type="number" id="s${id}" min="1" max="${e.qty}" value="${e.qty}"><button onclick="sell(${qid},+document.getElementById('s${id}').value)">卖</button>` : '<span class="dim">-</span>'}</td></tr>`;
+  };
   for (const q of S.market){
     const it = ITEMS.find(i => i.id === q.id);
-    const e = S.bag[q.id];
-    const maxBuy = Math.max(0, Math.min(free, Math.floor(S.cash / q.price)));
-    h += `<tr><td title="${esc(it.desc)}">${it.name}</td><td>${q.price}</td>
-      <td>${e ? e.qty+"件(均价"+e.avg+")" : '<span class="dim">-</span>'}</td>
-      <td><input type="number" id="b${q.id}" min="1" max="${maxBuy}" ${maxBuy>0?`value="${Math.min(10,maxBuy)}"`:'value="0" disabled'}><button onclick="buy(${q.id},+document.getElementById('b${q.id}').value)" ${maxBuy<=0?"disabled":""}>买</button><span class="dim"> ≤${maxBuy}</span></td>
-      <td>${e ? `<input type="number" id="s${q.id}" min="1" max="${e.qty}" value="${e.qty}"><button onclick="sell(${q.id},+document.getElementById('s${q.id}').value)">卖</button>` : '<span class="dim">-</span>'}</td></tr>`;
+    const bu = Math.ceil(q.price * 1.15);
+    h += rowOf(q.id, `<span title="${esc(it.desc)}">${it.name}</span>`, `收 ${bu} / 出 ${Math.floor(q.price*0.9)}`, bu);
+  }
+  // 特殊货：任何城市都能按当日行情出手
+  for (const c in NPCS) for (const g of NPCS[c].goods){
+    const sellP = S.specialPrices[g.id];
+    const canBuy = c === S.city && S.npcUnlocked[c];
+    h += rowOf(g.id, `⭐${g.name}<span class="dim">(${c})</span>`,
+      canBuy ? `收 ${g.buy} / 出 ${sellP}` : `<span class="dim">出 ${sellP}</span>`,
+      canBuy ? g.buy : Infinity);
   }
   h += `</table></div>`;
+  h += `<span class="dim">⭐特殊货：找对应城市的NPC付费开黑市才能进货；行情每天浮动，可在任意城市出手。"收"是黑市要价(+15%)，"出"是出手价(9折)</span>`;
   document.getElementById("market").innerHTML = h;
 
   let a = `<h2>赶路（每天只能去一个城市）</h2>`;
@@ -311,15 +469,21 @@ function render(){
     a += `<br><input type="number" id="repayAmt" min="1" max="${maxPay}" ${maxPay>0?`value="${maxPay}"`:'value="0" disabled'}><button onclick="repay(+document.getElementById('repayAmt').value)" ${maxPay<=0?"disabled":""}>🧾 还债（≤${maxPay}，不耗天数）</button>`;
   }
   a += ` <button onclick="enterRank()">🏨 冲${esc(S.city)}必玩榜（¥1000，伤身，不耗天数）</button>`;
-  a += `<span class="dim"> 移动消耗一天，并刷新当地行情</span><br><button onclick="if(confirm('回大厅将丢失当前进度，确定？'))location.href='../'">🏠 返回大厅</button>`;
+  const npc = NPCS[S.city];
+  if (npc && !S.npcUnlocked[S.city]){
+    a += ` <button onclick="unlockNpc()">🤝 找${npc.name}开黑市（¥${npc.fee}，不耗天数）</button>`;
+  } else if (npc){
+    a += ` <span class="dim">🤝 ${npc.name}的黑市已向你开放</span>`;
+  }
+  a += `<span class="dim"> 移动消耗一天，并刷新当地行情</span><br><button onclick="showBoard()">🏆 必玩榜</button><button onclick="if(confirm('回大厅将丢失当前进度，确定？'))location.href='./'">🏠 返回大厅</button>`;
   document.getElementById("actions").innerHTML = a;
 }
 
 // ==================== 开局 ====================
 S = initState();
-log("2000 年，小强揣着 2000 块从北京站下了火车，口袋里还装着欠村长的 5500 块欠条。", "warn");
-log("从北京到南京，沿线倒货 40 天，赚钱、保命、还债——这是小强的浮生记。");
-log("提示：低买高卖，看新闻囤货，别把健康耗光了。", "dim");
+log("2000 年，小强揣着 2000 块在青岛站下了火车，口袋里还装着欠村长的 5500 块欠条。", "warn");
+log("从青岛出发，沿线五城倒货 40 天，赚钱、保命、还债——这是小强的浮生记。");
+log("提示：黑市收货要加价、出手要打折，想赚大钱得找各城的神秘 NPC 开黑市。", "dim");
 render();
 </script>
 </body>
