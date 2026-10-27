@@ -96,10 +96,10 @@ const WOMEN = {
 };
 // 成婚被动加成
 const WIFE_PERK = {
-  "晓雪":"特殊货火车站查获率 15% → 7%",
-  "巧云":"疗养全免费",
-  "婉清":"债务日息 15% → 7%",
-  "如玉":"NPC 特殊货进货价打 9 折",
+  "晓雪":"特殊货火车站查获率 15% → 5%",
+  "巧云":"疗养免费，且每次赶路自动回复 3 点健康",
+  "婉清":"普通商品出手不打折（95折→原价）",
+  "如玉":"NPC 进货价打 8 折，开黑市费用减半",
 };
 // 成就：key -> [名称, 描述]
 const ACHVS = {
@@ -183,10 +183,10 @@ function driftPrices(city){ // 该城价格在其自身上次价格基础上 ±2
     p[it.id] = Math.max(1, Math.min(maxP, np));
   }
 }
-function newSpecialPrices(){ // 特殊货在各城的出手价每天浮动：0.6~1.7 倍基准
+function newSpecialPrices(){ // 特殊货出手行情：0.35~1.55 倍基准——低位会跌破进货价，囤货有风险
   const p = {};
   for (const c in NPCS) for (const g of NPCS[c].goods)
-    p[g.id] = Math.round(g.sellBase * (0.6 + rnd(110)/100));
+    p[g.id] = Math.max(1, Math.round(g.sellBase * (0.35 + rnd(121)/100)));
   return p;
 }
 
@@ -199,6 +199,7 @@ function initState(){
     market: [],
     specialPrices: newSpecialPrices(),
     npcUnlocked: {}, // 已付费解锁的黑市：城市名 -> true
+    npcStock: {},    // NPC 本次供货量：货id -> 剩余件数（换城补货）
     favor: {},       // 佳人好感度：名字 -> 0~100
     married: [],     // 已成婚的佳人
     chatToday: {},   // 今日已聊天：名字 -> true
@@ -236,10 +237,9 @@ function travel(dest){
   log(`小强坐上了去${dest}的车……`, "dim");
   drawLottery(); // 上一城的彩票开奖
 
-  // 债务利息（婉清成婚则减半）
+  // 债务利息
   if (S.debt > 0){
-    const rate = S.married.includes("婉清") ? 7 : 15;
-    const interest = Math.floor(S.debt * rate / 100);
+    const interest = Math.floor(S.debt * 15 / 100);
     S.debt += interest;
     if (interest > 0) log(`村长托人带话：欠款利息 +${interest}，现在欠 ${S.debt} 元。`, "warn");
   }
@@ -248,12 +248,20 @@ function travel(dest){
   driftPrices(dest);
   S.market = newMarket(dest);
   S.specialPrices = newSpecialPrices();
+  // NPC 补货：每样特殊货 5 件，卖完要等下次换城
+  S.npcStock = {};
+  if (NPCS[dest]) for (const g of NPCS[dest].goods) S.npcStock[g.id] = 5;
+  // 巧云成婚：赶路时顺路照看小强
+  if (S.married.includes("巧云") && S.health > 0 && S.health < 100){
+    S.health = Math.min(100, S.health + 3);
+    log(`💊 巧云塞给小强一包卤味和伤药：“路上不许亏待自己。”健康 +3`, "good");
+  }
   // 成就：白手起家（落魄过又爬起来）
   if (S.cash < 100) S.wasBroke = true;
   if (S.wasBroke && S.cash >= 10000) grant("broke");
 
-  // 火车站安检：黑市货（⭐特殊货）有几率被整批查获（晓雪成婚则 15% → 7%）
-  const seizeRate = S.married.includes("晓雪") ? 7 : 15;
+  // 火车站安检：黑市货（⭐特殊货）有几率被整批查获（晓雪成婚则 15% → 5%）
+  const seizeRate = S.married.includes("晓雪") ? 5 : 15;
   for (const id of Object.keys(S.bag)){
     if (typeof id !== "string") continue;
     if (rnd(100) < seizeRate){
@@ -318,30 +326,35 @@ function buyUnitPrice(id){
 function sellUnitPrice(id){
   if (typeof id === "string") return S.specialPrices[id] || 0;   // 特殊货：每日浮动行情
   const q = S.market.find(m => m.id === id);
-  return Math.floor(q.price * 0.95);                              // 普通货：出手 95 折
+  if (S.married.includes("婉清")) return q.price;                // 婉清执笔吆喝：出手不打折
+  return Math.floor(q.price * 0.95);                             // 普通货：出手 95 折
 }
 
 function buy(id, qty){
   if (qty <= 0) return;
-  let unit, name;
+  let unit, name, maxByStock = Infinity;
   if (typeof id === "string"){ // 特殊货：只能在货主城市、且已解锁黑市时购买
     const npc = NPCS[S.city];
     const g = npc && npc.goods.find(g => g.id === id);
     if (!g){ log("这里没人卖这个货。", "bad"); return; }
     if (!S.npcUnlocked[S.city]){ log(`先找到${npc.name}付钱开黑市。`, "bad"); return; }
-    unit = S.married.includes("如玉") ? Math.round(g.buy * 0.9) : g.buy; // 如玉成婚打 9 折
+    const stock = S.npcStock[id] || 0;
+    if (stock <= 0){ log(`${npc.name}两手一摊：“这批货出完了，等下批。”（换城补货）`, "bad"); return; }
+    unit = S.married.includes("如玉") ? Math.round(g.buy * 0.8) : g.buy; // 如玉成婚打 8 折
     name = g.name;
+    maxByStock = stock;
   } else {
     unit = buyUnitPrice(id);
     name = ITEMS.find(i => i.id === id).name;
   }
   const free = S.capacity - bagUsed();
   const maxAffordable = Math.floor(S.cash / unit);
-  const maxQty = Math.min(free, maxAffordable);
+  const maxQty = Math.min(free, maxAffordable, maxByStock);
   if (qty > maxQty){
-    if (maxQty <= 0){ log(free === 0 ? "背包满了。" : "现金不够。", "bad"); return; }
+    if (maxQty <= 0){ log(free === 0 ? "背包满了。" : maxAffordable === 0 ? "现金不够。" : `${name}这批只剩 ${maxByStock} 件了。`, "bad"); return; }
     qty = maxQty;
-    log(`数量超出上限，自动改为买 ${qty} 件（受${free < maxAffordable ? "背包格数" : "现金"}限制）。`, "warn");
+    const why = free < maxAffordable && free <= maxByStock ? "背包格数" : maxByStock <= maxAffordable ? "NPC 库存" : "现金";
+    log(`数量超出上限，自动改为买 ${qty} 件（受${why}限制）。`, "warn");
   }
   const cost = unit * qty;
   const e = S.bag[id] || { qty:0, avg:0 };
@@ -349,6 +362,7 @@ function buy(id, qty){
   e.qty += qty;
   S.bag[id] = e;
   S.cash -= cost;
+  if (typeof id === "string") S.npcStock[id] -= qty;
   log(`买了 ${qty} 件${name}，单价 ${unit}，花 ${cost} 元（均价 ${e.avg}）。`);
   render();
 }
@@ -628,10 +642,11 @@ function render(){
 
   let h = `<h2>本地市场 —— ${esc(S.city)}黑市</h2><div class="tblwrap"><table><tr><th>商品</th><th>行情</th><th>持有</th><th>买入</th><th>卖出</th></tr>`;
   const free = S.capacity - bagUsed();
-  const rowOf = (id, displayName, priceText, unit) => {
+  const rowOf = (id, displayName, priceText, unit, stockLimit) => {
     const e = S.bag[id];
-    const maxBuy = unit === Infinity ? 0 : Math.max(0, Math.min(free, Math.floor(S.cash / unit)));
-    const qid = typeof id === "string" ? `'${id}'` : id; // 字符串 id 用单引号，避免和外层双引号冲突
+    let maxBuy = unit === Infinity ? 0 : Math.max(0, Math.min(free, Math.floor(S.cash / unit)));
+    if (stockLimit !== undefined) maxBuy = Math.min(maxBuy, stockLimit);
+    const qid = typeof id === "string" ? `'${id}'` : id;
     return `<tr><td>${displayName}</td><td>${priceText}</td>
       <td>${e ? e.qty+"件(均价"+e.avg+")" : '<span class="dim">-</span>'}</td>
       <td><input type="number" id="b${id}" min="1" max="${maxBuy}" ${maxBuy>0?`value="${Math.min(10,maxBuy)}"`:'value="0" disabled'}><button onclick="buy(${qid},+document.getElementById('b${id}').value)" ${maxBuy<=0?"disabled":""}>买</button><span class="dim"> ≤${maxBuy}</span></td>
@@ -645,10 +660,12 @@ function render(){
   // 特殊货：任何城市都能按当日行情出手
   for (const c in NPCS) for (const g of NPCS[c].goods){
     const sellP = S.specialPrices[g.id];
-    const canBuy = c === S.city && S.npcUnlocked[c];
+    const stock = S.npcStock[g.id] || 0;
+    const canBuy = c === S.city && S.npcUnlocked[c] && stock > 0;
     h += rowOf(g.id, `⭐${g.name}<span class="dim">(${c})</span>`,
-      canBuy ? `收 ${g.buy} / 出 ${sellP}` : `<span class="dim">出 ${sellP}</span>`,
-      canBuy ? g.buy : Infinity);
+      canBuy ? `收 ${g.buy} / 出 ${sellP} <span class="dim">货剩${stock}</span>` : `<span class="dim">出 ${sellP}${c===S.city?"（无货）":""}</span>`,
+      canBuy ? (S.married.includes("如玉") ? Math.round(g.buy*0.8) : g.buy) : Infinity,
+      canBuy ? stock : undefined);
   }
   h += `</table></div>`;
   h += `<span class="dim">⭐特殊货：找对应城市的NPC付费开黑市才能进货；行情每天浮动，可在任意城市出手。"收"是黑市要价(+15%)，"出"是出手价(95折)</span>`;
