@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
@@ -361,13 +361,13 @@ async function boardPush(rec){
       method:"PUT", headers:{ "Content-Type":"application/json", "Accept":"application/json" },
       body: JSON.stringify(list.slice(-200)),
     });
-    if (r1.ok) return "全服必玩榜";
+    if (r1.ok) return "全服排行榜";
     throw 0;
   } catch(e){ return "本机榜（云端暂不可达）"; }
 }
 
 function uploadScore(reason, wealth){
-  const name = prompt("混完了！留下大名上必玩榜（留空则匿名）：", "") || "无名小强";
+  const name = prompt("混完了！留下大名上排行榜（留空则匿名）：", "") || "无名小强";
   const rec = { name, wealth, day:S.day, city:S.city, died:reason==="died", at:new Date().toISOString() };
   boardPush(rec).then(where => log(`🏆 成绩已记入${where}。`, "dim"));
 }
@@ -384,7 +384,7 @@ async function createBlob(){ // 在浏览器控制台运行一次，输出 blob 
 
 async function showBoard(){
   const list = (await boardFetch()).sort((a,b)=>b.wealth-a.wealth).slice(0,10);
-  let text = "🏆 倒爷必玩榜 TOP10 🏆\n" + (LEADER_BLOB_ID ? "" : "（本机榜：未配置云存储）\n");
+  let text = "🏆 倒爷排行榜 TOP10 🏆\n" + (LEADER_BLOB_ID ? "" : "（本机榜：未配置云存储）\n");
   if (!list.length) text += "（还没人上榜，你就是第一个传奇）";
   list.forEach((e,i) => {
     text += `${String(i+1).padStart(2)}. ${String(e.name).slice(0,12)}  ${e.wealth} 元  第${e.day}天·${e.city}${e.died?"（客死）":""}\n`;
@@ -424,7 +424,7 @@ function render(){
   if (S.ended){
     document.getElementById("market").innerHTML = "";
     document.getElementById("actions").innerHTML =
-      `<button onclick="location.reload()">再来一局</button><button onclick="showBoard()">🏆 必玩榜</button><button onclick="location.href='./'">返回大厅</button>`;
+      `<button onclick="location.reload()">再来一局</button><button onclick="showBoard()">🏆 排行榜</button><button onclick="location.href='./'">返回大厅</button>`;
     return;
   }
 
@@ -475,7 +475,7 @@ function render(){
   } else if (npc){
     a += ` <span class="dim">🤝 ${npc.name}的黑市已向你开放</span>`;
   }
-  a += `<span class="dim"> 移动消耗一天，并刷新当地行情</span><br><button onclick="showBoard()">🏆 必玩榜</button><button onclick="if(confirm('回大厅将丢失当前进度，确定？'))location.href='./'">🏠 返回大厅</button>`;
+  a += `<span class="dim"> 移动消耗一天，并刷新当地行情</span><br><button onclick="showBoard()">🏆 排行榜</button><button onclick="if(confirm('回大厅将丢失当前进度，确定？'))location.href='./'">🏠 返回大厅</button>`;
   document.getElementById("actions").innerHTML = a;
 }
 
