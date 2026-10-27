@@ -1,15 +1,9 @@
 /* ============================================================
- * 《一世仙途》推演引擎 v2.0
+ * 《一世仙途》推演引擎 v3.0
  * ------------------------------------------------------------
- * 纯逻辑、无 DOM 依赖，浏览器与 Node 均可运行。
- * 引擎不直接操作界面：调用方反复 next() 取事件，
- * 遇到 choice 时把三选一交给玩家，再用 resolve(index) 结算。
- *
- * 设计要点：
- *   1. 带种子的 PRNG，整局可复现，便于测试与分享“命数”。
- *   2. 每个选项自带独立概率分布，引擎只按权重掷骰。
- *   3. 玩家抉择：修行方针 / 破境之法 / 特色事件 / 旧事件抉择。
- *   4. 所有时间推进、寿元、结局判定集中在引擎内，UI 只负责呈现。
+ * 玩家只做五次选择：天赋、门派、职业、正邪、道侣。
+ * 之后全程自动：事件自动挑选项，结果按各自概率分布掷骰。
+ * 纯逻辑、无 DOM，浏览器与 Node 共用。
  * ============================================================ */
 (function (root, factory) {
   const api = factory();
@@ -20,9 +14,8 @@
 
   const ATTR_KEYS = ["悟性", "根骨", "心境", "机缘", "声望", "善恶", "金铢"];
   const TIER_NAME = { good: "上签", mid: "平", bad: "下签" };
-  const TIER_ORDER = ["good", "mid", "bad"];
 
-  /* ---------------- 随机数：可复现 ---------------- */
+  /* ---------------- 随机数 ---------------- */
   function hashString(str) {
     let h = 2166136261 >>> 0;
     for (let i = 0; i < str.length; i++) {
@@ -46,7 +39,7 @@
     return hashString(String(input));
   }
 
-  /* ---------------- 条件与门槛 ---------------- */
+  /* ---------------- 条件 ---------------- */
   function parseCond(cond) {
     if (!cond) return null;
     const m = String(cond).match(/^(flag\s*:?)?\s*([^><=!\s]+)\s*(>=|<=|>|<|==)\s*(-?\d+)$/);
@@ -63,75 +56,54 @@
     return compare(v, c.op, c.num);
   }
   function reqInfo(st, req) {
-    if (!req) return { ok: true, text: "" };
+    if (!req) return { ok: true, text: "", current: 0 };
     const c = parseCond(req);
-    if (!c) return { ok: true, text: "" };
+    if (!c) return { ok: true, text: "", current: 0 };
     const v = c.isFlag ? st.flags[c.key] || 0 : st.attrs[c.key] || 0;
-    const label = c.isFlag ? c.key : c.key;
-    return {
-      ok: compare(v, c.op, c.num),
-      text: `需 ${label} ${c.op} ${c.num}`,
-      current: v,
-    };
+    return { ok: compare(v, c.op, c.num), text: `需 ${c.key} ${c.op} ${c.num}`, current: v };
   }
 
-  /* ---------------- 效果结算 ---------------- */
+  /* ---------------- 效果 ---------------- */
   function clampAttr(key, v) {
-    if (key === "金铢") return Math.max(0, v);
-    return Math.max(-999, v);
+    return key === "金铢" ? Math.max(0, v) : Math.max(-999, v);
   }
   function applyEffect(st, eff) {
-    if (!eff) return {};
-    const gained = {};
-    // 兼容旧格式：{ 根骨: 1, flag孤星: 1 }
-    const hasTyped = eff.attr || eff.flag || eff.lifespan !== undefined || eff.ending || eff.death;
-    if (hasTyped) {
-      if (eff.attr) {
-        for (const [k, v] of Object.entries(eff.attr)) {
-          st.attrs[k] = clampAttr(k, (st.attrs[k] || 0) + v);
-          gained[k] = (gained[k] || 0) + v;
-        }
+    if (!eff) return;
+    if (eff.attr || eff.flag || eff.lifespan !== undefined) {
+      if (eff.attr) for (const [k, v] of Object.entries(eff.attr)) {
+        st.attrs[k] = clampAttr(k, (st.attrs[k] || 0) + v);
       }
-      if (eff.flag) {
-        for (const [k, v] of Object.entries(eff.flag)) {
-          st.flags[k] = (st.flags[k] || 0) + v;
-          if (v > 0) gained[k] = (gained[k] || 0) + v;
-        }
+      if (eff.flag) for (const [k, v] of Object.entries(eff.flag)) {
+        st.flags[k] = (st.flags[k] || 0) + v;
       }
-      if (typeof eff.lifespan === "number") {
-        st.lifespan = Math.max(1, st.lifespan + eff.lifespan);
-      }
-    } else {
-      for (const [k, v] of Object.entries(eff)) {
-        if (k.startsWith("flag")) {
-          const key = k.slice(4);
-          st.flags[key] = (st.flags[key] || 0) + v;
-        } else if (ATTR_KEYS.includes(k)) {
-          st.attrs[k] = clampAttr(k, (st.attrs[k] || 0) + v);
-          gained[k] = (gained[k] || 0) + v;
-        }
+      if (typeof eff.lifespan === "number") st.lifespan = Math.max(1, st.lifespan + eff.lifespan);
+      return;
+    }
+    for (const [k, v] of Object.entries(eff)) {
+      if (k.startsWith("flag")) {
+        const key = k.slice(4);
+        st.flags[key] = (st.flags[key] || 0) + v;
+      } else if (ATTR_KEYS.includes(k)) {
+        st.attrs[k] = clampAttr(k, (st.attrs[k] || 0) + v);
       }
     }
-    return gained;
   }
-  function describeEffects(st, eff) {
+  function describeEffects(eff, positiveOnly) {
     if (!eff) return "";
     const parts = [];
-    const isTyped = eff.attr || eff.flag || eff.lifespan !== undefined;
-    if (isTyped) {
-      if (eff.attr) for (const [k, v] of Object.entries(eff.attr)) parts.push(`${k}${v >= 0 ? "+" : ""}${v}`);
-      if (eff.flag) for (const [k, v] of Object.entries(eff.flag)) parts.push(`${k}${v >= 0 ? "+" : ""}${v}`);
-      if (eff.lifespan) parts.push(`寿元${eff.lifespan >= 0 ? "+" : ""}${eff.lifespan}`);
-    } else {
-      for (const [k, v] of Object.entries(eff)) {
-        if (k.startsWith("flag")) parts.push(`${k.slice(4)}${v >= 0 ? "+" : ""}${v}`);
-        else if (ATTR_KEYS.includes(k)) parts.push(`${k}${v >= 0 ? "+" : ""}${v}`);
-      }
+    if (eff.attr) for (const [k, v] of Object.entries(eff.attr)) {
+      if (positiveOnly && v <= 0) continue;
+      parts.push(`${k}${v >= 0 ? "+" : ""}${v}`);
     }
+    if (eff.flag) for (const [k, v] of Object.entries(eff.flag)) {
+      if (positiveOnly && v <= 0) continue;
+      parts.push(`${k}${v >= 0 ? "+" : ""}${v}`);
+    }
+    if (eff.lifespan) parts.push(`寿元${eff.lifespan >= 0 ? "+" : ""}${eff.lifespan}`);
     return parts.join(" · ");
   }
 
-  /* ---------------- 加权抽取 ---------------- */
+  /* ---------------- 概率与分档 ---------------- */
   function weightedPick(st, items, weight) {
     let total = 0;
     for (const it of items) total += Math.max(0, weight(it));
@@ -143,51 +115,41 @@
     }
     return items[items.length - 1];
   }
-
-  /* ---------------- 风险分档 ---------------- */
+  function pickOutcome(rng, outcomes) {
+    const total = outcomes.reduce((s, o) => s + Math.max(0, o.p || 0), 0) || 1;
+    const point = rng() * 100;
+    let acc = 0;
+    let hit = outcomes[outcomes.length - 1];
+    for (const o of outcomes) {
+      acc += (Math.max(0, o.p || 0) / total) * 100;
+      if (point < acc) { hit = o; break; }
+    }
+    return { outcome: hit, point: Math.round(point * 10) / 10 };
+  }
   function inferTier(outcome) {
     if (!outcome) return "mid";
     if (outcome.tier) return outcome.tier;
     if (outcome.death) return "bad";
     let score = 0;
-    if (outcome.attr) {
-      for (const [k, v] of Object.entries(outcome.attr)) {
-        score += k === "善恶" ? v * 0.4 : k === "金铢" ? v / 100 : v;
-      }
+    if (outcome.attr) for (const [k, v] of Object.entries(outcome.attr)) {
+      score += k === "善恶" ? v * 0.4 : k === "金铢" ? v / 100 : v;
     }
-    if (outcome.flag) {
-      for (const v of Object.values(outcome.flag)) score += v > 0 ? 1 : v < 0 ? -1 : 0;
-    }
+    if (outcome.flag) for (const v of Object.values(outcome.flag)) score += v > 0 ? 1 : v < 0 ? -1 : 0;
     if (outcome.lifespan) score += outcome.lifespan / 10;
     if (outcome.jump) score -= 5;
     return score >= 2 ? "good" : score <= -1 ? "bad" : "mid";
   }
-
   function oddsForOutcomes(outcomes) {
     const total = outcomes.reduce((s, o) => s + Math.max(0, o.p || 0), 0) || 1;
     const byTier = { good: 0, mid: 0, bad: 0 };
     for (const o of outcomes) byTier[inferTier(o)] += (Math.max(0, o.p || 0) / total) * 100;
-    return finishOdds(byTier);
-  }
-  function finishOdds(byTier) {
-    const rounded = TIER_ORDER.map((t) => ({ tier: t, pct: Math.floor(byTier[t] || 0) }));
+    const order = ["good", "mid", "bad"];
+    const rounded = order.map((t) => ({ tier: t, pct: Math.floor(byTier[t] || 0) }));
     let rest = 100 - rounded.reduce((s, x) => s + x.pct, 0);
-    // 把余数按小数部分从大到小补齐，保证总计 100
-    const fractions = TIER_ORDER.map((t) => ({ t, f: (byTier[t] || 0) - Math.floor(byTier[t] || 0) }))
+    const fractions = order.map((t) => ({ t, f: (byTier[t] || 0) - Math.floor(byTier[t] || 0) }))
       .sort((a, b) => b.f - a.f);
-    for (let i = 0; rest > 0; i++, rest--) {
-      const hit = rounded.find((x) => x.tier === fractions[i % fractions.length].t);
-      hit.pct += 1;
-    }
+    for (let i = 0; rest > 0; i++, rest--) rounded.find((x) => x.tier === fractions[i % 3].t).pct += 1;
     return rounded.filter((x) => x.pct > 0);
-  }
-  function riskLabel(odds) {
-    const bad = (odds.find((o) => o.tier === "bad") || {}).pct || 0;
-    const good = (odds.find((o) => o.tier === "good") || {}).pct || 0;
-    if (bad >= 35) return "凶险";
-    if (bad >= 15) return "有险";
-    if (good >= 50) return "上佳";
-    return "稳妥";
   }
 
   /* ---------------- 破境成功率 ---------------- */
@@ -200,10 +162,6 @@
     if (st.flags["劫伤"]) p -= 0.05;
     return Math.max(0.35, Math.min(0.88, p));
   }
-  function pillCost(st, br) {
-    if (!br.costBase) return 0;
-    return Math.round((br.costBase + br.costPerStage * st.stageIdx) / 100) * 100;
-  }
 
   /* ---------------- 开局 ---------------- */
   function createGame(opts) {
@@ -215,10 +173,8 @@
     ATTR_KEYS.forEach((k) => (attrs[k] = 0));
     const st = {
       S, seed, rng: mulberry32(seed),
-      name: (opts.name || "无名").toString().slice(0, 12),
-      path: null,
-      attrs,
-      flags: {},
+      name: (opts.name || "无名客").toString().slice(0, 12),
+      attrs, flags: {},
       age: S.CONFIG.startAge,
       lifespan: S.CONFIG.baseLifespan,
       stageIdx: -1,
@@ -228,195 +184,160 @@
       usedSpecials: {},
       specialMarks: [],
       specialPtr: 0,
-      pending: null,
       queue: [],
       started: false,
       finished: false,
       ending: null,
       failReason: "",
+      creation: [],
+      scripts: {},
+      pending: null,
       history: [],
-      stats: { decisions: 0, specials: 0, breakthroughs: 0, good: 0, mid: 0, bad: 0 },
+      stats: { decisions: 0, specials: 0, events: 0, breakthroughs: 0, good: 0, mid: 0, bad: 0 },
     };
 
-    const talentIds = opts.talentIds || opts.talents || [];
-    for (const id of talentIds) {
-      const t = S.TALENTS.find((x) => x.id === id || x.name === id);
-      if (t) applyEffect(st, t.effects);
-    }
-    const path = S.PATHS.find((p) => p.id === (opts.pathId || opts.path) || p.name === (opts.pathId || opts.path));
-    st.path = path || S.PATHS[0];
-    applyEffect(st, st.path.effects);
+    const find = (list, id, name) => list.find((x) => x.id === id || x.name === id || x.name === name);
+
+    applyEffect(st, S.CONFIG.creationBase);
+
+    // 天赋：开局唯一一次选择
+    const talentIds = opts.talentId ? [opts.talentId] : (opts.talentIds || opts.talents || []);
+    const talents = talentIds.map((id) => find(S.TALENTS, id)).filter(Boolean);
+    talents.forEach((t) => applyEffect(st, t.effects));
+    st.creation.push({ label: "天赋", name: talents.map((t) => t.name).join("、") || "无" });
+    const bestGrade = talents.reduce((m, t) => Math.max(m, t.grade || 1), 1);
+    st.flags[bestGrade >= 3 ? "天骄" : "寒门"] = 1;
 
     return makeGameApi(st);
   }
 
   /* ---------------- 阶段 ---------------- */
+  function stageName(st) {
+    if (st.stageIdx < 0) return "凡尘";
+    return st.S.STAGES[Math.min(st.stageIdx, st.S.STAGES.length - 1)].name;
+  }
   function scheduleSpecials(st) {
     const S = st.S;
     const stage = S.STAGES[st.stageIdx];
     const n = (S.CONFIG.specialsPerStage && S.CONFIG.specialsPerStage[stage.id]) || 0;
     const years = S.CONFIG.yearsPerStage[stage.id];
     const marks = [];
-    if (n > 0 && years > 1) {
-      for (let i = 0; i < n; i++) {
-        const slot = years * ((i + 1) / (n + 1));
-        const jitter = (st.rng() * 2 - 1) * Math.max(1, (years / (n + 1)) * 0.28);
-        const y = Math.max(1, Math.min(years - 1, Math.round(slot + jitter)));
-        if (!marks.includes(y)) marks.push(y);
-      }
+    for (let i = 0; i < n && years > 1; i++) {
+      const slot = years * ((i + 1) / (n + 1));
+      const jitter = (st.rng() * 2 - 1) * Math.max(1, (years / (n + 1)) * 0.28);
+      const y = Math.max(1, Math.min(years - 1, Math.round(slot + jitter)));
+      if (!marks.includes(y)) marks.push(y);
     }
     st.specialMarks = marks.sort((a, b) => a - b);
     st.specialPtr = 0;
   }
-
   function enterStage(st) {
     const S = st.S;
     st.stageIdx++;
     const stage = S.STAGES[st.stageIdx];
-    st.lifespan += (S.CONFIG.lifespanBonus[stage.id] || 0);
+    st.lifespan += S.CONFIG.lifespanBonus[stage.id] || 0;
     st.yearsLeft = S.CONFIG.yearsPerStage[stage.id];
     st.stageYear = 0;
     scheduleSpecials(st);
-    const first = st.stageIdx === 0;
     return {
-      type: "log",
-      kind: "stage",
-      cls: "brk",
-      age: st.age,
-      stage: stage.name,
-      text: first
+      type: "log", kind: "stage", cls: "brk", age: st.age, stage: stage.name,
+      text: st.stageIdx === 0
         ? `— ${st.name} 降世，故事从 ${st.age} 岁那年开始 —`
         : `— 突破！踏入【${stage.name}期】 寿元增至 ${st.lifespan} 载 —`,
     };
   }
-
-  function stageName(st) {
-    const S = st.S;
-    if (st.stageIdx < 0) return "凡尘";
-    return S.STAGES[Math.min(st.stageIdx, S.STAGES.length - 1)].name;
-  }
-
   function advanceYear(st) {
     st.age++;
     st.yearsLeft--;
     st.stageYear++;
   }
-
-  /* ---------------- 行动：日志 / 选项 / 结局 ---------------- */
   function makeLog(st, kind, title, text, extra) {
     return Object.assign({
       type: "log", kind, age: st.age, stage: stageName(st), title, text,
     }, extra || {});
   }
-  function makeChoice(st, kind, title, text, options, meta) {
-    st.pending = {
-      kind, title, text, options,
-      meta: meta || {},
-      age: st.age,
-      stage: stageName(st),
-    };
-    return {
-      type: "choice", kind, title, text,
-      age: st.age, stage: stageName(st),
-      options, meta: meta || {},
-    };
-  }
 
-  function breakthroughChoice(st) {
-    const S = st.S;
-    const target = S.STAGES[st.stageIdx + 1];
-    const base = breakChance(st);
-    const opts = S.BREAKTHROUGHS.map((br, i) => {
-      const chance = Math.max(0.2, Math.min(0.97, base + br.odds));
-      const cost = pillCost(st, br);
-      const locked = cost > (st.attrs["金铢"] || 0);
-      return {
-        index: i, label: br.name, desc: br.desc,
-        chance, chancePct: Math.round(chance * 100),
-        cost, locked,
-        lockText: locked ? `金铢不足（需 ${cost}）` : "",
-        detail: br.id === "br_force"
-          ? "成则悟性 +2、根骨 +1；败则道途止步"
-          : br.id === "br_steady" ? "成则心境 +1" : "成则心境 +1，消耗金铢",
-        br,
-      };
-    });
-    return makeChoice(st, "breakthrough", `破境 · ${target.name}`,
-      `寿元将尽，你已站在【${stageName(st)}】巅峰。下一步，是踏入【${target.name}期】。你要如何破这道关？`,
-      opts, { target: target.name, baseChance: Math.round(base * 100) });
-  }
-
+  /* ---------------- 事件结算 ---------------- */
   function availableSpecials(st) {
     const S = st.S;
     const stage = S.STAGES[st.stageIdx];
-    const pool = (S.SPECIALS && S.SPECIALS[stage.id]) || [];
-    return pool.filter(
+    return ((S.SPECIALS && S.SPECIALS[stage.id]) || []).filter(
       (sp) => !st.usedSpecials[sp.id] && (sp.cond || []).every((c) => evalCond(st, c))
     );
   }
-
-  function specialChoice(st, sp) {
-    const opts = sp.options.map((op, i) => {
-      const req = reqInfo(st, op.req);
-      const odds = oddsForOutcomes(op.outcomes);
-      return {
-        index: i, label: op.label, desc: op.desc || "",
-        locked: !req.ok, req: op.req || "", reqText: req.text,
-        lockText: req.ok ? "" : `${req.text}（现有 ${req.current}）`,
-        odds, risk: riskLabel(odds),
-        outcomes: op.outcomes,
-      };
-    });
+  function resolveSpecial(st, sp) {
     st.usedSpecials[sp.id] = true;
     st.stats.specials++;
-    return makeChoice(st, "special", sp.title, sp.text, opts, {
-      specialId: sp.id,
-      hint: "每个选项都是一次独立的天命掷骰，概率已标注",
-    });
-  }
-
-  function pickOutcome(rng, outcomes) {
-    const total = outcomes.reduce((s, o) => s + Math.max(0, o.p || 0), 0) || 1;
-    const point = rng() * 100;
-    let acc = 0;
-    let hit = outcomes[outcomes.length - 1];
-    for (const o of outcomes) {
-      acc += (Math.max(0, o.p || 0) / total) * 100;
-      if (point < acc) { hit = o; break; }
+    const options = sp.options.filter((o) => reqInfo(st, o.req).ok);
+    const pool = options.length ? options : sp.options;
+    const opt = weightedPick(st, pool, (o) => (o.weight || 1));
+    const pick = pickOutcome(st.rng, opt.outcomes);
+    const outcome = pick.outcome;
+    const age = st.age;
+    applyEffect(st, outcome);
+    record(st, sp.title, opt.label, inferTier(outcome));
+    advanceYear(st);
+    if (outcome.jump || outcome.ending || outcome.death) {
+      return {
+        type: "jump", age, outcome,
+        log: {
+          type: "log", kind: "special", title: `【${sp.title}】`, age, stage: stageName(st),
+          text: `${sp.text}\n▶ ${opt.label}。${outcome.text}`,
+          effects: describeEffects(outcome), tier: inferTier(outcome),
+        },
+      };
     }
-    return { outcome: hit, point: Math.round(point * 10) / 10 };
+    return {
+      type: "log", kind: "special", title: `【${sp.title}】`, age, stage: stageName(st),
+      text: `${sp.text}\n▶ ${opt.label}。${outcome.text}`,
+      effects: describeEffects(outcome), tier: inferTier(outcome),
+    };
   }
-
-  function ambientEventChoice(st, ev, cands) {
-    const opts = cands.map((c, i) => {
-      const odds = oddsForOutcomes(c.outcomes);
-      return { index: i, label: c.label, desc: "", locked: false, odds, risk: riskLabel(odds), choice: c };
-    });
-    return makeChoice(st, "event", ev.title, ev.text, opts, { eventId: ev.id });
+  function resolveAsk(st, ev, cands) {
+    const choice = weightedPick(st, cands, (c) => (c.weight || 1));
+    const pick = pickOutcome(st.rng, choice.outcomes);
+    const outcome = pick.outcome;
+    const age = st.age;
+    applyEffect(st, outcome);
+    record(st, ev.title, choice.label, inferTier(outcome));
+    advanceYear(st);
+    if (outcome.jump || outcome.ending || outcome.death) {
+      return {
+        type: "jump", age, outcome,
+        log: {
+          type: "log", kind: "event", title: `【${ev.title}】`, age, stage: stageName(st),
+          text: `${ev.text}\n▶ ${choice.label}。${outcome.text}`,
+          effects: describeEffects(outcome), tier: inferTier(outcome),
+        },
+      };
+    }
+    return {
+      type: "log", kind: "event", title: `【${ev.title}】`, age, stage: stageName(st),
+      text: `${ev.text}\n▶ ${choice.label}。${outcome.text}`,
+      effects: describeEffects(outcome), tier: inferTier(outcome),
+    };
   }
-
   function yearStep(st) {
     const S = st.S;
     const stage = S.STAGES[st.stageIdx];
     const pool = (S.EVENTS[stage.id] || []).filter(
       (e) => !st.used[e.id] && (e.cond || []).every((c) => evalCond(st, c))
     );
-
     if (!pool.length) {
-      const fillers = (S.FILLERS && S.FILLERS[stage.id]) || (S.FILLERS && S.FILLERS.mortal) || ["岁月无声，又过一年。"];
+      const fillers = (S.FILLERS && S.FILLERS[stage.id]) || ["岁月无声，又过一年。"];
       const text = fillers[Math.floor(st.rng() * fillers.length)];
       const action = makeLog(st, "fill", "", text, { cls: "fill" });
       advanceYear(st);
       return action;
     }
-
     const ev = weightedPick(st, pool, (e) => e.weight || 1);
     st.used[ev.id] = true;
+    st.stats.events++;
 
     if (ev.ask && ev.choices) {
       let cands = ev.choices.filter((c) => !c.cond_flag || st.flags[c.cond_flag]);
       if (!cands.length) cands = ev.choices;
-      return ambientEventChoice(st, ev, cands);
+      return resolveAsk(st, ev, cands);
     }
 
     let cands = ev.branches.filter((b) => !b.cond_flag || st.flags[b.cond_flag]);
@@ -424,15 +345,14 @@
     const br = weightedPick(st, cands, (b) => b.p || 1);
     applyEffect(st, br);
     const action = makeLog(st, "event", `【${ev.title}】`, br.text, {
-      effects: describeEffects(st, br),
-      tier: inferTier(br),
+      effects: describeEffects(br), tier: inferTier(br),
     });
     advanceYear(st);
-    if (br.jump) return { type: "jump", outcome: br, log: action };
-    if (br.death) return { type: "jump", outcome: br, log: action };
+    if (br.jump || br.death) return { type: "jump", outcome: br, log: action };
     return action;
   }
 
+  /* ---------------- 结局 ---------------- */
   function resolveEnding(st, exclude) {
     const S = st.S;
     const ex = exclude || [];
@@ -450,28 +370,33 @@
     if (!st.finished) {
       st.finished = true;
       st.ending = ending || st.S.ENDINGS.find((e) => e.id === "end_death");
-      st.pending = null;
     }
     return { type: "ending", summary: buildSummary(st) };
   }
+  function record(st, title, label, tier) {
+    if (tier === "good") st.stats.good++;
+    else if (tier === "bad") st.stats.bad++;
+    else st.stats.mid++;
+    st.history.push({ age: st.age, stage: stageName(st), title, label, tier });
+  }
 
-  /* ---------------- 结局统计 ---------------- */
+  /* ---------------- 评分 ---------------- */
   function scoreOf(st) {
     let score = Math.max(0, st.stageIdx) * 140;
     for (const k of ATTR_KEYS) if (k !== "金铢") score += Math.max(0, st.attrs[k] || 0) * 2;
     score += Math.min(2000, Math.max(0, st.attrs["金铢"] || 0)) / 20;
-    score += st.history.length * 4;
-    if (st.flags["道心圆满"]) score += 80;
-    if (st.flags["飞升"]) score += 120;
-    if (st.flags["双飞升"]) score += 80;
-    if (st.flags["魔染"] >= 3) score -= 60;
+    score += st.stats.specials * 6;
+    if (st.flags["道心圆满"]) score += 60;
+    if (st.flags["飞升"]) score += 100;
+    if (st.flags["双飞升"]) score += 60;
+    if (st.flags["魔染"] >= 3) score -= 50;
     return Math.round(score);
   }
   function gradeOf(score) {
-    if (score >= 1800) return "S";
-    if (score >= 1400) return "A";
-    if (score >= 900) return "B";
-    if (score >= 500) return "C";
+    if (score >= 1600) return "S";
+    if (score >= 1200) return "A";
+    if (score >= 800) return "B";
+    if (score >= 400) return "C";
     return "D";
   }
   function buildSummary(st) {
@@ -479,42 +404,66 @@
     const stage = S.STAGES[Math.max(0, Math.min(st.stageIdx, S.STAGES.length - 1))];
     const flags = Object.entries(st.flags)
       .filter(([k, v]) => v > 0 && S.FLAG_NAMES && S.FLAG_NAMES[k])
-      .map(([k, v]) => ({ key: k, name: S.FLAG_NAMES[k], value: v }));
+      .slice(0, 12)
+      .map(([k]) => ({ key: k, name: S.FLAG_NAMES[k] }));
     const score = scoreOf(st);
+    const choices = [{ label: "天赋", name: (st.creation[0] && st.creation[0].name) || "无" }];
+    for (const [slot, label] of [["sect", "门派"], ["craft", "职业"], ["align", "正邪"], ["partner", "道侣"]]) {
+      choices.push({ label, name: st.scripts[slot] || "未及" });
+    }
     return {
       ending: { id: st.ending.id, name: st.ending.name, desc: st.ending.desc },
       name: st.name,
       age: st.age,
       lifespan: st.lifespan,
-      pathName: st.path ? st.path.name : "",
       stageName: stage.name,
       stageIdx: st.stageIdx,
       attrs: Object.assign({}, st.attrs),
       flags,
+      creation: st.creation.slice(),
+      choices,
       stats: Object.assign({}, st.stats),
-      history: st.history.slice(-10),
+      history: st.history.slice(-8),
       score,
       grade: gradeOf(score),
       failReason: st.failReason || "",
     };
   }
 
-  /* ---------------- 决策记录 ---------------- */
-  function record(st, kind, title, label, tier, extra) {
-    st.stats.decisions++;
-    if (tier === "good") st.stats.good++;
-    else if (tier === "bad") st.stats.bad++;
-    else st.stats.mid++;
-    st.history.push(Object.assign({ age: st.age, stage: stageName(st), kind, title, label, tier }, extra || {}));
+  function dueScript(st) {
+    const S = st.S;
+    for (const sc of S.SCRIPTS || []) {
+      if (st.scripts[sc.slot]) continue;
+      if (sc.after && !st.scripts[sc.after]) continue;
+      if (st.age < sc.atAge) continue;
+      if (!(sc.cond || []).every((c) => evalCond(st, c))) continue;
+      return sc;
+    }
+    return null;
+  }
+  function scriptChoice(st, sc) {
+    st.pending = { kind: "script", script: sc };
+    const S = st.S;
+    return {
+      type: "choice", kind: "script", title: sc.title, text: sc.text,
+      options: sc.options.map((o, i) => {
+        const item = (S[o.group] || []).find((x) => x.id === o.id || x.name === o.id);
+        return {
+          index: i,
+          label: item ? item.name : o.id,
+          desc: item ? item.desc : "",
+          effectsText: item ? describeEffects(item.effects, true) : "",
+          group: o.group, id: o.id,
+        };
+      }),
+    };
   }
 
-  /* ---------------- 对外 API ---------------- */
+  /* ---------------- 主循环 ---------------- */
   function makeGameApi(st) {
-    const api = {
+    return {
       state: st,
       seed: st.seed,
-
-      /** 取下一条消息：log / choice / ending / wait */
       next() {
         if (st.queue.length) return st.queue.shift();
         if (st.pending) return { type: "wait" };
@@ -527,133 +476,81 @@
           st.failReason = "寿元耗尽";
           return resolveEnding(st);
         }
+        const sc = dueScript(st);
+        if (sc) return scriptChoice(st, sc);
         if (st.yearsLeft <= 0) {
-          // 凡人期未能入道
-          if (st.stageIdx === 0 && !(st.flags["入宗"] || st.flags["拜师"] || st.flags["散人"] || st.flags["得功法"] || st.flags["仙缘"])) {
-            st.failReason = "仙缘未至";
-            return finishById(st, "end_mortal");
-          }
           if (st.stageIdx + 1 >= st.S.STAGES.length) return resolveEnding(st);
-          return breakthroughChoice(st);
+          return breakthrough(st);
         }
-        // 特色事件到点
         if (st.specialPtr < st.specialMarks.length && st.stageYear >= st.specialMarks[st.specialPtr]) {
           st.specialPtr++;
           const pool = availableSpecials(st);
           if (pool.length) {
             const sp = weightedPick(st, pool, (s) => s.weight || 1);
-            return specialChoice(st, sp);
+            const result = resolveSpecial(st, sp);
+            return settleJump(st, result);
           }
         }
         const step = yearStep(st);
-        if (step.type === "jump") {
-          const act = step.log;
-          const outcome = step.outcome;
-          return finishByIdOrDeath(st, outcome, act);
-        }
+        if (step.type === "jump") return settleJump(st, step);
         return step;
       },
-
-      /** 结算当前选项 */
       resolve(index) {
         const p = st.pending;
-        if (!p) return { type: "error", message: "当前没有待决之事" };
-        const opt = p.options[index];
-        if (!opt) return { type: "error", message: "选项不存在" };
-        if (opt.locked) return { type: "error", message: opt.lockText || "条件不足" };
+        if (!p || p.kind !== "script") return { type: "error", message: "当前没有待决之事" };
+        const sc = p.script;
+        const ref = sc.options[index];
+        if (!ref) return { type: "error", message: "选项不存在" };
+        const item = (st.S[ref.group] || []).find((x) => x.id === ref.id || x.name === ref.id);
+        if (!item) return { type: "error", message: "剧本选项数据缺失" };
         st.pending = null;
-
-        /* ---- 破境 ---- */
-        if (p.kind === "breakthrough") {
-          const br = opt.br;
-          const roll = st.rng();
-          const ok = roll < opt.chance;
-          record(st, "breakthrough", `破境·${p.meta.target}`, opt.label, ok ? "good" : "bad", { chance: opt.chancePct });
-          st.stats.breakthroughs++;
-          const cost = opt.cost || 0;
-          if (cost && br.id === "br_pill") st.attrs["金铢"] = clampAttr("金铢", (st.attrs["金铢"] || 0) - cost);
-          if (ok) {
-            applyEffect(st, br.success);
-            const result = {
-              type: "result", kind: "breakthrough", tier: "good",
-              title: `破境 · ${p.meta.target}`, label: opt.label,
-              text: br.successText || "你成功破境。",
-              effects: describeEffects(st, br.success),
-              chancePct: opt.chancePct, roll: Math.round(roll * 1000) / 10,
-              age: st.age, stage: stageName(st),
-            };
-            st.queue.push(enterStage(st));
-            return result;
-          }
-          st.failReason = `冲击【${p.meta.target}期】失败，道基崩解`;
-          const end = resolveEnding(st, ["end_longevity", "end_mortal"]);
-          end.text = `你倾尽全力冲击【${p.meta.target}期】，终究功亏一篑。道基寸寸崩解，眼前的光一点点暗了下去。`;
-          end.title = "破境失败";
-          return end;
-        }
-
-        /* ---- 特殊事件 / 旧事件 ---- */
-        const outcomes = p.kind === "special" ? p.options[index].outcomes : p.options[index].choice.outcomes;
-        const pick = pickOutcome(st.rng, outcomes);
-        const outcome = pick.outcome;
-        applyEffect(st, outcome);
-        const label = opt.label;
-        const title = p.title;
-        const kind = p.kind;
-        const tier = inferTier(outcome);
-        record(st, kind, title, label, tier, { roll: pick.point });
-        advanceYear(st);
-
-        if (outcome.jump || outcome.death || outcome.ending) {
-          const end = outcome.ending ? finishById(st, outcome.ending)
-            : outcome.jump ? finishById(st, outcome.jump)
-            : resolveEnding(st);
-          end.text = outcome.text;
-          end.title = title;
-          end.tier = tier;
-          end.roll = pick.point;
-          return end;
-        }
+        applyEffect(st, item.effects);
+        st.scripts[sc.slot] = item.name;
+        st.stats.decisions = (st.stats.decisions || 0) + 1;
         return {
-          type: "result", kind, title, label,
-          text: outcome.text,
-          effects: describeEffects(st, outcome),
-          tier, roll: pick.point,
+          type: "result", kind: "script", title: sc.title, label: item.name,
+          text: `你选择了【${item.name}】。${item.desc}`,
+          effects: describeEffects(item.effects),
           age: st.age, stage: stageName(st),
         };
       },
-
-      /** 当前选项是否合法 */
-      legalOptions() {
-        if (!st.pending) return [];
-        return st.pending.options.map((o, i) => (o.locked ? -1 : i)).filter((i) => i >= 0);
-      },
-
-      /** 自动抉择（托管模式）：在可用选项里随机挑一个 */
-      autoPick() {
-        const legal = api.legalOptions();
-        if (!legal.length) return 0;
-        return legal[Math.floor(st.rng() * legal.length)];
-      },
-
       summary() { return buildSummary(st); },
       breakChance() { return breakChance(st); },
     };
-    return api;
   }
 
-  function finishByIdOrDeath(st, outcome, logAction) {
-    // 先记录日志动作，再给出结局：调用方会先显示 logAction，再显示结局
-    const end = outcome.jump ? finishById(st, outcome.jump)
-      : outcome.ending ? finishById(st, outcome.ending)
+  function breakthrough(st) {
+    const S = st.S;
+    const target = S.STAGES[st.stageIdx + 1];
+    // 凡人踏入练气略高一档，但仍可能失败——活不到择门，就没有择门
+    const chance = st.stageIdx === 0 ? Math.min(0.95, breakChance(st) + 0.1) : breakChance(st);
+    st.stats.breakthroughs++;
+    if (st.rng() > chance) {
+      st.failReason = `冲击【${target.name}期】失败，道基崩解`;
+      const end = resolveEnding(st, ["end_longevity", "end_mortal"]);
+      end.text = `你倾尽全力冲击【${target.name}期】，终究功亏一篑。道基寸寸崩解，眼前的光一点点暗了下去。`;
+      end.title = "破境失败";
+      return end;
+    }
+    const action = {
+      type: "log", kind: "breakthrough", age: st.age, stage: stageName(st),
+      title: "破境", text: `你冲关成功，踏入【${target.name}期】。`, tier: "good",
+    };
+    st.queue.push(enterStage(st));
+    return action;
+  }
+  function settleJump(st, result) {
+    if (result.type !== "jump") return result;
+    const end = result.outcome.jump ? finishById(st, result.outcome.jump)
+      : result.outcome.ending ? finishById(st, result.outcome.ending)
       : resolveEnding(st);
-    end.text = outcome.text;
-    end.log = logAction;
-    end.title = logAction && logAction.title;
+    end.text = result.outcome.text;
+    end.log = result.log;
+    end.title = result.log && result.log.title;
     return end;
   }
 
-  /* ---------------- 数据校验（测试用） ---------------- */
+  /* ---------------- 数据校验 ---------------- */
   function validateData(S) {
     const errors = [];
     const warnings = [];
@@ -663,12 +560,11 @@
 
     const checkOutcome = (where, o) => {
       if (!(o.p > 0)) errors.push(`${where}: p 必须 > 0`);
-      if (o.tier && !TIER_ORDER.includes(o.tier)) errors.push(`${where}: 非法 tier ${o.tier}`);
+      if (o.tier && !TIER_NAME[o.tier]) errors.push(`${where}: 非法 tier ${o.tier}`);
       if (o.attr) for (const [k, v] of Object.entries(o.attr)) {
         if (!validAttr.has(k)) errors.push(`${where}: 非法属性 ${k}`);
         if (typeof v !== "number" || !isFinite(v)) errors.push(`${where}: 属性 ${k} 非数字`);
       }
-      if (o.lifespan !== undefined && typeof o.lifespan !== "number") errors.push(`${where}: lifespan 非数字`);
       if (o.ending && !endingIds.has(o.ending)) errors.push(`${where}: 未知结局 ${o.ending}`);
       if (o.jump && !S.ENDINGS.some((e) => e.id === o.jump || e.trigger === o.jump)) errors.push(`${where}: 未知 jump ${o.jump}`);
     };
@@ -678,7 +574,6 @@
       for (const sp of list) {
         if (ids.has(sp.id)) errors.push(`重复事件 id ${sp.id}`);
         ids.add(sp.id);
-        if (!sp.title || !sp.text) errors.push(`${sp.id}: 缺少标题或正文`);
         if (!Array.isArray(sp.options) || sp.options.length !== 3) {
           errors.push(`${sp.id}: 特色事件必须三选一（当前 ${sp.options ? sp.options.length : 0}）`);
           continue;
@@ -690,7 +585,6 @@
           if (sum !== 100) errors.push(`${where}: 概率合计 ${sum}，应为 100`);
           if (opt.req && !parseCond(opt.req)) errors.push(`${where}: 无法解析门槛 ${opt.req}`);
           opt.outcomes.forEach((o) => checkOutcome(where, o));
-          if (!opt.outcomes.some((o) => inferTier(o) !== "bad") && !opt.label) warnings.push(`${where}: 全为下签`);
         });
         for (const c of sp.cond || []) if (!parseCond(c)) errors.push(`${sp.id}: 无法解析 cond ${c}`);
       }
@@ -701,7 +595,6 @@
         if (!Array.isArray(ev.branches) && !Array.isArray(ev.choices)) errors.push(`${ev.id}: 缺少分支`);
         (ev.branches || []).forEach((b, i) => checkOutcome(`${ev.id}.分支${i + 1}`, b));
         (ev.choices || []).forEach((c, ci) => {
-          if (c.cond_flag && !c.cond_flag) warnings.push(`${ev.id}.选项${ci + 1}: 空 cond_flag`);
           (c.outcomes || []).forEach((o, i) => checkOutcome(`${ev.id}.选项${ci + 1}.结局${i + 1}`, o));
         });
         for (const c of ev.cond || []) if (!parseCond(c)) errors.push(`${ev.id}: 无法解析 cond ${c}`);
@@ -712,8 +605,29 @@
       for (const c of e.cond || []) if (!parseCond(c)) errors.push(`${e.id}: 无法解析 cond ${c}`);
       if (!e.trigger && typeof e.priority !== "number") errors.push(`${e.id}: 缺少 priority`);
     }
-    if ((S.BREAKTHROUGHS || []).length !== 3) errors.push("BREAKTHROUGHS 必须为 3 个");
-
+    for (const [name, list] of [["SECTS", S.SECTS], ["PROFESSIONS", S.PROFESSIONS], ["ALIGNMENTS", S.ALIGNMENTS], ["PARTNERS", S.PARTNERS]]) {
+      if (!Array.isArray(list) || list.length !== 3) errors.push(`${name} 必须为 3 个`);
+    }
+    const slots = new Set(["sect", "craft", "align", "partner"]);
+    const scriptIds = new Set();
+    for (const sc of S.SCRIPTS || []) {
+      if (scriptIds.has(sc.id)) errors.push(`SCRIPTS: 重复 id ${sc.id}`);
+      scriptIds.add(sc.id);
+      if (!slots.has(sc.slot)) errors.push(`SCRIPTS.${sc.id}: 非法 slot ${sc.slot}`);
+      if (sc.after && !slots.has(sc.after)) errors.push(`SCRIPTS.${sc.id}: 非法 after ${sc.after}`);
+      if (typeof sc.atAge !== "number") errors.push(`SCRIPTS.${sc.id}: 缺少 atAge`);
+      if (!sc.options || sc.options.length !== 3) errors.push(`SCRIPTS.${sc.id}: 必须三选一`);
+      for (const o of sc.options || []) {
+        if (!S[o.group] || !S[o.group].some((x) => x.id === o.id || x.name === o.id)) {
+          errors.push(`SCRIPTS.${sc.id}: 选项 ${o.group}/${o.id} 不存在`);
+        }
+      }
+      for (const c of sc.cond || []) if (!parseCond(c)) errors.push(`SCRIPTS.${sc.id}: 无法解析 cond ${c}`);
+    }
+    for (const slot of slots) {
+      if (!(S.SCRIPTS || []).some((sc) => sc.slot === slot)) errors.push(`SCRIPTS: 缺少 ${slot} 支线`);
+    }
+    if (!S.CONFIG.creationBase) warnings.push("缺少 creationBase");
     return { ok: errors.length === 0, errors, warnings };
   }
 
@@ -726,8 +640,7 @@
     oddsForOutcomes,
     inferTier,
     TIER_NAME,
-    TIER_ORDER,
     ATTR_KEYS,
-    _internal: { mulberry32, makeSeed, parseCond, pickOutcome },
+    _internal: { mulberry32, makeSeed, pickOutcome, parseCond },
   };
 });

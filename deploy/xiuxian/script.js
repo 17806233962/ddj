@@ -6,13 +6,13 @@
  *       → 每个选项按各自的概率分布结算 → 属性/标记(flag)决定结局
  *
  * v2.0 新增（交互层）：
- *   BREAKTHROUGHS 破境时的“破境之法”三选一
- *   SPECIALS      特色事件池，固定三选一，选项带有明确的概率分布
+ *   SCRIPTS       四条人生支线的剧本：不同分支、不同年份触发三选一
+ *   SPECIALS      特色事件池，开局后自动结算，结果按各自概率分布
  *   FILLERS       没有事件时的平淡年份旁白
  *
  * 数据结构说明（引擎直接消费）：
  *   TALENTS  开局天赋池，按稀有度加权抽取
- *   PATHS    开局选择的修行方向
+ *   SECTS / PROFESSIONS / ALIGNMENTS / PARTNERS  开局五择中的后四择
  *   STAGES   境界表：每境界推进若干年，触发对应事件池
  *   EVENTS   旧事件池（多数自动结算，少数 ask:true 的也交给玩家抉择）
  *   SPECIALS 特色事件池，每个事件恰好 3 个选项；选项的 outcomes 是独立分布
@@ -27,6 +27,7 @@ const CONFIG = {
   },
   baseLifespan: 80,     // 凡人基础寿元，每次突破大境界延长
   lifespanBonus: { lianqi: 10, zhuji: 20, jindan: 40, yuanying: 80, huashen: 150, dujie: 250 },
+  creationBase: { 悟性: 2, 根骨: 2, 心境: 2, 机缘: 2 },
   // 每个境界安排几次“特色事件”（不占普通事件名额）
   specialsPerStage: { mortal: 1, lianqi: 2, zhuji: 2, jindan: 2, yuanying: 2, huashen: 2, dujie: 2 },
   // UI 节奏（引擎不依赖）
@@ -61,18 +62,106 @@ const TALENTS = [
   { id: "t_reborn", name: "重修者", grade: 4, desc: "你隐约记得——这条路你走过一次", effects: { 悟性: 6, 心境: 4, 机缘: 3, flag重修: 1 } },
 ];
 
-/* ============================ 修行方向（开局三选一） ============================ */
-const PATHS = [
-  { id: "p_sword", name: "剑修", desc: "一剑破万法。攻伐无双，证道最快，也最易死于刀兵。",
-    effects: { 根骨: 2, 悟性: 1 }, tags: ["剑"] },
-  { id: "p_dan", name: "丹修", desc: "炼丹养道。寿元悠长，人脉广博，可解万难。",
-    effects: { 悟性: 2, 机缘: 2 }, tags: ["丹"] },
-  { id: "p_body", name: "体修", desc: "以身为炉。肉身成圣，硬撼天劫。",
-    effects: { 根骨: 4, 心境: 1 }, tags: ["体"] },
-  { id: "p_talisman", name: "符修", desc: "一笔定乾坤。机关阵法，保命遁世第一。",
-    effects: { 悟性: 3, 机缘: 1 }, tags: ["符"] },
-  { id: "p_free", name: "散修", desc: "不入宗门，逍遥天地间。机缘莫测，无人护道。",
-    effects: { 机缘: 3, 心境: 2 }, tags: ["散"] },
+/* ============================ 开局五择 ============================ */
+const SECTS = [
+  { id: "sect_qingyun", name: "青云宗", desc: "天下第一正道宗门。有师长、有同门、有资源，也有规矩。",
+    effects: { attr: { 悟性: 2, 声望: 2, 金铢: 200 }, flag: { 入宗: 1, 散人: -1, 青云: 1 } } },
+  { id: "sect_miaoyin", name: "妙音阁", desc: "亦正亦邪的音修之地。消息灵通，奇遇多，靠山少。",
+    effects: { attr: { 机缘: 3, 心境: 1, 金铢: 300 }, flag: { 入宗: 1, 散人: -1, 妙音: 1 } } },
+  { id: "sect_sanxiu", name: "无门无派", desc: "散修。没人管，也没人护。机缘最盛，风险最高。",
+    effects: { attr: { 机缘: 4, 根骨: 1, 金铢: 100 }, flag: { 入宗: -1, 散人: 1 } } },
+];
+const PROFESSIONS = [
+  { id: "prof_sword", name: "剑修", desc: "一剑破万法。攻伐最盛，也最易死于刀兵。",
+    effects: { attr: { 根骨: 2, 悟性: 1 }, flag: { 剑心: 2, 职业剑: 1 } } },
+  { id: "prof_dan", name: "丹修", desc: "炼丹养道。寿元长，人脉广，最不缺盘缠。",
+    effects: { attr: { 悟性: 2, 机缘: 2, 金铢: 500 }, flag: { 丹道: 2, 职业丹: 1 } } },
+  { id: "prof_body", name: "体修", desc: "以身为炉。肉身成圣，硬撼天劫。",
+    effects: { attr: { 根骨: 4, 心境: 1 }, flag: { 体修: 1, 职业体: 1 } } },
+];
+const ALIGNMENTS = [
+  { id: "align_righteous", name: "正道", desc: "守正持中，扶危济困。人望高，心魔少。",
+    effects: { attr: { 善恶: 20, 声望: 3 }, flag: { 正道: 1, 中立: -1, 魔道: -1, 魔染: -99 } } },
+  { id: "align_neutral", name: "亦正亦邪", desc: "只凭本心，不问正邪。机缘最盛，名声难说。",
+    effects: { attr: { 机缘: 2, 心境: 1 }, flag: { 中立: 1, 正道: -1, 魔道: -1 } } },
+  { id: "align_demon", name: "魔道", desc: "以力证道，百无禁忌。修为快，代价也重。",
+    effects: { attr: { 悟性: 3, 金铢: 1000, 善恶: -20 }, flag: { 魔道: 1, 正道: -1, 中立: -1, 魔染: 2, 入魔: 2 } } },
+];
+const PARTNERS = [
+  { id: "partner_qingmei", name: "苏挽月", desc: "青梅竹马。她会在你最难的时候出现。",
+    effects: { attr: { 心境: 2, 善恶: 5 }, flag: { 情缘: 1, 道侣: 1, 无情: -1 } } },
+  { id: "partner_hongyan", name: "白芷", desc: "红颜知己。亦正亦邪，与你并肩，也与你相争。",
+    effects: { attr: { 机缘: 3, 悟性: 1 }, flag: { 情缘: 1, 道侣: 1, 无情: -1 } } },
+  { id: "partner_none", name: "独身向道", desc: "不结道侣。心无挂碍，剑心通明。",
+    effects: { attr: { 悟性: 3, 心境: 2 }, flag: { 道侣: -1, 无情: 1 } } },
+];
+
+/* ============================ 剧本（按分支、按年份触发） ============================
+ * 天赋在开局选；其余四次由剧本在各自年份触发，不卡境界。
+ * 不同分支走不同剧本，所以每次选择出现的年龄也不同。
+ * 活不到那一年，就不会遇到。
+ *
+ * slot   选择槽位：sect 门派 / craft 职业 / align 正邪 / partner 道侣
+ * after  必须先完成的前置槽位
+ * atAge  该剧本触发的年龄
+ * cond   额外条件（flag）
+ * options 用 group + id 指向 SECTS / PROFESSIONS / ALIGNMENTS / PARTNERS
+ * ============================================================ */
+const SCRIPTS = [
+  { id: "sc_sect_tianjiao", slot: "sect", atAge: 13, cond: ["flag:天骄>=1"],
+    title: "三宗争徒",
+    text: "测灵石在你掌心亮了一瞬，三宗使者同日至村口。青云宗的礼单是内门弟子，妙音阁的礼单是一卷音谱，无门无派的老散修只放下一柄旧剑，说：「跟我走，没人管你。」",
+    options: [{ group: "SECTS", id: "sect_qingyun" }, { group: "SECTS", id: "sect_miaoyin" }, { group: "SECTS", id: "sect_sanxiu" }] },
+
+  { id: "sc_sect_hanmen", slot: "sect", atAge: 17, cond: ["flag:寒门>=1"],
+    title: "山门试炼",
+    text: "你独自走到青云宗山门。执事看了你一眼，说外门还缺个扫地的；山道另一头，妙音阁的画舫正靠岸，琴声顺着风飘下来；身后是你来时的路，一个人也没有。",
+    options: [{ group: "SECTS", id: "sect_qingyun" }, { group: "SECTS", id: "sect_miaoyin" }, { group: "SECTS", id: "sect_sanxiu" }] },
+
+  { id: "sc_craft_qingyun", slot: "craft", after: "sect", atAge: 26, cond: ["flag:青云>=1"],
+    title: "内门择业",
+    text: "内门大比之后，掌门把你叫到殿前。剑峰、丹房、炼体堂各有一位长老看着你，谁都没有先开口。",
+    options: [{ group: "PROFESSIONS", id: "prof_sword" }, { group: "PROFESSIONS", id: "prof_dan" }, { group: "PROFESSIONS", id: "prof_body" }] },
+
+  { id: "sc_craft_miaoyin", slot: "craft", after: "sect", atAge: 33, cond: ["flag:妙音>=1"],
+    title: "音阁问心",
+    text: "阁主把七弦琴推到你面前：「音阁不教人杀人，只教人听。你听见什么，就选什么。」琴声里有剑鸣，有药香，有骨头断裂的闷响。",
+    options: [{ group: "PROFESSIONS", id: "prof_sword" }, { group: "PROFESSIONS", id: "prof_dan" }, { group: "PROFESSIONS", id: "prof_body" }] },
+
+  { id: "sc_craft_sanxiu", slot: "craft", after: "sect", atAge: 38, cond: ["flag:散人>=1"],
+    title: "坊市谋生",
+    text: "坊市里三份活计同时找上你：护一趟走黑水的镖，替丹铺看一炉不能熄的火，或者跟体修去乱葬岗搬一座山一样的棺材。都得吃饭。",
+    options: [{ group: "PROFESSIONS", id: "prof_sword" }, { group: "PROFESSIONS", id: "prof_dan" }, { group: "PROFESSIONS", id: "prof_body" }] },
+
+  { id: "sc_align_sword", slot: "align", after: "craft", atAge: 48, cond: ["flag:职业剑>=1"],
+    title: "杀伐之惑",
+    text: "你剑下亡魂过百。雨夜里，一个魔道长老拦住你，问：「你的剑，是护人的，还是杀人的？」他没有拔刀，像是在等一个答案。",
+    options: [{ group: "ALIGNMENTS", id: "align_righteous" }, { group: "ALIGNMENTS", id: "align_neutral" }, { group: "ALIGNMENTS", id: "align_demon" }] },
+
+  { id: "sc_align_dan", slot: "align", after: "craft", atAge: 58, cond: ["flag:职业丹>=1"],
+    title: "丹会风波",
+    text: "丹会决赛，炉里的丹快成了，对面的魔道丹师却递来一包药：「加进去，你赢；不加，你输。」台下几百双眼睛看着你。",
+    options: [{ group: "ALIGNMENTS", id: "align_righteous" }, { group: "ALIGNMENTS", id: "align_neutral" }, { group: "ALIGNMENTS", id: "align_demon" }] },
+
+  { id: "sc_align_body", slot: "align", after: "craft", atAge: 66, cond: ["flag:职业体>=1"],
+    title: "血战魔修",
+    text: "魔修屠城，你以肉身挡在城门前。身后是没跑掉的百姓，面前是血海。魔修头领笑：「让开，我许你半城。」",
+    options: [{ group: "ALIGNMENTS", id: "align_righteous" }, { group: "ALIGNMENTS", id: "align_neutral" }, { group: "ALIGNMENTS", id: "align_demon" }] },
+
+  { id: "sc_partner_righteous", slot: "partner", after: "align", atAge: 95, cond: ["flag:正道>=1"],
+    title: "上元灯会",
+    text: "上元灯会，人潮如织。苏挽月在桥头等你，白芷在河对岸朝你举了举酒盏。你也可以谁也不见，转身走进人海里。",
+    options: [{ group: "PARTNERS", id: "partner_qingmei" }, { group: "PARTNERS", id: "partner_hongyan" }, { group: "PARTNERS", id: "partner_none" }] },
+
+  { id: "sc_partner_neutral", slot: "partner", after: "align", atAge: 105, cond: ["flag:中立>=1"],
+    title: "渡口",
+    text: "渡口只剩最后一班船。白衣的女修替你留了位置，黑衣的女修把伞往你这边偏了偏。船家问：「走不走？」",
+    options: [{ group: "PARTNERS", id: "partner_qingmei" }, { group: "PARTNERS", id: "partner_hongyan" }, { group: "PARTNERS", id: "partner_none" }] },
+
+  { id: "sc_partner_demon", slot: "partner", after: "align", atAge: 112, cond: ["flag:魔道>=1"],
+    title: "魔渊来客",
+    text: "魔渊的风很冷。她站在你身后，不问你杀过多少人，只问：「你还要走多远？」你也可以一个人走下去，走到谁都不认识你。",
+    options: [{ group: "PARTNERS", id: "partner_qingmei" }, { group: "PARTNERS", id: "partner_hongyan" }, { group: "PARTNERS", id: "partner_none" }] },
 ];
 
 /* ============================ 境界 ============================ */
@@ -508,33 +597,13 @@ const EVENTS = {
   ],
 };
 
-/* ============================ 破境之法（三选一） ============================
- * odds 为对基础成功率的修正；cost 为需要消耗的金铢。
- * 失败即道途止步（由结局表结算），故“稳”与“险”的取舍是核心。
- * ============================================================ */
-const BREAKTHROUGHS = [
-  { id: "br_steady", name: "稳守道基", odds: 0.10,
-    desc: "不贪一时之快，将道基反复压实。最稳，但少一份破釜沉舟的锐气。",
-    success: { attr: { 心境: 1 }, flag: { 稳中求进: 1 } },
-    successText: "你按部就班，水到渠成。那道横亘在前的门槛，被一点点磨平了。" },
-
-  { id: "br_force", name: "强行冲关", odds: -0.08,
-    desc: "以命相搏，一鼓作气。成则道心淬炼、修为暴涨；败则再无回头路。",
-    success: { attr: { 悟性: 2, 根骨: 1 }, flag: { 破釜沉舟: 1 } },
-    successText: "你以命相搏，硬生生撞开了那扇门。浑身浴血，却从未如此畅快。" },
-
-  { id: "br_pill", name: "服丹借力", odds: 0.20, costBase: 300, costPerStage: 400,
-    desc: "以财换命。丹药之力可强推一把，只是这笔开销并非人人负担得起。",
-    success: { attr: { 心境: 1 }, flag: { 借丹破境: 1 } },
-    successText: "丹药化开，磅礴药力推着你的道基向上拔升。你听见体内传来一声轻响。" },
-];
-
-/* ============================ 特色事件（固定三选一） ============================
+/* ============================ 特色事件（自动结算） ============================
  * 每个选项的 outcomes 是独立概率分布：
- *   p     权重（同一选项内按比例归一，UI 显示百分比）
- *   tier  good 上签 / mid 平 / bad 下签，用于展示风险与结算播报
- *   attr / flag / lifespan 结算内容；ending 可直接指定结局；death 为身死
+ *   p     权重（与同组其它结果按比例归一）
+ *   tier  good 上签 / mid 平 / bad 下签，用于结算配色
+ *   attr / flag / lifespan 结算内容；ending 可指定结局；death 为身死
  * 选项的 req 为门槛：如 "金铢>=500"、"flag:剑心>=1"、"善恶>=20"
+ * 玩家开局做完五次选择后，事件由天意自动挑选项、自动掷结果。
  * ============================================================ */
 const SPECIALS = (typeof module !== "undefined" && module.exports)
   ? require("./specials.js")
@@ -553,6 +622,7 @@ const FLAG_NAMES = {
   善缘: "善缘", 功德: "功德", 妖缘: "妖缘", 妖仇: "妖仇", 结仇: "结仇", 孤星: "天煞孤星",
   上界传承: "上界传承", 见仙界: "得见仙界", 护界: "护界之功", 星核: "天外星核",
   仙缘: "仙缘", 同心: "同心", 见龙: "见龙", 剑意: "剑意",
+  正道: "正道", 中立: "亦正亦邪", 魔道: "魔道", 无情: "无情道", 天骄: "天骄", 寒门: "寒门",
   破釜沉舟: "破釜沉舟", 稳中求进: "稳中求进", 借丹破境: "借丹破境",
 };
 
@@ -581,11 +651,11 @@ const ENDINGS = [
     desc: "你没有飞升。你留在世界壁障的裂缝前，以身为针，一坐就是万年。\n后来有修士神游太虚，看见一道人影缝在虚空里，背对着人间。\n那人影没有回头，只留下一句话：别怕，还撑得住。" },
 
   { id: "end_demon_lord", priority: 96, name: "魔主临世",
-    cond: ["flag入魔>=2", "flag渡劫成功>=1"],
+    cond: ["flag入魔>=2", "flag渡劫成功>=1", "flag魔道>=1"],
     desc: "九雷渡尽，你立于魔渊之巅，俯瞰两界。\n仙门为你而开，你却笑了：「仙又如何？」\n——一个时代的梦魇，就此开始。" },
 
   { id: "end_holy_body", priority: 92, name: "肉身成圣",
-    cond: ["flag渡劫成功>=1", "flag雷体>=1"],
+    cond: ["flag渡劫成功>=1", "flag体修>=1"],
     desc: "雷光散尽，你周身金光如铸。你未借仙门，以肉身撞破世界壁障，一步踏出。\n壁障之上，留下了一个人的形状。" },
 
   { id: "end_dream", priority: 75, name: "长梦不醒",
@@ -598,7 +668,7 @@ const ENDINGS = [
     desc: "元婴裹着你的神魂坠入轮回。奈何桥头，你回望仙路，一步之遥。\n——来世，再走一遭。\n（本结局可开启「二周目」：保留部分天赋重开）" },
 
   { id: "end_alchemy", priority: 60, name: "丹道祖师",
-    cond: ["flag丹圣传人>=1"],
+    cond: ["flag丹道>=2"],
     desc: "你终究没能等到自己的天劫——寿元在最后一炉丹的香气中燃尽。\n你留下的《九转残方》滋养了此后十万炼丹师。\n你炼的最后一颗丹，取名「人间」。" },
 
   { id: "end_artifact", priority: 58, name: "万器之祖",
@@ -612,6 +682,22 @@ const ENDINGS = [
   { id: "end_sect_master", priority: 55, name: "桃李天下",
     cond: ["flag万世师>=1"],
     desc: "你没有飞升。你说：「仙界不缺一个仙人，人间缺一个讲道的。」\n千年之后，你坐化于桃树之下，满山弟子披麻，天下修士缟素。" },
+
+  { id: "end_paragon", priority: 46, name: "正道魁首",
+    cond: ["flag正道>=1"],
+    desc: "你没有飞升，也没有堕入魔道。你在人间立了一座碑，碑上刻着所有被你救过的人的名字。\n后来碑被风雨磨平了，人们还是记得：那年有个正道修士，替他们挡过一刀。" },
+
+  { id: "end_wanderer", priority: 43, name: "逍遥散人",
+    cond: ["flag中立>=1"],
+    desc: "你不属于任何一边。正道请你除魔，魔道请你喝酒，你谁的面子都不给。\n最后你在东海钓了三百年的鱼，鱼没钓到几条，倒是把自己钓明白了。" },
+
+  { id: "end_demon_way", priority: 44, name: "魔道巨擘",
+    cond: ["flag魔道>=1"],
+    desc: "你没有成为魔主，却成了魔道最锋利的一把刀。正道怕你，魔道也怕你。\n你死之后，魔渊裂成两半，一半为你陪葬。" },
+
+  { id: "end_solo", priority: 42, name: "太上忘情",
+    cond: ["flag无情>=1"],
+    desc: "你谁也没有选。剑就是你的道侣，风就是你的归处。\n后来有人在山顶看见一块无字碑，碑前插着一柄剑，剑还在等它的主人。" },
 
   { id: "end_hermit", priority: 89, name: "归隐林泉",
     cond: ["flag挚爱>=1", "flag道心圆满>=1"],
@@ -628,11 +714,6 @@ const ENDINGS = [
   { id: "end_longevity", priority: 30, name: "寿元耗尽",
     cond: [],
     desc: "卡在化神巅峰三百年，天劫始终未至。你的头发白了，牙齿落了，握剑的手开始颤抖。\n最后一夜，你坐在当年拜师的山门前，看着日出，慢慢闭上了眼。" },
-
-  { id: "end_mortal", priority: 20, name: "凡人终老",
-    cond: [],
-    trigger: "mortal_failed",
-    desc: "测灵石没有亮，谷底没有功法，机缘终究没有来。\n你娶妻生子，春种秋收。孙儿膝头听你讲山中神仙的故事，你讲得比谁都好。\n——未曾入道，亦是人生。" },
 
   { id: "end_death", priority: 10, name: "身死道消",
     cond: [],
@@ -671,8 +752,9 @@ const ENDINGS = [
 
 /* 暴露给引擎（浏览器通过 <script src> 引入；Node 测试通过 require 读取） */
 const XIUXIAN_SCRIPT = {
-  CONFIG, TALENTS, PATHS, STAGES, EVENTS, FILLERS, ENDINGS,
-  SPECIALS, BREAKTHROUGHS, FLAG_NAMES,
+  CONFIG, TALENTS, STAGES, EVENTS, FILLERS, ENDINGS,
+  SECTS, PROFESSIONS, ALIGNMENTS, PARTNERS, SCRIPTS,
+  SPECIALS, FLAG_NAMES,
 };
 if (typeof window !== "undefined") window.XIUXIAN_SCRIPT = XIUXIAN_SCRIPT;
 if (typeof module !== "undefined" && module.exports) module.exports = XIUXIAN_SCRIPT;
