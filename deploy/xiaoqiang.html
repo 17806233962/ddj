@@ -640,7 +640,7 @@ function render(){
     return;
   }
 
-  let h = `<h2>本地市场 —— ${esc(S.city)}黑市</h2><div class="tblwrap"><table><tr><th>商品</th><th>行情</th><th>持有</th><th>买入</th><th>卖出</th></tr>`;
+  let h = `<h2>本地市场 —— ${esc(S.city)}黑市</h2><div class="tblwrap"><table><tr><th>商品</th><th>买入价/卖出价</th><th>持有</th><th>买入</th><th>卖出</th></tr>`;
   const free = S.capacity - bagUsed();
   const rowOf = (id, displayName, priceText, unit, stockLimit) => {
     const e = S.bag[id];
@@ -654,17 +654,18 @@ function render(){
   };
   for (const q of S.market){
     const it = ITEMS.find(i => i.id === q.id);
-    const bu = Math.ceil(q.price * 1.08);
-    h += rowOf(q.id, `<span title="${esc(it.desc)}">${it.name}</span>`, `收 ${bu} / 出 ${Math.floor(q.price*0.9)}`, bu);
+    // 显示与结算同源：直接调用买卖单价函数，杜绝显示/实际不一致
+    h += rowOf(q.id, `<span title="${esc(it.desc)}">${it.name}</span>`, `买 ${buyUnitPrice(q.id)} / 卖 ${sellUnitPrice(q.id)}`, buyUnitPrice(q.id));
   }
   // 特殊货：任何城市都能按当日行情出手
   for (const c in NPCS) for (const g of NPCS[c].goods){
     const sellP = S.specialPrices[g.id];
     const stock = S.npcStock[g.id] || 0;
     const canBuy = c === S.city && S.npcUnlocked[c] && stock > 0;
+    const unitP = S.married.includes("如玉") ? Math.round(g.buy*0.8) : g.buy;
     h += rowOf(g.id, `⭐${g.name}<span class="dim">(${c})</span>`,
-      canBuy ? `收 ${g.buy} / 出 ${sellP} <span class="dim">货剩${stock}</span>` : `<span class="dim">出 ${sellP}${c===S.city?"（无货）":""}</span>`,
-      canBuy ? (S.married.includes("如玉") ? Math.round(g.buy*0.8) : g.buy) : Infinity,
+      canBuy ? `买 ${unitP} / 卖 ${sellP} <span class="dim">货剩${stock}</span>` : `<span class="dim">卖 ${sellP}${c===S.city?"（无货）":""}</span>`,
+      canBuy ? unitP : Infinity,
       canBuy ? stock : undefined);
   }
   h += `</table></div>`;
