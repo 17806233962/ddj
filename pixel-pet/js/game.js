@@ -4,7 +4,9 @@ const SAVE_KEY = 'pixelPetSave_v1';
 function newPet(lineKey, name) {
   const sp = SPECIES[lineKey];
   return {
-    id: crypto.randomUUID ? crypto.randomUUID() : String(Math.random()),
+    id: (typeof crypto !== 'undefined' && crypto.randomUUID)
+      ? crypto.randomUUID()
+      : 'pet_' + Date.now() + '_' + Math.floor(Math.random() * 1e9),
     line: lineKey,
     name: name || sp.stages[0].name,
     level: 1,
@@ -48,10 +50,11 @@ function petStats(p) {
 
 function evolutionIndex(p) {
   const st = SPECIES[p.line].stages;
-  for (let i = st.length - 1; i >= 0; i--) {
-    if (st[i].evolveLv === null || p.level >= st[i].evolveLv) return i;
+  let idx = 0;
+  for (let i = 1; i < st.length; i++) {
+    if (p.level >= st[i].evolveLv) idx = i;
   }
-  return 0;
+  return idx;
 }
 
 function expNeeded(p) { return 10 + p.level * 8; }
@@ -96,7 +99,7 @@ function petSpriteKey(p) {
 }
 
 // ============ UI 基础 ============
-const $ = sel => document.querySelector('#' + sel);
+const $ = sel => document.querySelector(sel);
 
 function log(msg) {
   const box = $('#log');

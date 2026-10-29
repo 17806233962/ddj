@@ -18,7 +18,6 @@ const PAL = {
 };
 
 // ============ 宠物像素画（16x16）============
-// 每条进化链 3 个阶段
 const SPRITES = {
   spark1: [
     '................',
@@ -185,13 +184,14 @@ const SPRITES = {
 };
 
 // ============ 宠物种族 ============
+// evolveLv = 成为该形态所需的最低等级
 const SPECIES = {
   spark: {
     name: '电电鼠', line: 'spark',
     stages: [
-      { key: 'spark1', name: '电电鼠', evolveLv: 8 },
-      { key: 'spark2', name: '霹雳兽', evolveLv: 18 },
-      { key: 'spark3', name: '雷暴君', evolveLv: null },
+      { key: 'spark1', name: '电电鼠', evolveLv: 1 },
+      { key: 'spark2', name: '霹雳兽', evolveLv: 8 },
+      { key: 'spark3', name: '雷暴君', evolveLv: 18 },
     ],
     base: { hp: 30, atk: 6, def: 3 },
     wild: true,
@@ -199,9 +199,9 @@ const SPECIES = {
   leaf: {
     name: '芽芽', line: 'leaf',
     stages: [
-      { key: 'leaf1', name: '芽芽', evolveLv: 8 },
-      { key: 'leaf2', name: '藤藤兽', evolveLv: 18 },
-      { key: 'leaf3', name: '森之主', evolveLv: null },
+      { key: 'leaf1', name: '芽芽', evolveLv: 1 },
+      { key: 'leaf2', name: '藤藤兽', evolveLv: 8 },
+      { key: 'leaf3', name: '森之主', evolveLv: 18 },
     ],
     base: { hp: 36, atk: 5, def: 4 },
     wild: true,
@@ -209,9 +209,9 @@ const SPECIES = {
   aqua: {
     name: '泡泡龟', line: 'aqua',
     stages: [
-      { key: 'aqua1', name: '泡泡龟', evolveLv: 8 },
-      { key: 'aqua2', name: '浪涛龟', evolveLv: 18 },
-      { key: 'aqua3', name: '深渊霸主', evolveLv: null },
+      { key: 'aqua1', name: '泡泡龟', evolveLv: 1 },
+      { key: 'aqua2', name: '浪涛龟', evolveLv: 8 },
+      { key: 'aqua3', name: '深渊霸主', evolveLv: 18 },
     ],
     base: { hp: 34, atk: 5, def: 5 },
     wild: true,
@@ -229,7 +229,7 @@ const EQUIPS = {
 
 // ============ 野外敌人 ============
 const ENEMIES = [
-  { name: '野Slug',   spr: 'spark1', hp: 18, atk: 4, def: 1, exp: 8,  coins: 6 },
+  { name: '野生Slug', spr: 'spark1', hp: 18, atk: 4, def: 1, exp: 8,  coins: 6 },
   { name: '刺刺虫',   spr: 'leaf1',  hp: 22, atk: 5, def: 2, exp: 10, coins: 8 },
   { name: '水滴怪',   spr: 'aqua1',  hp: 20, atk: 5, def: 3, exp: 11, coins: 9 },
   { name: '岩石傀儡', spr: 'leaf2',  hp: 34, atk: 7, def: 5, exp: 18, coins: 15 },
