@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>一世仙途 · 文字修仙人生</title>
+<style>
+  :root{
+    --bg:#0f1218; --panel:#161b24; --line:#2c3446; --ink:#d8d2c4;
+    --dim:#8b909c; --gold:#d4af37; --jade:#7ec8a9; --red:#c96a6a;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{background:var(--bg); color:var(--ink); font-family:"KaiTi","STKaiti","楷体","Noto Serif SC",serif;
+    min-height:100vh; display:flex; justify-content:center;}
+  #app{width:min(820px,96vw); padding:18px 12px 44px;}
+  header{text-align:center; margin:12px 0 20px;}
+  header h1{font-size:30px; letter-spacing:9px; color:var(--gold); font-weight:600;}
+  header p{color:var(--dim); margin-top:6px; letter-spacing:2px; font-size:13px;}
+  .panel{background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:16px; margin-bottom:12px;}
+  .panel h2{font-size:16px; color:var(--gold); margin-bottom:10px; letter-spacing:2px; font-weight:600;}
+  .row{display:flex; gap:9px; flex-wrap:wrap; align-items:center;}
+  .center{justify-content:center;}
+  input[type=text]{background:#0b0e14; border:1px solid var(--line); color:var(--ink);
+    padding:8px 10px; border-radius:5px; font-size:15px; font-family:inherit; width:190px;}
+  input[type=text]:focus{outline:none; border-color:var(--gold);}
+  button{background:#1e2532; color:var(--ink); border:1px solid var(--line); padding:7px 14px;
+    border-radius:5px; cursor:pointer; font-family:inherit; font-size:14px; letter-spacing:1px;}
+  button:hover:not(:disabled){border-color:var(--gold); color:var(--gold);}
+  button:disabled{opacity:.4; cursor:not-allowed;}
+  button.primary{background:#332a13; border-color:var(--gold); color:var(--gold);}
+  .hint{color:var(--dim); font-size:13px;}
+  .rules{color:var(--dim); font-size:12.5px; line-height:1.9; text-align:center; margin-top:12px;}
+
+  .cards{display:grid; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); gap:7px;}
+  .card{border:1px solid var(--line); border-radius:6px; padding:10px; cursor:pointer; background:#11161e;}
+  .card:hover{background:#171e29;}
+  .card .name{font-size:14.5px;}
+  .card .desc{font-size:12px; color:var(--dim); margin-top:4px; line-height:1.55;}
+  .card .grade{font-size:10.5px; color:var(--dim);}
+  .card.sel{border-color:var(--jade); background:#15211d;}
+  .card.sel::after{content:" ✓"; color:var(--jade);}
+  .card.g4 .grade{color:var(--gold);}
+  .card.g3 .grade{color:#b48ae0;}
+
+  #stele{display:flex; flex-wrap:wrap; gap:5px;}
+  .stchip{font-size:11.5px; border:1px solid var(--line); border-radius:12px; padding:2px 9px; color:var(--dim);}
+  .stchip.got{color:var(--gold); border-color:#5a4a1e; cursor:help;}
+
+  #status{display:flex; flex-wrap:wrap; gap:6px 14px; align-items:center;
+    background:var(--panel); border:1px solid var(--line); border-radius:8px;
+    padding:9px 12px; margin-bottom:10px; font-size:13.5px;}
+  #status b{color:var(--gold); font-weight:600;}
+  .chip{background:#1d2434; border-radius:12px; padding:1px 8px; font-size:12px;}
+  #log{background:var(--panel); border:1px solid var(--line); border-radius:8px;
+    padding:16px 18px; min-height:320px; max-height:64vh; overflow-y:auto;
+    line-height:1.9; font-size:15px;}
+  .entry{margin-bottom:9px;}
+  .entry .yr{color:var(--dim); font-size:12.5px; margin-right:7px;}
+  .entry .et{color:var(--jade); margin-right:5px;}
+  .entry.brk{text-align:center; color:var(--gold); letter-spacing:3px; margin:16px 0;
+    border-top:1px dashed var(--line); border-bottom:1px dashed var(--line); padding:7px 0;}
+  .entry.fill{color:#9aa0ad;}
+  .entry .fx{display:block; color:var(--dim); font-size:12px; margin-top:2px;}
+  .entry.special{border-left:2px solid var(--gold); padding-left:10px;}
+  .entry.event{border-left:2px solid #3a4a60; padding-left:10px;}
+  .entry.breakthrough{border-left:2px solid var(--jade); padding-left:10px;}
+  .badge{display:inline; font-size:11px; margin-left:5px; letter-spacing:1px;}
+  .badge::before{content:"〔";} .badge::after{content:"〕";}
+  .badge.good{color:var(--jade);}
+  .badge.mid{color:var(--gold);}
+  .badge.bad{color:var(--red);}
+
+  .choice{border:1px solid var(--line); border-left:3px solid var(--gold);
+    padding:13px 14px; margin:15px 0; background:#131822;}
+  .ctag{font-size:10.5px; letter-spacing:3px; color:var(--dim); margin-bottom:5px;}
+  .ctitle{color:var(--gold); font-size:16px; margin-bottom:6px;}
+  .ctext{line-height:1.8; font-size:14px; margin-bottom:9px;}
+  .opt{display:block; width:100%; text-align:left; margin-bottom:7px; padding:9px 11px;
+    background:#0e1219; border:1px solid var(--line); border-radius:5px; letter-spacing:0;}
+  .opt:last-child{margin-bottom:0;}
+  .opt:hover:not(:disabled){border-color:var(--gold);}
+  .olabel{font-size:14.5px; color:var(--ink);}
+  .odesc{font-size:12px; color:var(--dim); line-height:1.6; margin-top:4px;}
+  .ofx{font-size:11.5px; color:var(--jade); margin-top:3px;}
+
+  #controls{display:flex; gap:6px; margin-top:9px; flex-wrap:wrap; align-items:center;}
+  #controls .sep{flex:1;}
+  #controls button{padding:6px 12px; font-size:13px;}
+  #controls button.on{border-color:var(--gold); color:var(--gold);}
+
+  #ending{position:fixed; inset:0; background:rgba(6,8,12,.94); z-index:20;
+    display:flex; align-items:center; justify-content:center; padding:18px;}
+  #ending .card{background:var(--panel); border:1px solid var(--gold); border-radius:10px;
+    max-width:600px; width:100%; padding:26px 26px 22px; text-align:center;
+    max-height:90vh; overflow-y:auto;}
+  #ending .etag{color:var(--dim); letter-spacing:4px; font-size:12px;}
+  #ending h2{font-size:28px; color:var(--gold); letter-spacing:6px; margin:10px 0 4px; font-weight:600;}
+  #ending .grade{color:var(--dim); font-size:12.5px; margin-bottom:14px;}
+  #ending .grade b{color:var(--gold); font-size:17px;}
+  #ending .edesc{white-space:pre-line; line-height:1.9; font-size:14.5px; text-align:left;
+    margin-bottom:14px; padding:11px 13px; background:#10141b; border-radius:6px;}
+  #ending .grid{display:grid; grid-template-columns:repeat(4,1fr); gap:5px; margin-bottom:12px;}
+  #ending .grid div{background:#10141b; border:1px solid var(--line); border-radius:4px; padding:5px 3px;
+    font-size:11.5px; color:var(--dim);}
+  #ending .grid b{display:block; color:var(--ink); font-size:14px; font-weight:400; margin-top:2px;}
+  #ending .flagwrap{display:flex; flex-wrap:wrap; gap:4px; justify-content:center; margin-bottom:12px;}
+  #ending .flag{font-size:11px; color:var(--jade); border:1px solid #29473c; border-radius:10px; padding:1px 8px;}
+  #ending .unlock{font-size:11.5px; color:var(--dim); margin-bottom:10px;}
+  #ending .choices{text-align:left; font-size:12.5px; color:var(--dim); line-height:1.9;
+    border-top:1px dashed var(--line); padding-top:8px; margin-bottom:14px;}
+  #ending .choices b{color:var(--ink); font-weight:400;}
+  #ending .actions{display:flex; gap:9px; justify-content:center; flex-wrap:wrap;}
+  #ending .actions button{padding:9px 20px; font-size:14px;}
+
+  @media(max-width:640px){
+    header h1{font-size:26px; letter-spacing:6px;}
+    #ending .grid{grid-template-columns:repeat(2,1fr);}
+  }
+  ::-webkit-scrollbar{width:7px;} ::-webkit-scrollbar-thumb{background:#2c3446; border-radius:3px;}
+  .hidden{display:none !important;}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1>一世仙途</h1>
+    <p>五次选择 · 一生自走</p>
+  </header>
+
+  <section id="setup">
+    <div class="panel">
+      <h2>道名</h2>
+      <div class="row">
+        <input type="text" id="nameInput" maxlength="8" placeholder="道友名讳…">
+        <button id="randName">随机</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h2>一 · 天赋 <span class="hint">（抽三择一）</span></h2>
+      <div class="row" style="margin-bottom:8px;">
+        <button id="drawBtn">抽取天赋</button>
+        <span class="hint" id="talentHint">尚未抽取</span>
+      </div>
+      <div id="talentGrid" class="cards"></div>
+    </div>
+
+    <div class="panel">
+      <h2>仙途碑 <span class="hint" id="steleHint"></span></h2>
+      <div id="stele"></div>
+    </div>
+
+    <div class="row center" style="margin-top:16px;">
+      <button id="startBtn" class="primary" disabled style="font-size:16px; padding:10px 40px;">踏入仙途</button>
+    </div>
+
+    <p class="rules">
+      开局只选天赋。门派、职业、正邪、道侣由剧本在各自的年份触发，不同分支时间不同。<br>
+      活不到那一年，就不必选；其余年份自动推演，奇遇按各自概率随机结算。
+    </p>
+  </section>
+
+  <section id="game" class="hidden">
+    <div id="status"></div>
+    <div id="log"></div>
+    <div id="controls">
+      <button id="pauseBtn">暂停</button>
+      <button id="slowBtn">慢速</button>
+      <button id="fastBtn">快速</button>
+      <button id="turboBtn">极快</button>
+      <span class="sep"></span>
+      <button id="restartBtn">重新开局</button>
+    </div>
+  </section>
+</div>
+
+<div id="ending" class="hidden">
+  <div class="card">
+    <div class="etag">—— 此生终局 ——</div>
+    <h2 id="endName"></h2>
+    <div class="grade" id="endGrade"></div>
+    <div class="edesc" id="endDesc"></div>
+    <div class="grid" id="endGrid"></div>
+    <div class="flagwrap" id="endFlags"></div>
+    <div class="unlock" id="endUnlock"></div>
+    <div class="choices" id="endChoices"></div>
+    <div class="actions">
+      <button id="againBtn" class="primary">再入轮回</button>
+      <button id="sameSeedBtn">同命再走一遭</button>
+    </div>
+  </div>
+</div>
+
+<script src="./specials.js"></script>
+<script src="./script.js"></script>
+<script src="./engine.js"></script>
+<script src="./ui.js"></script>
+</body>
+</html>
