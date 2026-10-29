@@ -39,13 +39,14 @@ function petStats(p) {
   let hp = sp.base.hp + p.level * 3 + stageIdx * 8;
   let atk = sp.base.atk + p.level + stageIdx * 2;
   let def = sp.base.def + Math.floor(p.level / 2) + stageIdx;
+  let spd = sp.base.spd + Math.floor(p.level / 3) + stageIdx;
   let luck = 0;
   for (const slot in p.equips) {
     const e = EQUIPS[p.equips[slot]];
     if (!e) continue;
     atk += e.atk || 0; def += e.def || 0; luck += e.luck || 0;
   }
-  return { hp, atk, def, luck, stageName: st.name };
+  return { hp, atk, def, spd, luck, stageName: st.name };
 }
 
 function evolutionIndex(p) {
@@ -125,6 +126,8 @@ function setMenu(title, items) {
 }
 
 function showMain() {
+  battle = null;
+  $('#enemyPanel').classList.add('hidden');
   save();
   const p = activePet();
   renderPet(p);
@@ -291,30 +294,78 @@ function showExplore() {
   if (p.energy < 20) { log('体力不足（需要 20），先让它休息。'); return showMain(); }
   p.energy -= 20;
   const e = ENEMIES[Math.floor(Math.random() * ENEMIES.length)];
-  battle = { pet: p, enemy: { ...e, maxHp: e.hp }, turn: 'pet' };
+  battle = { pet: p, petHp: petStats(p).hp, enemy: { ...e, maxHp: e.hp }, turn: 'pet' };
   $('#enemyPanel').classList.remove('hidden');
   drawSprite($('#enemyCanvas'), e.spr, 5);
   $('#enemyInfo').textContent = `野生 ${e.name} 出现了！`;
-  battleMenu();
+  // 速度决定先手：敌人更快则抢先攻击（PokéRogue/宝可梦规则）
+  if (e.spd > petStats(p).spd) {
+    log(`${e.name} 速度更快，抢先出手！`);
+    enemyTurn();
+  } else if (petStats(p).spd > e.spd) {
+    log(`${p.name} 抢先占得先机！`);
+  }
+  if (battle) battleMenu();
+}
+
+// 敌方回合（选招 + 属性克制 + 会心）
+function enemyTurn() {
+  const b = battle; if (!b) return;
+  const p = b.pet, e = b.enemy;
+  const st = petStats(p);
+  const move = enemyPickMove(e);
+  const mult = typeMult(e.type, SPECIES[p.line].type);
+  const { dmg: edmg, crit: ecrit } = calcDamage(e.atk, st.def, mult, move.mult);
+  b.petHp -= edmg;
+  let msg = `${e.name} 使出「${move.name}」！`;
+  if (mult > 1) msg += '效果绝佳！';
+  if (mult < 1) msg += '效果不太理想……';
+  if (ecrit) msg += '会心一击！💥';
+  msg += `${p.name} 受到 ${edmg} 伤害。（HP ${Math.max(0, b.petHp)}/${st.hp}）`;
+  log(msg);
+  if (b.petHp <= 0) {
+    log(`💤 ${p.name} 倒下了……被送回了家（无大碍，但本次探索结束）`);
+    p.energy = Math.max(0, p.energy - 10);
+    battle = null; showMain();
+  }
 }
 
 function battleMenu() {
   const b = battle, p = b.pet, e = b.enemy;
   const st = petStats(p);
-  $('#enemyInfo').textContent = `${e.name} HP ${e.hp}/${e.maxHp} · ⚔️${e.atk} 🛡️${e.def}`;
+  const eff = typeMult(SPECIES[p.line].type, e.type);
+  const effTxt = eff > 1 ? '（属性克制中，占上风 ✓）' : eff < 1 ? '（被对方克制 ⚠）' : '';
+  $('#enemyInfo').textContent = `${e.name} HP ${e.hp}/${e.maxHp} · ⚔️${e.atk} 🛡️${e.def} ${effTxt}`;
   setMenu('⚔️ 战斗', [
     { label: '🗡️ 攻击', action: () => battleAction('atk') },
     { label: `💥 技能（消耗 15 体力，威力 x2）`, action: () => battleAction('skill') },
     { label: '🧢 尝试捕捉（幸运越高越容易）', action: () => battleAction('catch') },
     { label: '🏃 逃跑', action: () => { log('逃跑了……'); battle = null; showMain(); } },
   ]);
-  $('#petInfo').innerHTML = `${p.name} HP ${st.hp} ⚔️${st.atk} 🛡️${st.def}<br>` + bar('体力', p.energy);
+  $('#petInfo').innerHTML = `${p.name} HP ${b.petHp}/${st.hp} ⚔️${st.atk} 🛡️${st.def} ⚡${st.spd}<br>` + bar('体力', p.energy);
+}
+
+// 通用伤害计算（学习自宝可梦公式）：基础伤害 x 随机波动 x 属性克制，1/16 概率会心一击 x1.5
+function calcDamage(atk, def, mult, power) {
+  let dmg = Math.max(1, Math.round((atk * power - def) * (0.85 + Math.random() * 0.3) * mult));
+  let crit = false;
+  if (Math.random() < 1 / 16) { crit = true; dmg = Math.round(dmg * 1.5); }
+  return { dmg, crit };
+}
+
+// 敌方 AI：SMART_RANDOM 简化版——按招式权重随机选招
+function enemyPickMove(e) {
+  const total = e.moves.reduce((s, m) => s + m.weight, 0);
+  let r = Math.random() * total;
+  for (const m of e.moves) { r -= m.weight; if (r <= 0) return m; }
+  return e.moves[0];
 }
 
 function battleAction(kind) {
   const b = battle; if (!b) return;
   const p = b.pet, e = b.enemy;
   const st = petStats(p);
+  const petType = SPECIES[p.line].type;
   if (kind === 'catch') {
     const chance = 0.15 + st.luck * 0.08 + (1 - e.hp / e.maxHp) * 0.45;
     if (Math.random() < chance) {
@@ -326,17 +377,23 @@ function battleAction(kind) {
       log('捕捉失败了……');
     }
   } else {
-    let dmg;
+    let power, name;
     if (kind === 'skill') {
       if (p.energy < 15) return log('体力不足，无法使用技能！');
       p.energy -= 15;
-      dmg = Math.max(1, Math.round((st.atk * 2 - e.def) * (0.85 + Math.random() * 0.3)));
-      log(`${p.name} 使出强力技能！造成 ${dmg} 伤害！`);
+      power = 2; name = '强力技能';
     } else {
-      dmg = Math.max(1, Math.round((st.atk - e.def) * (0.85 + Math.random() * 0.3)));
-      log(`${p.name} 攻击了 ${e.name}，造成 ${dmg} 伤害。`);
+      power = 1; name = '攻击';
     }
+    const mult = typeMult(petType, e.type);
+    const { dmg, crit } = calcDamage(st.atk, e.def, mult, power);
     e.hp -= dmg;
+    let msg = `${p.name} 使出${name}！`;
+    if (mult > 1) msg += '效果绝佳！';
+    if (mult < 1) msg += '效果不太理想……';
+    if (crit) msg += '会心一击！💥';
+    msg += `造成 ${dmg} 伤害。`;
+    log(msg);
     if (e.hp <= 0) {
       log(`🎉 击败了 ${e.name}！获得 ${e.exp} 经验、${e.coins} 金币。`);
       S.coins += e.coins;
@@ -345,14 +402,8 @@ function battleAction(kind) {
     }
   }
   // 敌人回合
-  const edmg = Math.max(1, Math.round((e.atk - st.def) * (0.85 + Math.random() * 0.3)));
-  log(`${e.name} 反击！${p.name} 受到 ${edmg} 伤害。`);
-  if (edmg >= st.hp) {
-    log(`💤 ${p.name} 倒下了……被送回了家（无大碍，但本次探索结束）`);
-    p.energy = Math.max(0, p.energy - 10);
-    battle = null; return showMain();
-  }
-  battleMenu();
+  enemyTurn();
+  if (battle) battleMenu();
 }
 
 // ============ 启动 ============
