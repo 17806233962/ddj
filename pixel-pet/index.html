@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>像素宠物 Pixel Pet</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="app">
+  <h1>🐾 像素宠物 <span class="sub">PIXEL PET</span></h1>
+  <div id="topbar">💰 金币：<span id="coins">0</span></div>
+
+  <div id="stage">
+    <div id="petPanel" class="panel">
+      <canvas id="petCanvas"></canvas>
+      <div id="petInfo"></div>
+    </div>
+    <div id="enemyPanel" class="panel hidden">
+      <canvas id="enemyCanvas"></canvas>
+      <div id="enemyInfo"></div>
+    </div>
+  </div>
+
+  <div id="menuPanel">
+    <div id="menuTitle">主菜单</div>
+    <div id="menu"></div>
+  </div>
+
+  <div id="log"></div>
+</div>
+<script src="js/data.js"></script>
+<script src="js/game.js"></script>
+</body>
+</html>

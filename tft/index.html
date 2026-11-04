@@ -1,0 +1,747 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>云顶自走棋 S1 翻版 (Tactics of the Rift)</title>
+<style>
+  * { box-sizing: border-box; margin:0; padding:0; user-select:none; }
+  body { background:#12141c; color:#e8e6e3; font-family:"Microsoft YaHei",sans-serif; overflow-x:auto; }
+  #wrap { width:1400px; margin:0 auto; padding:8px; }
+  /* 顶栏 */
+  #topbar { display:flex; gap:14px; align-items:center; background:#1c1f2a; border:1px solid #333;
+    border-radius:8px; padding:8px 14px; margin-bottom:8px; font-size:15px; flex-wrap:wrap;}
+  #topbar b { color:#ffd860; }
+  #topbar .hp { color:#6fe08f; }
+  .btn { background:#2b3350; border:1px solid #4a5578; color:#fff; padding:5px 14px; border-radius:6px;
+    cursor:pointer; font-size:14px; }
+  .btn:hover { background:#3a4570; }
+  .btn:disabled { opacity:.4; cursor:default; }
+  #logline { color:#9fb0d0; font-size:13px; margin-left:auto; max-width:420px; text-align:right;}
+  #main { display:flex; gap:10px; }
+  /* 羁绊面板 */
+  #traits { width:230px; background:#1c1f2a; border:1px solid #333; border-radius:8px;
+    padding:8px; height:600px; overflow-y:auto; font-size:13px; }
+  #traits h3 { font-size:14px; color:#c9d4ee; margin-bottom:6px;}
+  .trait { margin-bottom:6px; padding:5px 7px; border-radius:6px; background:#222637; }
+  .trait.active { background:#2d3a1e; border:1px solid #6a8f3c; }
+  .trait .tn { font-weight:bold; }
+  .trait.inactive { opacity:.45; }
+  .trait .tc { color:#ffd860; }
+  /* 棋盘 */
+  #boardwrap { flex:1; }
+  #board { position:relative; width:840px; height:520px; margin:0 auto;
+    background:#1a2130; border:1px solid #333; border-radius:10px; }
+  .hex { position:absolute; width:110px; height:96px; clip-path:polygon(25% 0,75% 0,100% 50%,75% 100%,25% 100%,0 50%);
+    background:#262d40; cursor:pointer; }
+  .hex.my { background:#2a3348; }
+  .hex.enemyzone { background:#1f2636; }
+  .hex:hover { background:#3d4a6b; }
+  .hex.hl { background:#4d5d3a !important; }
+  .unit { position:absolute; width:96px; height:88px; cursor:grab; z-index:5; pointer-events:auto; }
+  .unit .portrait { position:absolute; inset:6px 12px; border-radius:50%; border:3px solid #888;
+    display:flex; align-items:center; justify-content:center; font-size:12px; color:#fff;
+    text-shadow:0 1px 2px #000; text-align:center; line-height:1.1; background:#333; overflow:hidden;}
+  .unit.c1 .portrait{border-color:#9ab3c8} .unit.c2 .portrait{border-color:#5ac45f}
+  .unit.c3 .portrait{border-color:#4f9bd9} .unit.c4 .portrait{border-color:#d953d9}
+  .unit.c5 .portrait{border-color:#e6b83c}
+  .unit .stars { position:absolute; top:-2px; left:0; right:0; text-align:center; color:#ffd860;
+    font-size:11px; text-shadow:0 0 3px #000; z-index:2;}
+  .unit .hplabel { position:absolute; bottom:0; left:0; right:0; text-align:center; font-size:10px;
+    color:#7ddf8f; text-shadow:0 0 2px #000;}
+  .unit.selected .portrait { box-shadow:0 0 0 3px #ffd860; }
+  .unit .zzz { position:absolute; inset:6px 12px; border-radius:50%; background:rgba(10,10,20,.55);
+    display:none; align-items:center; justify-content:center; color:#9cf; font-size:16px; }
+  /* 底部 */
+  #bottom { display:flex; gap:10px; margin-top:8px; }
+  #bench { display:flex; gap:6px; }
+  .slot { width:76px; height:96px; background:#1c1f2a; border:1px dashed #455; border-radius:8px;
+    position:relative; }
+  #sellzone { width:120px; background:#3a1c1c; border:1px solid #833; border-radius:8px; color:#eaa;
+    display:flex; align-items:center; justify-content:center; font-size:13px; text-align:center; }
+  #sellzone.hl { background:#6a2a2a; }
+  #shop { flex:1; display:flex; gap:6px; }
+  .shopcard { flex:1; background:#1c1f2a; border:1px solid #444; border-radius:8px; cursor:pointer;
+    padding:4px; text-align:center; font-size:12px; min-height:96px; }
+  .shopcard:hover { border-color:#ffd860; }
+  .shopcard .goldcost { color:#ffd860; font-weight:bold; }
+  #enemytraits { width:230px; background:#1c1f2a; border:1px solid #333; border-radius:8px; padding:8px;
+    height:200px; overflow-y:auto; font-size:12px; }
+  #combatlog { width:230px; background:#1c1f2a; border:1px solid #333; border-radius:8px; padding:8px;
+    height:600px; overflow-y:auto; font-size:12px; color:#a9b6d6;}
+  .frozen .zzz{display:flex; color:#8fd0ff;}
+  .dead .portrait{ filter:grayscale(1) brightness(.4); }
+  #tips { color:#8a93a8; font-size:12px; margin-top:6px; }
+</style>
+</head>
+<body>
+<div id="wrap">
+  <div id="topbar">
+    <span>❤ <b class="hp" id="ui-hp">100</b></span>
+    <span>💰 <b id="ui-gold">2</b></span>
+    <span>⚔ <b id="ui-level">1</b>级</span>
+    <span>经验 <b id="ui-xp">0/2</b></span>
+    <span>回合 <b id="ui-round">1</b></span>
+    <button class="btn" id="btn-xp">买经验(4💰/4XP)</button>
+    <button class="btn" id="btn-reroll">刷新商店(2💰)</button>
+    <button class="btn" id="btn-lock">锁定商店</button>
+    <button class="btn" id="btn-fight" style="background:#4a6b2b;border-color:#6a8f3c">▶ 开战</button>
+    <span id="logline">拖拽棋子到棋盘(上半部为敌方区域,不可放置)</span>
+  </div>
+  <div id="main">
+    <div id="traits"><h3>羁绊 (上阵激活)</h3><div id="traitlist"></div></div>
+    <div id="boardwrap">
+      <div id="board"></div>
+      <div id="tips">玩法: 点击选中棋子 → 点击目标位置移动; 右键棋子=卖出; 三合一自动升星。棋盘下半 4 行可放置, 上限=等级。</div>
+    </div>
+    <div id="combatlog"><h3 style="font-size:13px;color:#c9d4ee">战斗日志</h3><div id="log"></div></div>
+  </div>
+  <div id="bottom">
+    <div id="bench"></div>
+    <div id="sellzone">拖到这里<br>卖出 ♻</div>
+    <div id="shop"></div>
+  </div>
+</div>
+<script src="data.js"></script>
+<script>
+"use strict";
+// ================= 工具 =================
+const $ = s=>document.querySelector(s);
+const CMAP = {}; CHAMPS.forEach(c=>CMAP[c.n]=c);
+const rand = a=>a[Math.floor(Math.random()*a.length)];
+function log(msg, cls){ const d=document.createElement('div'); if(cls)d.style.color=cls; d.textContent=msg;
+  $('#log').prepend(d); while($('#log').children.length>60)$('#log').lastChild.remove(); }
+function setline(s){ $('#logline').textContent=s; }
+
+// ================= 全局状态 =================
+const G = {
+  hp:100, gold:2, level:1, xp:0, round:1, shop:[], locked:false, streak:0,
+  board:{},        // hexKey -> unit
+  bench:[null,null,null,null,null,null,null,null,null],
+  pool:{},         // name -> copies left
+};
+CHAMPS.forEach(c=>G.pool[c.n]=POOL_SIZE[c.t]);
+function hexKey(r,c){ return r+','+c; }
+const ROWS=8, COLS=7;
+function xpNeed(l){ return XP_NEEDED[l]||9999; }
+
+// ================= 商店 =================
+function rollShop(){
+  if(G.locked) return;
+  G.shop = [];
+  const odds = SHOP_ODDS[Math.min(9,G.level)];
+  for(let i=0;i<5;i++){
+    let r=Math.random()*100, tier=1;
+    for(let t=0;t<5;t++){ if(r<odds[t]){tier=t+1;break;} r-=odds[t]; }
+    // 从池中抽(空池则降级)
+    let cand = CHAMPS.filter(c=>c.t===tier&&G.pool[c.n]>0);
+    while(!cand.length&&tier>1){ tier--; cand=CHAMPS.filter(c=>c.t===tier&&G.pool[c.n]>0); }
+    if(!cand.length){ G.shop.push(null); continue; }
+    const ch = rand(cand);
+    G.shop.push({name:ch.n});
+  }
+  renderShop();
+}
+function renderShop(){
+  const el=$('#shop'); el.innerHTML='';
+  G.shop.forEach((s,i)=>{
+    const d=document.createElement('div'); d.className='shopcard';
+    if(!s){ d.textContent='(空)'; d.style.opacity=.4; }
+    else{
+      const c=CMAP[s.name];
+      d.innerHTML=`<b style="color:#fff">${c.zh}</b> <span class="goldcost">💰${c.t}</span><br>
+        <span style="color:#9ab">${ORIGINS[c.o[0]].zh}/${CLASSES[c.c[0]].zh}</span>`;
+      d.onclick=()=>buy(i,d);
+    }
+    el.appendChild(d);
+  });
+}
+function buy(i,dom){
+  const s=G.shop[i]; if(!s)return;
+  const c=CMAP[s.name];
+  if(G.gold<c.t){ setline('金币不足!'); return; }
+  const benchIdx = G.bench.findIndex(v=>v===null);
+  if(benchIdx<0){ setline('备战席已满!'); return; }
+  G.gold-=c.t; G.pool[s.name]--;
+  G.bench[benchIdx]={name:s.name,star:1};
+  G.shop[i]=null;
+  tryCombine(s.name);
+  render(); dom&&dom.blur&&dom.blur();
+}
+
+// ================= 三合一 =================
+function tryCombine(name){
+  for(let star=1;star<=2;star++){
+    const all=[...G.bench.map((u,i)=>({u,i,bench:true})),
+               ...Object.entries(G.board).map(([k,u])=>({u,k,bench:false}))]
+      .filter(x=>x.u&&x.u.name===name&&x.u.star===star);
+    if(all.length>=3){
+      const take=all.slice(0,3);
+      // 尽量保留棋盘上的位置
+      const keep = take.find(x=>!x.bench)||take[0];
+      const nu={name,star:star+1};
+      take.forEach(x=>{ if(x===keep){ x.u=nu; if(x.bench)G.bench[x.i]=nu; else G.board[x.k]=nu; }
+        else { if(x.bench)G.bench[x.i]=null; else delete G.board[x.k]; } });
+      log(`⭐ ${CMAP[name].zh} 升至 ${star+1}星!`,'#ffd860');
+    }
+  }
+}
+
+// ================= 拖拽 =================
+let sel=null; // {type:'bench'|'board', idx|key}
+let drag=null; // {unit, from, ghost}
+function startDrag(unit,from,ev){
+  drag={unit,from};
+  const e=ev; moveGhost(e);
+  document.body.addEventListener('mousemove',moveGhost);
+  document.body.addEventListener('mouseup',endDrag);
+}
+function moveGhost(ev){
+  if(!drag)return;
+  if(!drag.ghost){ const g=document.createElement('div'); g.className='unit ghost';
+    g.style.cssText='position:fixed;z-index:99;pointer-events:none;opacity:.8;width:80px;height:80px;';
+    g.innerHTML=`<div class="portrait c${CMAP[drag.unit.name].t}">${CMAP[drag.unit.name].zh}</div>`;
+    document.body.appendChild(g); drag.ghost=g; }
+  drag.ghost.style.left=(ev.clientX-40)+'px'; drag.ghost.style.top=(ev.clientY-40)+'px';
+}
+function endDrag(ev){
+  if(!drag)return;
+  document.body.removeEventListener('mousemove',moveGhost);
+  document.body.removeEventListener('mouseup',endDrag);
+  drag.ghost&&drag.ghost.remove();
+  const el=document.elementFromPoint(ev.clientX,ev.clientY);
+  const drop=findDrop(el);
+  if(drop) applyMove(drag.unit,drag.from,drop);
+  drag=null; render();
+}
+function findDrop(el){
+  while(el){
+    if(el.dataset&&el.dataset.hexkey!==undefined) return {type:'hex',key:el.dataset.hexkey};
+    if(el.dataset&&el.dataset.benchidx!==undefined) return {type:'bench',idx:+el.dataset.benchidx};
+    if(el.id==='sellzone') return {type:'sell'};
+    el=el.parentElement;
+  }
+  return null;
+}
+function applyMove(unit,from,drop){
+  const unitCount=Object.keys(G.board).length;
+  if(drop.type==='sell'){
+    let refund=CMAP[unit.name].t*unit.star - (unit.star>1?1:0);
+    if(CMAP[unit.name].t===1&&unit.star===1)refund=1;
+    G.gold+=refund; returnUnit(unit); log(`卖出 ${CMAP[unit.name].zh} +${refund}💰`);
+    clearUnit(from); return;
+  }
+  if(drop.type==='bench'){
+    if(from.type==='bench'){ if(G.bench[drop.idx]) swapBench(from.idx,drop.idx); else {G.bench[drop.idx]=unit;clearUnit(from);} }
+    else { if(G.bench[drop.idx]){ // 与备战席棋子换位: 被换的棋子放到原棋盘格
+             const other=G.bench[drop.idx];
+             G.bench[drop.idx]=unit; G.board[from.key]=other;
+           } else { delete G.board[from.key]; G.bench[drop.idx]=unit; } }
+    return;
+  }
+  if(drop.type==='hex'){
+    const [r]=drop.key.split(',').map(Number);
+    if(r<4){ setline('不能放在敌方区域!'); return; }
+    if(from.type==='bench'&&G.board[drop.key]){ // 换位: 板上棋子回备战
+      const other=G.board[drop.key];
+      const bi=G.bench.findIndex(v=>v===null); if(bi<0){setline('备战席已满!');return;}
+      G.bench[bi]=other; G.board[drop.key]=unit; G.bench[from.idx]=null; return;
+    }
+    if(from.type==='bench'){ if(Object.keys(G.board).length>=G.level){setline(`上阵已达上限(${G.level}), 升级可增加!`);return;}
+      G.bench[from.idx]=null; G.board[drop.key]=unit; return; }
+    else { const other=G.board[drop.key]; G.board[drop.key]=unit; if(from.key!==drop.key) G.board[from.key]=other; return; }
+  }
+}
+function swapBench(a,b){ const t=G.bench[a]; G.bench[a]=G.bench[b]; G.bench[b]=t; }
+function swapBoardBench(key,bUnit,bi){ G.board[key]=bUnit; G.bench[bi]=null; /* old unit went to drop.idx bench slot */ }
+function clearUnit(from){ if(from.type==='bench')G.bench[from.idx]=null; else delete G.board[from.key]; }
+function returnUnit(u){ G.pool[u.name]+=u.star===1?1:(u.star===2?3:9); }
+
+// ================= 渲染 =================
+function buildBoard(){
+  const b=$('#board'); b.innerHTML='';
+  for(let r=0;r<ROWS;r++)for(let c=0;c<COLS;c++){
+    const d=document.createElement('div'); d.className='hex '+(r>=4?'my':'enemyzone');
+    d.dataset.hexkey=hexKey(r,c);
+    // 蜂窝错位布局
+    const off=(r%2)*60;
+    d.style.left=(10+c*116+off)+'px'; d.style.top=(r*62)+'px';
+    b.appendChild(d);
+  }
+  // 敌方区域提示
+  const zone=document.createElement('div');
+  zone.style.cssText='position:absolute;left:8px;top:2px;color:#7a8399;font-size:12px;pointer-events:none';
+  zone.textContent='▲ 敌方区域 ▲'; b.appendChild(zone);
+}
+function unitDom(u,from,extraCls){
+  const c=CMAP[u.name];
+  const d=document.createElement('div');
+  d.className='unit c'+c.t+(extraCls?' '+extraCls:'');
+  d.innerHTML=`<div class="stars">${'★'.repeat(u.star)}</div>
+    <div class="portrait" style="background:hsl(${(c.n.length*57)%360} 25% 28%)">${c.zh}<br><span style="font-size:10px;color:#bbb">${ORIGINS[c.o[0]].zh}·${CLASSES[c.c[0]].zh}</span></div>
+    <div class="hplabel"></div><div class="zzz"></div>`;
+  d.addEventListener('mousedown',ev=>{ if(ev.button===2){sellClick(from);return;} startDrag(u,from,ev); ev.preventDefault(); });
+  d.oncontextmenu=e=>e.preventDefault();
+  return d;
+}
+function sellClick(from){
+  const u=from.type==='bench'?G.bench[from.idx]:G.board[from.key];
+  if(!u)return;
+  let refund=CMAP[u.name].t*u.star-(u.star>1?1:0);
+  G.gold+=refund; returnUnit(u); clearUnit(from);
+  log(`卖出 ${CMAP[u.name].zh} +${refund}💰`); render();
+}
+function render(){
+  // 清除棋盘上的 unit DOM
+  document.querySelectorAll('#board .unit, #bench .unit').forEach(e=>e.remove());
+  for(const [k,u] of Object.entries(G.board)){
+    const d=unitDom(u,{type:'board',key:k});
+    const [r,c]=k.split(',').map(Number);
+    const off=(r%2)*60;
+    d.style.left=(15+c*116+off)+'px'; d.style.top=(r*62+4)+'px';
+    $('#board').appendChild(d);
+  }
+  // bench
+  const bn=$('#bench'); bn.innerHTML='';
+  G.bench.forEach((u,i)=>{
+    const s=document.createElement('div'); s.className='slot'; s.dataset.benchidx=i;
+    if(u){ const d=unitDom(u,{type:'bench',idx:i}); d.style.cssText='position:relative;width:76px;height:96px';
+      s.appendChild(d); }
+    bn.appendChild(s);
+  });
+  // 数值
+  $('#ui-hp').textContent=G.hp; $('#ui-gold').textContent=G.gold;
+  $('#ui-level').textContent=G.level;
+  $('#ui-xp').textContent=G.level>=9?'MAX':`${G.xp}/${xpNeed(G.level)}`;
+  $('#ui-round').textContent=G.round;
+  $('#btn-reroll').disabled=G.gold<2; $('#btn-xp').disabled=G.gold<4||G.level>=9;
+  renderTraits(); renderShop();
+}
+function activeTraits(entries){
+  // entries: [{unit}]
+  const cnt={};
+  entries.forEach(e=>{ CMAP[e.name].o.concat(CMAP[e.name].c).forEach(t=>cnt[t]=(cnt[t]||0)+1); });
+  return cnt;
+}
+function traitDesc(trait,def,n){
+  const idx=def.tiers.filter(t=>n>=t).length-1;
+  return {lvl:idx>=0?idx+1:0, text:idx>=0?def.desc[idx]:def.desc[0]};
+}
+function renderTraits(){
+  const entries=Object.values(G.board);
+  const cnt=activeTraits(entries);
+  const el=$('#traitlist'); el.innerHTML='';
+  const all={};
+  Object.entries(ORIGINS).forEach(([k,v])=>all[k]={...v,type:'origin'});
+  Object.entries(CLASSES).forEach(([k,v])=>all[k]={...v,type:'class'});
+  const shown={};
+  entries.forEach(e=>{ CMAP[e.name].o.concat(CMAP[e.name].c).forEach(t=>shown[t]=1); });
+  for(const [t,n] of Object.entries(cnt).sort((a,b)=>b[1]-a[1])){
+    const def=all[t]; const info=traitDesc(t,def,n);
+    const d=document.createElement('div'); d.className='trait active';
+    d.innerHTML=`<span class="tn">${def.zh}</span> (${n}/${def.tiers[info.lvl-1]}) — <span class="tc">${info.text}</span>`;
+    el.appendChild(d);
+  }
+  for(const t of Object.keys(shown)) if(!(t in cnt)){
+    const def=all[t];
+    const d=document.createElement('div'); d.className='trait inactive';
+    d.innerHTML=`<span class="tn">${def.zh}</span> (${cnt[t]||0}/${def.tiers[0]})`;
+    el.appendChild(d);
+  }
+}
+
+// ================= 回合流程 =================
+function nextRound(){
+  // 收入
+  let inc=5+Math.min(5,Math.floor(G.gold/10));
+  if(G.round>1) G.xp+=2;
+  while(G.level<9&&G.xp>=xpNeed(G.level)){ G.xp-=xpNeed(G.level); G.level++;
+    log(`🆙 升到 ${G.level} 级! 上阵上限 ${G.level}`,'#6fe08f'); }
+  G.round++;
+  G.locked=false; $('#btn-lock').textContent='锁定商店';
+  rollShop(); render();
+  setline(`回合 ${G.round} 开始, 收入 +${inc}💰`);
+  G.gold+=inc;
+  render();
+}
+$('#btn-fight').onclick=()=>{
+  if(combat){ setline('战斗进行中!'); return; }
+  if(!Object.keys(G.board).length){ setline('至少上阵 1 个棋子!'); return; }
+  runCombat();
+};
+$('#btn-reroll').onclick=()=>{ if(G.gold>=2){G.gold-=2; G.locked=false; rollShop(); render();} };
+$('#btn-lock').onclick=()=>{ G.locked=!G.locked; $('#btn-lock').textContent=G.locked?'解锁商店':'锁定商店'; };
+$('#btn-xp').onclick=()=>{ if(G.gold>=4&&G.level<9){G.gold-=4; G.xp+=4;
+  while(G.level<9&&G.xp>=xpNeed(G.level)){ G.xp-=xpNeed(G.level); G.level++;
+    log(`🆙 升到 ${G.level} 级! 上阵上限 ${G.level}`,'#6fe08f'); }
+  if(!G.locked) rollShop(); render(); } };
+
+// ================= 敌方生成 =================
+function genEnemy(){
+  const team={};
+  const n=Math.min(9, 1+Math.floor(G.round*0.9));
+  const odds=SHOP_ODDS[Math.min(9,Math.max(1,Math.floor(G.level*0.9)))];
+  const front=[]; const back=[];
+  for(let i=0;i<n;i++){
+    let r=Math.random()*100, tier=1;
+    for(let t=0;t<5;t++){ if(r<odds[t]){tier=t+1;break;} r-=odds[t]; }
+    const cand=CHAMPS.filter(c=>c.t===tier);
+    const ch=rand(cand);
+    const star=(G.round>=10&&Math.random()<0.25)?2:1;
+    (ch.c.includes('Brawler')||ch.c.includes('Knight')||ch.c.includes('Guardian')?front:back).push({name:ch.n,star});
+  }
+  // 放到敌方 4 行 (r: 0..3)
+  const spots=[];
+  for(let r=0;r<4;r++)for(let c=0;c<COLS;c++)spots.push([r,c]);
+  spots.sort((a,b)=>(a[0]-b[0]));
+  let si=0;
+  front.forEach(u=>{ while(true){ const [r,c]=spots[si++%spots.length]; if(r<2&&!team[hexKey(r,c)]){team[hexKey(r,c)]=u;break;} } });
+  back.forEach(u=>{ while(true){ const [r,c]=spots[si++%spots.length]; if(r>=2&&!team[hexKey(r,c)]){team[hexKey(r,c)]=u;break;} } });
+  return team;
+}
+
+// ================= 战斗引擎 =================
+// 六边形邻接(奇数行右移)
+function neighbors(r,c){
+  const odd=r%2;
+  return [[r,c-1],[r,c+1],[r-1,c],[r+1,c],[r-1,c+odd],[r+1,c+odd]]
+    .filter(([rr,cc])=>rr>=0&&rr<ROWS&&cc>=0&&cc<COLS);
+}
+function hexDist(a,b){
+  // 近似: 列加权
+  const [r1,c1]=a,[r2,c2]=b;
+  const dc=Math.abs(c1-c2), dr=Math.abs(r1-r2);
+  return Math.max(dr, dc-Math.floor(dr/2)*0); // 简化
+}
+function dist(a,b){
+  // BFS 实际距离(准确)
+  if(a[0]===b[0]&&a[1]===b[1])return 0;
+  const seen={}; const q=[[a,0]]; seen[a]=1;
+  while(q.length){ const [p,d]=q.shift();
+    for(const nb of neighbors(p[0],p[1])){ const k=nb[0]+','+nb[1];
+      if(seen[k])continue; seen[k]=1;
+      if(nb[0]===b[0]&&nb[1]===b[1])return d+1;
+      q.push([nb,d+1]); } }
+  return 99;
+}
+function makeFighter(unit,side,pos,traitBuf){
+  const c=CMAP[unit.name];
+  const s=unit.star||1;
+  const f={
+    name:c.n, zh:c.zh, side, pos, star:s,
+    hpMax: Math.round(c.hp*(s===1?1:s===2?1.8:3.24)) + (traitBuf.hp||0),
+    ad: Math.round(c.ad*(s===1?1:s===2?1.5:2.25)) + (traitBuf.ad||0),
+    as: c.as||0.6, asBase:c.as||0.6, rng:c.rng||1, arm:c.arm||20, mr:c.mr||20,
+    mana:0, manaMax:c.mana||100, ap:1, dmgAmp:1, takeAmp:1,
+    dmg:[c.dmg[s-1]||0, c.dmg[Math.min(2,s)]||0], stunT:0, alive:true,
+    c:c.c, o:c.o, traits:traitBuf, atkCd:0, stacks:0,
+    trueDmg:false, dodge:0, dragon:false, ranged:c.rng>1,
+  };
+  f.hp=f.hpMax;
+  return f;
+}
+function computeBuffs(entries){
+  // 返回每个 unit 的 trait 加成 {hp,ad,...} 和 全局标记
+  const res={}; const flags={};
+  const cnt=activeTraits(entries);
+  const byTrait={};
+  entries.forEach(e=>{ const c=CMAP[e.name];
+    c.o.concat(c.c).forEach(t=>{ (byTrait[t]=byTrait[t]||[]).push(e); }); });
+  const B=(u)=>res[u.uid]=(res[u.uid]||{hp:0,ad:0});
+  entries.forEach(e=>e.uid=Math.random().toString(36).slice(2));
+  // 斗士
+  if(cnt.Brawler>=2) byTrait.Brawler.forEach(u=>B(u).hp+=cnt.Brawler>=4?700:300);
+  // 忍者
+  if(byTrait.Ninja){ if(cnt.Ninja===1) B(byTrait.Ninja[0]).ad+=40;
+    else if(cnt.Ninja>=4) byTrait.Ninja.forEach(u=>B(u).ad+=80); }
+  // 贵族
+  if(byTrait.Noble&&cnt.Noble>=3){ const tgt=cnt.Noble>=6?byTrait.Noble:[rand(byTrait.Noble)];
+    tgt.forEach(u=>{ B(u).armorBonus=(B(u).armorBonus||0)+100; B(u).nobleHeal=true; }); }
+  // 机器人
+  if(byTrait.Robot&&cnt.Robot>=1) byTrait.Robot.forEach(u=>flags['full_'+u.uid]=true);
+  // 帝国
+  if(byTrait.Imperial&&cnt.Imperial>=2){
+    const tgt=cnt.Imperial>=4?byTrait.Imperial:[rand(byTrait.Imperial)];
+    tgt.forEach(u=>flags['imp_'+u.uid]=true); }
+  // 野性
+  flags.wild2=cnt.Wild>=2; flags.wild4=cnt.Wild>=4;
+  // 法师 AP
+  flags.apBonus=cnt.Sorcerer>=6?1.0:cnt.Sorcerer>=3?0.45:0;
+  // 刺客暴伤
+  flags.critDmg=cnt.Assassin>=6?3.5:cnt.Assassin>=3?1.5:0;
+  flags.assassins=cnt.Assassin>=3;
+  // 骑士格挡
+  flags.block=cnt.Knight>=6?55:cnt.Knight>=4?30:cnt.Knight>=2?15:0;
+  // 游侠
+  flags.ranger=cnt.Ranger>=4?1.0:cnt.Ranger>=2?0.4:0;
+  // 枪手
+  flags.gun=cnt.Gunslinger>=6?3:cnt.Gunslinger>=4?2:cnt.Gunslinger>=2?1:0;
+  // 剑士
+  flags.blade=cnt.Blademaster>=6?0.65:cnt.Blademaster>=3?0.35:0;
+  // 变形师
+  flags.shapeshift=cnt.Shapeshifter>=3;
+  // 元素使(石像)
+  flags.golem=cnt.Elementalist>=3;
+  // 龙族
+  flags.dragon=cnt.Dragon>=2;
+  // 虚空
+  flags.void=cnt.Void>=2;
+  // 约德尔
+  flags.dodge=cnt.Yordle>=6?0.45:cnt.Yordle>=3?0.25:0;
+  // 冰川
+  flags.glacial=cnt.Glacial>=6?0.45:cnt.Glacial>=4?0.3:cnt.Glacial>=2?0.2:0;
+  // 恶魔
+  flags.demon=cnt.Demon>=2;
+  // 海克斯(无装备版本: 降伤)
+  flags.hexcut=cnt.Hextech>=4?0.3:cnt.Hextech>=2?0.15:0;
+  return {res,flags,cnt};
+}
+let combat=null;
+function runCombat(){
+  const mine=Object.entries(G.board).map(([k,u])=>({u,pos:k.split(',').map(Number)}));
+  const enemyEntries=Object.values(genEnemy());
+  const eteam={};
+  { const spots=[]; for(let r=0;r<4;r++)for(let c=0;c<COLS;c++)spots.push([r,c]);
+    spots.sort((a,b)=>a[0]-b[0]); let si=0;
+    enemyEntries.forEach(u=>{ const front=CMAP[u.name].c.some(x=>['Brawler','Knight','Guardian'].includes(x));
+      let tries=0;
+      while(tries++<100){ const p=spots[si++%spots.length];
+        if((front?p[0]<2:p[0]>=2)&&!Object.values(eteam).some(f=>f.pos[0]===p[0]&&f.pos[1]===p[1])){ eteam[hexKey(...p)]=u;break; } } });
+  }
+  const mb=computeBuffs(Object.values(G.board));
+  // 敌方 buff(敌方也享受羁绊)
+  const eb=computeBuffs(Object.values(eteam));
+  const fA=mine.map(m=>makeFighter(m.u,'A',m.pos,mb.res[m.u.uid]||{hp:0,ad:0}));
+  const fB=Object.entries(eteam).map(([k,u])=>makeFighter(u,'B',k.split(',').map(Number),eb.res[u.uid]||{hp:0,ad:0}));
+  // 施加全局
+  [ [fA,mb],[fB,eb] ].forEach(([fs,bf])=>{
+    fs.forEach(f=>{
+      if(bf.flags.apBonus)f.ap+=bf.flags.apBonus;
+      if(bf.flags.critDmg&&f.c.includes('Assassin'))f.critDmg=bf.flags.critDmg; else f.critDmg=0;
+      if(bf.flags['full_'+f.uid])f.mana=f.manaMax;
+      if(bf.flags['imp_'+f.uid])f.dmgAmp*=2;
+      if(bf.flags.hexcut&&f.side==='B'){} // 对面处理
+      if(bf.flags.dodge&&f.o.includes('Yordle'))f.dodge=bf.flags.dodge;
+      if(bf.flags.dragon&&f.o.includes('Dragon'))f.dragon=true;
+      if(bf.flags.void&&f.o.includes('Void'))f.trueDmg=true;
+      if(bf.flags.block)f.block=bf.flags.block;
+      if(bf.flags.ranger&&f.c.includes('Ranger'))f.ranger=bf.flags.ranger;
+      if(bf.flags.gun&&f.c.includes('Gunslinger'))f.gun=bf.flags.gun;
+      if(bf.flags.blade&&f.c.includes('Blademaster'))f.blade=bf.flags.blade;
+      if(bf.flags.shapeshift&&f.c.includes('Shapeshifter')){ f.hpMax=Math.round(f.hpMax*1.6); f.hp=f.hpMax; }
+      if(bf.flags.wild2)f.wild=bf.flags.wild4||f.o.includes('Wild');
+      if(bf.flags.glacial&&f.o.includes('Glacial'))f.glacial=bf.flags.glacial;
+      if(bf.flags.demon&&f.o.includes('Demon'))f.demon=true;
+      if(f.traits.armorBonus)f.arm+=f.traits.armorBonus;
+      if(f.traits.nobleHeal)f.nobleHeal=true;
+      if(bf.flags.golem&&!f.golemFlag)f.golemFlag=fs.some(x=>x.c.includes('Elementalist'));
+      if(bf.flags.assassins&&f.c.includes('Assassin'))f.assassin=true;
+    });
+  });
+  // 敌方海克斯降我方伤
+  if(eb.flags.hexcut)fA.forEach(f=>f.dmgAmp*=(1-eb.flags.hexcut));
+  if(mb.flags.hexcut)fB.forEach(f=>f.dmgAmp*=(1-mb.flags.hexcut));
+  // 幻影诅咒
+  [ [fA,mb],[fB,eb] ].forEach(([fs,bf])=>{ if(bf.cnt.Phantom>=2){
+    const foes=fA===fs?fB:fA;
+    const low=foes.slice().sort((a,b)=>a.hp-b.hp)[0];
+    if(low){low.hp=Math.min(low.hp,100); log(`👁 幻影诅咒: ${low.zh} 生命降至100`,'#b89aff');} } });
+  // 浪人护盾
+  [ [fA,mb],[fB,eb] ].forEach(([fs,bf])=>{ fs.forEach(f=>{ if(f.o.includes('Exile')&&bf.cnt.Exile>=1){
+    f.shield=f.hpMax; f.hpMax+=f.hpMax; f.hp+=f.hpMax/2; }}); });
+  // 刺客跳后排
+  fA.concat(fB).forEach(f=>{ if(f.assassin){ const foeRow=f.side==='A'?1:6;
+    f.pos=[foeRow, Math.floor(Math.random()*COLS)]; } });
+  // 守护者光环
+  fA.concat(fB).forEach(f=>{ if(f.c.includes('Guardian')&&combatGuardOK(f)){ } });
+  function combatGuardOK(){return true}
+  // 守护者
+  const applyGuard=(fs)=>{ const gs=fs.filter(f=>f.c.includes('Guardian'));
+    if(gs.length>=2){ gs.forEach(g=>{ g.arm+=30;
+      fs.forEach(o=>{ if(dist(o.pos,g.pos)===1)o.arm+=30; }); }); } };
+  applyGuard(fA); applyGuard(fB);
+  // 元素使石像
+  const addGolem=(fs,bf,side)=>{ if(bf.flags.golem){
+    const f={name:'Golem',zh:'元素之灵',side,pos:[side==='A'?4:3,3],star:1,hpMax:1500,ad:60,as:.6,asBase:.6,
+      rng:1,arm:30,mr:20,mana:999,manaMax:999,ap:1,dmgAmp:1,takeAmp:1,dmg:[0,0],stunT:0,alive:true,c:[],o:[],
+      traits:{},atkCd:0,stacks:0,trueDmg:false,dodge:0,dragon:false,ranged:false,critDmg:0};
+    f.hp=f.hpMax; fs.push(f); log(`🪨 元素之灵降临!`,'#9cf'); } };
+  addGolem(fA,mb,'A'); addGolem(fB,eb,'B');
+  combat={fA,fB,time:0,over:false,cb:null};
+  $('#log').innerHTML='';
+  log(`⚔ 回合 ${G.round} 战斗开始! 我方${fA.length} vs 敌方${fB.length}`,'#ffd860');
+  // 显示战斗(用棋盘 overlay)
+  combatTick();
+}
+function foesOf(f){ return f.side==='A'?combat.fB:combat.fA; }
+function teamOf(f){ return f.side==='A'?combat.fA:combat.fA===f?combat.fA:combat.fB; }
+function findTarget(f){
+  const foes=foesOf(f).filter(x=>x.alive);
+  if(!foes.length)return null;
+  foes.sort((a,b)=>dist(f.pos,a.pos)-dist(f.pos,b.pos)||a.hp-b.hp);
+  return foes[0];
+}
+function stepToward(f,target){
+  const cur=f.pos;
+  let best=null,bd=dist(cur,target.pos);
+  for(const nb of neighbors(cur[0],cur[1])){
+    const occupied=combat.fA.concat(combat.fB).some(x=>x.alive&&x.pos[0]===nb[0]&&x.pos[1]===nb[1]);
+    if(occupied)continue;
+    const d=dist(nb,target.pos);
+    if(d<bd){bd=d;best=nb;}
+  }
+  if(best)f.pos=best;
+}
+function dealDamage(src,tgt,amount,type){
+  if(!tgt.alive)return;
+  if(!isFinite(amount))amount=0;   // NaN 兜底
+  if(type==='magic'&&tgt.dragon)amount*=0.25;
+  if(tgt.dodge&&Math.random()<tgt.dodge){ battleFloat(tgt,'闪避'); return; }
+  const defStat=(type==='magic'?(tgt.mr||0):(tgt.arm||0));
+  let red=100/(100+defStat);
+  if(tgt.block&&type!=='magic')amount=Math.max(0,amount-tgt.block);
+  amount=Math.round(amount);
+  if(tgt.shield){ const s=Math.min(tgt.shield,amount); tgt.shield-=s; amount-=s; }
+  tgt.hp-=amount;
+  tgt.mana=Math.min(tgt.manaMax,tgt.mana+Math.min(15,amount*0.5));
+  src&&tgt.alive===false&&onKill(src,tgt);
+  if(tgt.hp<=0){ tgt.alive=false; tgt.hp=0;
+    log(`💀 ${tgt.zh} 被击倒`, tgt.side==='A'?'#e88':'#8e8'); }
+  battleFloat(tgt,'-'+amount);
+}
+function onKill(){} 
+function attack(f){
+  const t=f.target; if(!t)return;
+  // 恶魔: 燃烧法力
+  if(f.demon&&t.mana>0){ const burn=Math.min(20,t.mana); t.mana-=burn;
+    if(burn>0){} }
+  let shots=1+(f.gun&&Math.random()<(f.gun>=3?1:f.gun===2?0.75:0.5)?f.gun:0);
+  if(f.blade&&Math.random()<f.blade)shots+=1;
+  for(let i=0;i<shots;i++){
+    if(!t.alive)break;
+    let dmg=f.ad*f.dmgAmp;
+    const crit=Math.random()<0.25;
+    if(crit)dmg*=(1.5+(f.critDmg||0)*0.5);
+    if(f.trueDmg){ // 虚空真实伤害
+      let red=100/(100+tgtArmor(t)); dmg=Math.round(dmg*red*0+ dmg); // 简化: 直接结算
+      t.hp-=Math.round(dmg*0.5); battleFloat(t,'-真'+Math.round(dmg*0.5));
+      if(t.hp<=0){t.alive=false;t.hp=0;log(`💀 ${t.zh} 被击倒`,'#8e8');}
+    } else dealDamage(f,t,dmg,'phys');
+    // 冰川冰冻
+    if(f.glacial&&Math.random()<f.glacial&&t.alive){ t.stunT=Math.max(t.stunT,1.5); battleFloat(t,'❄'); }
+    // 野性叠层
+    if(f.wild){ f.stacks=Math.min(5,f.stacks+1); f.as=f.asBase*(1+0.1*f.stacks); }
+  }
+  if(f.demon&&t.alive&&t.mana>0){ t.mana=Math.max(0,t.mana-15); dealDamage(f,t,20,'magic'); }
+  if(f.nobleHeal)f.hp=Math.min(f.hpMax,f.hp+35);
+  f.mana=Math.min(f.manaMax,f.mana+10);
+}
+function tgtArmor(t){ return t.arm; }
+function castAbility(f){
+  const c=CMAP[f.name];
+  f.mana=0;                        // 先清蓝,防止异常时反复触发
+  if(!c) return;                   // 石像等召唤物没有技能
+  const foes=foesOf(f).filter(x=>x.alive);
+  if(!foes.length)return;
+  foes.sort((a,b)=>dist(f.pos,a.pos)-dist(f.pos,b.pos));
+  const n=1;
+  const base=(f.dmg[0]||0)*f.ap*f.dmgAmp;
+  const hits=foes.slice(0,n);
+  hits.forEach(t=>{
+    dealDamage(f,t,base,'magic');
+    if(c.stun&&t.alive){ t.stunT=Math.max(t.stunT,c.stun); battleFloat(t,'💫'+c.stun+'s'); }
+  });
+  if(c.aoe){ foes.forEach(t=>{ if(!hits.includes(t)&&dist(f.pos,t.pos)<=c.aoe+1&&t.alive)
+    dealDamage(f,t,base*0.5,'magic'); }); }
+  if(c.n==='Darius'||c.n==='Garen'||c.n==='Poppy'){ f.hp=Math.min(f.hpMax,f.hp+f.hpMax*0.2); battleFloat(f,'+回复'); }
+  if(c.n==='Aatrox'){ f.hp=Math.min(f.hpMax,f.hp+base); battleFloat(f,'+吸血'); }
+  log(`✨ ${f.zh} 释放技能!`,'#9cf');
+}
+function combatTick(){
+  if(!combat||combat.over)return;
+  try{
+  const dt=0.1; // 100ms
+  combat.time+=dt;
+  const all=combat.fA.concat(combat.fB);
+  for(const f of all){
+    if(!f.alive)continue;
+    // NaN 兜底: 数值异常时恢复为满血,避免无敌
+    if(!isFinite(f.hp)) f.hp=f.hpMax;
+    if(!isFinite(f.hpMax)) f.hpMax=1;
+    if(f.stunT>0){ f.stunT-=dt; continue; }
+    if(f.ranger&&combat.time>=1){ f.as=Math.max(f.as,f.asBase*(1+f.ranger)); f.ranger=0; }
+    f.atkCd-=dt;
+    const t=findTarget(f); f.target=t;
+    if(!t)continue;
+    if(dist(f.pos,t.pos)<=f.rng){
+      if(f.atkCd<=0){
+        if(f.mana>=f.manaMax)castAbility(f);
+        else attack(f);
+        f.atkCd=1/Math.min(5,f.as);
+      }
+    } else if(f.atkCd<=0){ stepToward(f,t); f.atkCd=0.3; }
+  }
+  renderCombat();
+  const aAlive=combat.fA.some(f=>f.alive), bAlive=combat.fB.some(f=>f.alive);
+  if(!aAlive||!bAlive){ endCombat(aAlive,bAlive); return; }
+  if(combat.time>90){ endCombat(false,false); return; } // 超时判和
+  combat.cb=setTimeout(combatTick,100);
+  }catch(err){ // 防止任何异常冻结战斗
+    log('⚠ 战斗异常, 提前结算: '+err.message,'#f80');
+    combat.cb=null;
+    endCombat(combat.fA.some(f=>f.alive&&isFinite(f.hp)), combat.fB.some(f=>f.alive&&isFinite(f.hp)));
+  }
+}
+function battleFloat(f,txt){
+  f._float={txt,t:0.6};
+}
+function renderCombat(){
+  document.querySelectorAll('#board .unit').forEach(e=>e.remove());
+  const all=combat.fA.concat(combat.fB);
+  for(const f of all){
+    const d=document.createElement('div');
+    d.className='unit'+(f.alive?'':' dead')+(f.stunT>0?' frozen':'');
+    const [r,c]=f.pos; const off=(r%2)*60;
+    d.style.left=(15+c*116+off)+'px'; d.style.top=(r*62+4)+'px';
+    d.style.zIndex=f.side==='A'?6:5;
+    d.innerHTML=`<div class="stars">${f.side==='A'?'🟢':'🔴'}${'★'.repeat(f.star)}</div>
+      <div class="portrait" style="background:hsl(${(f.name.length*57)%360} 25% ${f.side==='A'?28:18}%)">${f.zh}</div>
+      <div class="hplabel">${Math.ceil(f.hp)}${f.shield?'+'+Math.ceil(f.shield):''}</div>
+      <div class="zzz">${f.stunT>0?'❄💫':''}</div>
+      ${f._float?`<div style="position:absolute;top:-14px;left:0;right:0;text-align:center;color:#ff8;font-size:11px">${f._float.txt}</div>`:''}`;
+    if(f._float){ f._float.t-=0.1; if(f._float.t<=0)f._float=null; }
+    $('#board').appendChild(d);
+  }
+  renderEnemyTraits();
+}
+function renderEnemyTraits(){
+  const el=$('#combatlog'); // 复用日志
+}
+function endCombat(aAlive,bAlive){
+  combat.over=true; clearTimeout(combat.cb);
+  const aSurv=combat.fA.filter(f=>f.alive).length;
+  const bSurv=combat.fB.filter(f=>f.alive).length;
+  let msg;
+  if(aAlive&&!bAlive){ msg='🏆 战斗胜利!'; log(msg,'#6fe08f');
+    if(Object.values(G.board).some(u=>CMAP[u.name].o.includes('Pirate'))&&CMAP){
+      const g=1+Math.floor(Math.random()*4); G.gold+=g; log(`🏴‍☠ 海盗: 额外 +${g}💰`,'#ffd860'); }
+    G.streak=Math.max(1,G.streak+1);
+    // 连胜奖励
+    if(G.streak>=2){ const bonus=Math.min(3,Math.floor(G.streak/2)); G.gold+=bonus; }
+  } else if(!aAlive&&bAlive){ const dmg=2+bSurv; G.hp-=dmg; msg=`💔 战败, 受到 ${dmg} 点伤害`; log(msg,'#e88');
+    G.streak=Math.min(-1,G.streak-1);
+    if(G.streak<=-3){ const bonus=Math.min(3,Math.floor(-G.streak/3)); G.gold+=bonus; }
+  } else { msg='🤝 平局(超时)'; log(msg,'#ccc'); G.hp-=1; }
+  combat=null;
+  setTimeout(()=>{ document.querySelectorAll('#board .unit').forEach(e=>e.remove());
+    if(G.hp<=0){ $('#log').innerHTML=''; log('☠ 你被淘汰了! 最终名次: '+G.round,'#f55'); alert('游戏结束! 你在第 '+G.round+' 回合被淘汰。\n刷新页面重新开始。'); return; }
+    render(); nextRound(); },1200);
+}
+
+// ================= 初始化 =================
+buildBoard();
+rollShop();
+render();
+setline('点击「▶ 开战」开始回合战斗');
+</script>
+</body>
+</html>

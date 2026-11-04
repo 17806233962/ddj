@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>一世仙途 · 命途</title>
+<style>
+  :root{
+    --bg:#0f1218; --panel:#161b24; --line:#2c3446; --ink:#d8d2c4;
+    --dim:#8b909c; --gold:#d4af37; --jade:#7ec8a9; --red:#c96a6a; --violet:#b48ae0;
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  body{background:var(--bg); color:var(--ink); font-family:"KaiTi","STKaiti","楷体","Noto Serif SC",serif;
+    min-height:100vh; display:flex; justify-content:center;}
+  #app{width:min(780px,96vw); padding:18px 12px 44px;}
+  header{text-align:center; margin:12px 0 18px;}
+  header h1{font-size:28px; letter-spacing:8px; color:var(--gold); font-weight:600;}
+  header p{color:var(--dim); margin-top:6px; letter-spacing:2px; font-size:13px;}
+  a{color:var(--dim); text-decoration:none; border-bottom:1px dashed var(--line);}
+  a:hover{color:var(--gold);}
+  .panel{background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:16px; margin-bottom:12px;}
+  .row{display:flex; gap:9px; flex-wrap:wrap; align-items:center; justify-content:center;}
+  input[type=text]{background:#0b0e14; border:1px solid var(--line); color:var(--ink);
+    padding:8px 10px; border-radius:5px; font-size:15px; font-family:inherit; width:190px;}
+  button{background:#1e2532; color:var(--ink); border:1px solid var(--line); padding:8px 16px;
+    border-radius:5px; cursor:pointer; font-family:inherit; font-size:14px; letter-spacing:1px;}
+  button:hover:not(:disabled){border-color:var(--gold); color:var(--gold);}
+  button:disabled{opacity:.4; cursor:not-allowed;}
+  button.primary{background:#332a13; border-color:var(--gold); color:var(--gold);}
+  .hint{color:var(--dim); font-size:13px;}
+
+  #attrs{display:flex; flex-wrap:wrap; gap:6px 12px; align-items:center;
+    background:var(--panel); border:1px solid var(--line); border-radius:8px;
+    padding:9px 12px; margin-bottom:10px; font-size:13px;}
+  #attrs b{color:var(--gold); font-weight:600;}
+  .chip{background:#1d2434; border-radius:12px; padding:1px 8px; font-size:12px;}
+  .chip.low{color:var(--red);}
+
+  #story{padding:18px 20px;}
+  #story .st{font-size:17px; color:var(--gold); margin-bottom:4px;}
+  #story .sa{color:var(--dim); font-size:12.5px; margin-bottom:10px;}
+  #story .sx{line-height:1.95; font-size:15px;}
+  .gate{margin-top:12px; border-top:1px dashed var(--line); padding-top:9px; font-size:12.5px;}
+  .gate .ok{color:var(--jade);} .gate .no{color:var(--red);}
+
+  .opt{display:block; width:100%; text-align:left; margin-bottom:9px; padding:11px 13px;
+    background:#0e1219; border:1px solid var(--line); border-radius:6px; letter-spacing:0;}
+  .opt:hover:not(:disabled){border-color:var(--gold);}
+  .opt:disabled{opacity:.45; cursor:not-allowed;}
+  .otext{font-size:14.5px; color:var(--ink);}
+  .trade{display:flex; gap:14px; flex-wrap:wrap; font-size:12px; margin-top:5px;}
+  .trade .g{color:var(--jade);} .trade .l{color:var(--red);}
+  .odds{font-size:11.5px; color:var(--dim); margin-top:4px;}
+  .odds .g{color:var(--jade);} .odds .m{color:var(--gold);} .odds .b{color:var(--red);}
+  .road{font-size:11.5px; color:var(--dim); margin-top:4px;}
+  .road.warn{color:var(--red);}
+  .olock{font-size:11.5px; color:var(--red); margin-top:3px;}
+
+  #log{margin-top:12px; line-height:1.9; font-size:14px; max-height:40vh; overflow-y:auto;}
+  .entry{margin-bottom:8px; color:#b9b4a6;}
+  .entry .tg{font-size:11px; margin-right:6px;}
+  .entry .tg.good{color:var(--jade);} .entry .tg.mid{color:var(--gold);} .entry .tg.bad{color:var(--red);}
+  .entry .skip{color:var(--violet);}
+  .entry .fx{color:var(--dim); font-size:12px;}
+
+  #ending{position:fixed; inset:0; background:rgba(6,8,12,.94); z-index:20;
+    display:flex; align-items:center; justify-content:center; padding:18px;}
+  #ending .card{background:var(--panel); border:1px solid var(--gold); border-radius:10px;
+    max-width:600px; width:100%; padding:26px; text-align:center; max-height:90vh; overflow-y:auto;}
+  #ending .etag{color:var(--dim); letter-spacing:4px; font-size:12px;}
+  #ending h2{font-size:28px; color:var(--gold); letter-spacing:6px; margin:10px 0 8px; font-weight:600;}
+  #ending .edesc{white-space:pre-line; line-height:1.9; font-size:14.5px; text-align:left;
+    margin:12px 0; padding:11px 13px; background:#10141b; border-radius:6px;}
+  #ending .epath{font-size:12px; color:var(--dim); line-height:1.9; margin-bottom:14px; text-align:left;}
+  #ending .epath b{color:var(--ink); font-weight:400;}
+  .hidden{display:none !important;}
+  ::-webkit-scrollbar{width:7px;} ::-webkit-scrollbar-thumb{background:#2c3446; border-radius:3px;}
+</style>
+</head>
+<body>
+<div id="app">
+  <header>
+    <h1>命 途</h1>
+    <p>一棵剧情树 · 每步有舍有得 · 属性改变签运 · 属性不够，剧情不触发</p>
+  </header>
+
+  <section id="setup">
+    <div class="panel">
+      <div class="row">
+        <input type="text" id="nameInput" maxlength="8" placeholder="道友名讳…">
+        <button id="startBtn" class="primary" style="padding:10px 36px; font-size:16px;">踏入命途</button>
+      </div>
+      <p class="hint" style="margin-top:12px; text-align:center;">
+        与《<a href="./game.html">一世仙途</a>》同源不同命：这里没有自动推演，每一步都要你选。<br>
+        选项上明码标出真实代价（折寿、耗金）；属性随签落定后才揭晓——悟性、机缘、心境越高越走运，魔染越高越凶险。<br>
+        前路若有死关，会提前标红。
+      </p>
+    </div>
+  </section>
+
+  <section id="game" class="hidden">
+    <div id="attrs"></div>
+    <div id="story" class="panel"></div>
+    <div id="log"></div>
+    <div id="options"></div>
+    <div class="row" style="margin-top:12px;">
+      <button id="restartBtn">重新踏入</button>
+      <a href="./game.html" style="align-self:center; font-size:13px;">返回主页</a>
+    </div>
+  </section>
+</div>
+
+<div id="ending" class="hidden">
+  <div class="card">
+    <div class="etag">—— 命途终局 ——</div>
+    <h2 id="endName"></h2>
+    <div class="edesc" id="endDesc"></div>
+    <div class="epath" id="endPath"></div>
+    <button id="againBtn" class="primary" style="padding:9px 24px;">再入命途</button>
+  </div>
+</div>
+
+<script src="./fate-tree.js"></script>
+<script src="./fate-engine.js"></script>
+<script>
+(function () {
+  "use strict";
+  const T = window.FATE_TREE, E = window.FATE_ENGINE;
+  const $ = (id) => document.getElementById(id);
+  const ATTRS = T.ATTR_KEYS;
+  const TIER = { good: "上签", mid: "平", bad: "下签" };
+
+  const params = new URLSearchParams(location.search);
+  let run = null;
+
+  function esc(s) {
+    return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;")
+      .replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+  }
+
+  function renderAttrs() {
+    const st = run.state;
+    const chips = ATTRS.map((k) => {
+      const low = (k === "魔染" && st.attrs[k] >= 3) ? " low" : "";
+      return `<span class="chip${low}">${esc(k)} ${st.attrs[k] || 0}</span>`;
+    }).join("");
+    $("attrs").innerHTML =
+      `<span><b>${esc(st.name || "")}</b></span>` +
+      `<span>年龄 <b>${st.age}</b></span>` + chips;
+  }
+
+  function gateHTML(v) {
+    const n = T.NODES[v.node.id];
+    if (!n || !n.require) return "";
+    const r = n.require;
+    const clauses = Array.isArray(r) ? r : [r];
+    const label = clauses.map((c) => {
+      if (c.and) return c.and.map((x) => `需 ${x.stats.join("+")} ${x.op === "<=" ? "≤" : "≥"} ${x.value}`).join(" 且 ");
+      return `需 ${c.stats.join("+")} ${c.op === "<=" ? "≤" : "≥"} ${c.value}`;
+    }).join(" 或 ");
+    const cur = clauses.flatMap((c) => c.and ? c.and.flatMap((x) => x.stats) : c.stats)
+      .map((k) => `${k}${run.state.attrs[k] || 0}`).join("/");
+    const kind = n.gate === "death" ? "⚠ 死关" : "✦ 机缘剧情";
+    const cls = v.gate.ok ? "ok" : "no";
+    return `<div class="gate ${cls}">${kind} · ${esc(label)}（当前 ${esc(cur)}）</div>`;
+  }
+
+  function costText(list) {
+    // "寿元-8" → "折寿8年"；"金铢-300" → "耗金300"
+    return list.map((s) => {
+      const m = s.match(/^(寿元|金铢)-(\d+)$/);
+      if (!m) return s;
+      return m[1] === "寿元" ? `折寿${m[2]}年` : `耗金${m[2]}`;
+    }).join("、");
+  }
+
+  function oddsHTML(o) {
+    const list = (o.odds || []).filter((x) => x.pct > 0);
+    if (list.length < 2) return ""; // 单一结果不显示签
+    const cls = { good: "g", mid: "m", bad: "b" };
+    return `<div class="odds">签：` + list.map((x) =>
+      `<span class="${cls[x.tier]}">${TIER[x.tier]} ${x.pct}%</span>`
+    ).join(" · ") + `</div>`;
+  }
+
+  function roadHTML(o) {
+    const target = o.goto && T.NODES[o.goto];
+    if (!target || !target.require) return "";
+    const clauses = Array.isArray(target.require) ? target.require : [target.require];
+    const label = clauses.map((c) => {
+      if (c.and) return c.and.map((x) => `${x.stats.join("+")}${x.op === "<=" ? "≤" : "≥"}${x.value}`).join(" 且 ");
+      return `${c.stats.join("+")}${c.op === "<=" ? "≤" : "≥"}${c.value}`;
+    }).join(" 或 ");
+    const death = target.gate === "death";
+    return `<div class="road${death ? " warn" : ""}">前路「${esc(target.title)}」· ${death ? "⚠ 死关 " : "✦ "}需 ${esc(label)}</div>`;
+  }
+
+  function render() {
+    const v = run.view();
+    renderAttrs();
+    if (v.finished) { showEnding(v.ending); return; }
+    const n = v.node;
+    $("story").innerHTML =
+      `<div class="st">${esc(n.title)}</div>` +
+      `<div class="sa">${n.age} 岁</div>` +
+      `<div class="sx">${esc(n.text)}</div>` + gateHTML(v);
+
+    const wrap = $("options");
+    wrap.innerHTML = "";
+    v.options.forEach((o, i) => {
+      const b = document.createElement("button");
+      b.className = "opt";
+      b.disabled = o.locked;
+      b.innerHTML =
+        `<div class="otext">${i + 1}. ${esc(o.text)}</div>` +
+        (o.cost.length ? `<div class="trade"><span class="l">代价：${esc(costText(o.cost))}</span></div>` : "") +
+        oddsHTML(o) + roadHTML(o) +
+        (o.locked ? `<div class="olock">${esc(o.lockText)}</div>` : "");
+      b.onclick = () => choose(i);
+      wrap.appendChild(b);
+    });
+  }
+
+  function logEntry(html) {
+    const d = document.createElement("div");
+    d.className = "entry";
+    d.innerHTML = html;
+    $("log").appendChild(d);
+    $("log").scrollTop = $("log").scrollHeight;
+  }
+
+  function choose(i) {
+    const r = run.pick(i);
+    if (r.error) return;
+    const tg = `<span class="tg ${r.roll.tier}">【${TIER[r.roll.tier]}】</span>`;
+    let html = `${tg}${esc(r.roll.text)}`;
+    if (r.changes && r.changes.length) {
+      html += `<span class="fx">属性变化：${esc(r.changes.join(" · "))}</span>`;
+    }
+    (r.skips || []).forEach((s) => { html += `<br><span class="skip">${esc(s)}</span>`; });
+    logEntry(html);
+    render();
+  }
+
+  function showEnding(e) {
+    if (!e) return;
+    $("endName").textContent = e.name;
+    $("endDesc").textContent = e.desc;
+    const titles = e.path.map((id) => {
+      const n = T.NODES[id];
+      return n ? `${n.age}岁·${n.title}` : id;
+    });
+    $("endPath").innerHTML =
+      `命途：${titles.map((t) => `<b>${esc(t)}</b>`).join(" → ")}<br>` +
+      `享年 ${e.age} 岁 · 悟${e.attrs.悟性 || 0} 根${e.attrs.根骨 || 0} 心${e.attrs.心境 || 0} ` +
+      `机${e.attrs.机缘 || 0} 声${e.attrs.声望 || 0} 魔${e.attrs.魔染 || 0}`;
+    $("ending").classList.remove("hidden");
+  }
+
+  function start() {
+    const seed = params.get("seed") != null ? params.get("seed") : undefined;
+    run = E.createRun({ tree: T, seed });
+    run.state.name = ($("nameInput").value.trim() || "无名客");
+    $("setup").classList.add("hidden");
+    $("game").classList.remove("hidden");
+    $("ending").classList.add("hidden");
+    $("log").innerHTML = "";
+    run.start();
+    render();
+  }
+
+  $("startBtn").onclick = start;
+  $("againBtn").onclick = () => {
+    $("ending").classList.add("hidden");
+    $("game").classList.add("hidden");
+    $("setup").classList.remove("hidden");
+    run = null;
+  };
+  $("restartBtn").onclick = () => {
+    $("game").classList.add("hidden");
+    $("setup").classList.remove("hidden");
+    run = null;
+  };
+
+  document.addEventListener("keydown", (e) => {
+    if (!run || run.state.finished) return;
+    const n = parseInt(e.key, 10);
+    if (n >= 1 && n <= 5) {
+      const btns = document.querySelectorAll("#options .opt");
+      if (btns[n - 1] && !btns[n - 1].disabled) btns[n - 1].click();
+    }
+  });
+
+  if (params.get("auto") === "1") start();
+  window.__FATE__ = { get run() { return run; }, start };
+})();
+</script>
+</body>
+</html>

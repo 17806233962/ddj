@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>文字游戏大厅</title>
+<style>
+  :root { --bg:#0d0f0c; --fg:#b8c9a8; --dim:#5c6b52; --accent:#88b04b; --gold:#e6c86e; --blue:#7aa2c9; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--fg); font-family:"Cascadia Mono",Consolas,"Microsoft YaHei",monospace; min-height:100vh; display:flex; align-items:center; justify-content:center; }
+  .hub { max-width:900px; padding:40px 20px; width:100%; }
+  h1 { color:var(--accent); text-align:center; letter-spacing:6px; font-size:26px; margin-bottom:6px; }
+  .sub { text-align:center; color:var(--dim); margin-bottom:36px; }
+  .cards { display:flex; gap:20px; flex-wrap:wrap; justify-content:center; }
+  a.card { display:block; width:380px; max-width:92vw; border:1px solid var(--dim); padding:24px; text-decoration:none; color:var(--fg); transition:border-color .15s, transform .15s; }
+  a.card:hover { border-color:var(--accent); transform:translateY(-3px); }
+  .card h2 { margin:0 0 10px; font-size:19px; }
+  .card.xq h2 { color:var(--gold); } .card.xx h2 { color:var(--blue); } .card.pp h2 { color:#f2953f; } .card.tft h2 { color:#c9a0ff; } .card.mt h2 { color:#d4af37; } .card.cl h2 { color:#88b04b; }
+  .card p { margin:0; color:var(--dim); font-size:13px; line-height:1.8; }
+  .card .tags { margin-top:14px; }
+  .tag { display:inline-block; border:1px dashed var(--dim); color:var(--dim); font-size:11px; padding:1px 8px; margin-right:6px; }
+  footer { text-align:center; color:var(--dim); margin-top:40px; font-size:12px; }
+</style>
+</head>
+<body>
+<div class="hub">
+  <h1>游 戏 大 厅</h1>
+  <div class="sub">—— 纯文字，纯上头 ——</div>
+  <div class="cards">
+    <a class="card xq" href="xiaoqiang.html">
+      <h2>小强倒爷记</h2>
+      <p>揣着 2000 块、欠着村长 5500 块，从青岛出发沿线五城倒货 40 天。低买高卖、找 NPC 开黑市、躲开火车站安检——你能衣锦还乡吗？</p>
+      <div class="tags"><span class="tag">经商模拟</span><span class="tag">随机事件</span><span class="tag">40天</span></div>
+    </a>
+    <a class="card xx" href="xiuxian/index.html">
+      <h2>修仙游戏</h2>
+      <p>凡人一枚，逆天修行。灵气、法宝、机缘与劫数，都在这一卷文字里。</p>
+      <div class="tags"><span class="tag">修仙放置</span><span class="tag">文字冒险</span></div>
+    </a>
+    <a class="card mt" href="xiuxian/fate.html">
+      <h2>修仙 · 命途版</h2>
+      <p>同一修仙世界的新玩法：一棵剧情树，每步必选。选项有舍有得，上中下签随属性浮动；属性不够，剧情不触发。</p>
+      <div class="tags"><span class="tag">剧情树</span><span class="tag">生死抉择</span><span class="tag">13结局</span></div>
+    </a>
+    <a class="card cl" href="xiuxian/classic.html">
+      <h2>修仙 · 经典版</h2>
+      <p>最初的原味：全自动推演人生，途中的仙缘考验由你定夺。灵气、法宝、机缘与劫数，都在这一卷文字里。</p>
+      <div class="tags"><span class="tag">原版复刻</span><span class="tag">全自动</span><span class="tag">16结局</span></div>
+    </a>
+    <a class="card pp" href="pixel-pet/index.html">
+      <h2>像素宠物</h2>
+      <p>捕捉你的像素小宠物：喂食、清洁、陪它玩耍，看它两次进化！穿装备、下副本打怪，战斗中还能抓新宠。</p>
+      <div class="tags"><span class="tag">宠物养成</span><span class="tag">像素画</span><span class="tag">回合战斗</span></div>
+    </a>
+    <a class="card tft" href="tft/index.html">
+      <h2>云顶自走棋 S1 翻版</h2>
+      <p>还原云顶之弈 S1 的自走棋:53 个经典棋子、24 个起源/职业羁绊、商店概率与利息经济。买棋子、凑羁绊、三合一升星,自动战斗一决胜负!</p>
+      <div class="tags"><span class="tag">自走棋</span><span class="tag">自动战斗</span><span class="tag">S1还原</span></div>
+    </a>
+  </div>
+  <footer>本地双击 xiaoqiang.html / xiuxian/index.html / pixel-pet/index.html / tft/index.html 也能直接玩</footer>
+</div>
+</body>
+</html>
