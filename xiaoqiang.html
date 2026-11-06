@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>小强浮生记</title>
+<title>小强行商记</title>
 <style>
   :root { --bg:#0d0f0c; --fg:#b8c9a8; --dim:#5c6b52; --good:#8fd67a; --bad:#e07a5f; --warn:#e6c86e; --accent:#88b04b; }
   * { box-sizing:border-box; }
@@ -41,7 +41,7 @@
 </head>
 <body>
 <div id="wrap">
-  <h1>小强浮生记 —— 五城倒货 40 天</h1>
+  <h1>小强行商记 —— 五城跑货 40 天</h1>
   <div id="status"></div>
   <div id="log"></div>
   <div id="market"></div>
@@ -106,7 +106,7 @@ const ACHVS = {
   marry1:   ["洞房花烛","首次成婚"],
   marry4:   ["齐人之福","四位佳人全部娶回家"],
   repayAll: ["无债一身轻","还清村长的所有欠款"],
-  rich:     ["百万倒爷","结局净资产达到 100000"],
+  rich:     ["身家百万","结局净资产达到 100000"],
   seized:   ["查无此人","被火车站查获过至少一次"],
   died:     ["风流鬼","抱着佳人入眠时客死他乡"],
   broke:    ["白手起家","结局前现金和存款几乎归零又翻到 10000+"],
@@ -557,7 +557,7 @@ async function createPantry(){ // 在浏览器控制台运行一次，输出 pan
   try {
     const r = await fetch("https://api.getpantry.cloud/pantry", {
       method:"POST", headers:{"Content-Type":"application/json"},
-      body: JSON.stringify({ name: "倒爷排行榜" }),
+      body: JSON.stringify({ name: "行商排行榜" }),
     });
     const j = await r.json();
     if (j.id){ console.log("pantry ID = " + JSON.stringify(j.id)); return j.id; }
@@ -568,7 +568,7 @@ async function createPantry(){ // 在浏览器控制台运行一次，输出 pan
 
 async function showBoard(){
   const list = (await boardFetch()).sort((a,b)=>b.wealth-a.wealth).slice(0,10);
-  let text = "🏆 倒爷排行榜 TOP10 🏆\n" + (PANTRY_ID ? "" : "（本机榜：未配置云存储）\n");
+  let text = "🏆 行商排行榜 TOP10 🏆\n" + (PANTRY_ID ? "" : "（本机榜：未配置云存储）\n");
   if (!list.length) text += "（还没人上榜，你就是第一个传奇）";
   list.forEach((e,i) => {
     text += `${String(i+1).padStart(2)}. ${String(e.name).slice(0,12)}  ${e.wealth} 元  第${e.day}天·${e.city}${e.died?"（客死）":""}\n`;
@@ -693,7 +693,7 @@ S = initState();
 for (const c of CITIES) S.prices[c] = rollPrices(); // 各城掷独立初始价
 S.market = newMarket();
 log("2000 年，小强揣着 2000 块在青岛站下了火车，口袋里还装着欠村长的 5500 块欠条。", "warn");
-log("从青岛出发，沿线五城倒货 40 天，赚钱、保命、还债——这是小强的浮生记。");
+log("从青岛出发，沿线五城跑货 40 天，赚钱、保命、还债——这是小强的行商路。");
 log("提示：黑市收货要加价、出手要打折；各城有神秘 NPC 和佳人，别错过。", "dim");
 render();
 </script>
