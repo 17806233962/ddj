@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>小强倒爷记</title>
+<title>小强浮生记</title>
 <style>
   :root { --bg:#0d0f0c; --fg:#b8c9a8; --dim:#5c6b52; --good:#8fd67a; --bad:#e07a5f; --warn:#e6c86e; --accent:#88b04b; }
   * { box-sizing:border-box; }
@@ -41,7 +41,7 @@
 </head>
 <body>
 <div id="wrap">
-  <h1>小强倒爷记 —— 五城倒货 40 天</h1>
+  <h1>小强浮生记 —— 五城倒货 40 天</h1>
   <div id="status"></div>
   <div id="log"></div>
   <div id="market"></div>
@@ -58,8 +58,8 @@ const ITEMS = [
   { id:4, name:"青岛啤酒(塑料袋装)",  base:60,   range:120,  desc:"波动大，旺季暴涨" },
   { id:5, name:"崂山白花蛇草水",      base:120,  range:280,  desc:"传说中的神水，味道劝退" },
   { id:6, name:"章丘铁锅",            base:500,  range:600,  desc:"手工锻造，风吹起来就是天价" },
-  { id:7, name:"斐济杯",              base:3000, range:4000, desc:"昂贵，行情极端" },
-  { id:8, name:"黄油碟片",            base:800,  range:1500, desc:"灰色生意，波动剧烈" },
+  { id:7, name:"绝版手办",            base:3000, range:4000, desc:"收藏圈硬通货，行情极端" },
+  { id:8, name:"限量款球鞋",          base:800,  range:1500, desc:"炒鞋江湖，波动剧烈" },
 ];
 const CITIES = ["青岛","廊坊","德州","济南","南京"];
 
@@ -108,7 +108,6 @@ const ACHVS = {
   repayAll: ["无债一身轻","还清村长的所有欠款"],
   rich:     ["百万倒爷","结局净资产达到 100000"],
   seized:   ["查无此人","被火车站查获过至少一次"],
-  rank:     ["必玩常客","进过必玩榜且活了下来"],
   died:     ["风流鬼","抱着佳人入眠时客死他乡"],
   broke:    ["白手起家","结局前现金和存款几乎归零又翻到 10000+"],
 };
@@ -144,15 +143,15 @@ const PRICE_EVENTS = [
   { text:"美食博主探店把子肉，济南把子肉全网爆火！",      item:3, mul:4 },
   { text:"啤酒节开幕！青岛啤酒供不应求，价格狂飙！",      item:4, mul:4 },
   { text:"《舌尖》剧组拍了铁锅，章丘铁锅一夜封神！",      item:6, mul:5 },
-  { text:"漫展人山人海，斐济杯一夜脱销，价格起飞！",      item:7, mul:3 },
-  { text:"碟友圈疯传绝版资源，黄油碟片被炒上天价！",      item:8, mul:4 },
+  { text:"漫展人山人海，绝版手办一夜脱销，价格起飞！",      item:7, mul:3 },
+  { text:"球鞋圈疯传绝版联名，限量款球鞋被炒上天价！",        item:8, mul:4 },
   { text:"养生专家直播吹爆蛇草水，割韭菜无数！",          item:5, mul:6 },
   { text:"物流恢复，外地火烧大量涌入，价格崩了。",        item:1, div:3 },
-  { text:"工厂直营店杀进漫展，斐济杯价格跳水。",          item:7, div:4 },
+  { text:"官方宣布手办再版，现货价格应声跳水。",          item:7, div:4 },
   { text:"啤酒节结束，青岛啤酒大量滞销。",                item:4, div:5 },
   { text:"铁路高速化，沿线特产不再稀缺，扒鸡跌价。",      item:2, div:4 },
   { text:"章丘铁锅被曝机器量产，信仰崩塌，价格跳水。",    item:6, div:5 },
-  { text:"扫黄打非专项行动，碟片市场风声鹤唳，价格崩了。", item:8, div:4 },
+  { text:"品牌方闪电补货，炒鞋市场风声鹤唳，价格崩了。",      item:8, div:4 },
 ];
 const CASH_EVENTS = [
   { text:"火车站口一个汉子拦住你：\"兄弟，给点钱用！\"",      pct:10 },
@@ -392,23 +391,6 @@ function heal(){
   log(cost === 0
     ? `💊 巧云给小强熬了药、揉了筋骨：“俺家的人，不许带伤赶路。”健康 +${gain}（分文不取）。`
     : `💊 在街头诊所扎了几针、灌了两碗汤药，健康 +${gain}（花 ${cost} 元，不耗天数）。`, "good");
-  render();
-}
-
-function enterRank(){ // 必玩榜：固定设施，花钱上榜，还折损健康（纯烧钱折腰的坑）
-  if (S.ended) return;
-  const fee = 1000;
-  if (S.cash < fee){ log(`上榜要 ${fee} 元，小强摸了摸口袋，悻悻走开。`, "bad"); return; }
-  S.cash -= fee;
-  const loss = 10 + rnd(11); // 10~20 点
-  S.health -= loss;
-  grant("rank"); // 进过必玩榜且活着出来
-  log(`🏨 小强豪掷 ${fee} 元冲进了"${S.city}必玩榜"，钱没了，腰也垮了（健康 -${loss}）。`, "bad");
-  if (S.health <= 0){
-    log("小强倒在必玩榜门口，日记本上写着：\"这条线，我还会再来的！\"", "bad");
-    endGame("died");
-    return;
-  }
   render();
 }
 
@@ -684,7 +666,6 @@ function render(){
     const maxPay = Math.min(S.cash, S.debt);
     a += `<br><input type="number" id="repayAmt" min="1" max="${maxPay}" ${maxPay>0?`value="${maxPay}"`:'value="0" disabled'}><button onclick="repay(+document.getElementById('repayAmt').value)" ${maxPay<=0?"disabled":""}>🧾 还债（≤${maxPay}，不耗天数）</button>`;
   }
-  a += ` <button onclick="enterRank()">🏨 冲${esc(S.city)}必玩榜（¥1000，伤身，不耗天数）</button>`;
   const npc = NPCS[S.city];
   if (npc && !S.npcUnlocked[S.city]){
     a += ` <button onclick="unlockNpc()">🤝 找${npc.name}开黑市（¥${npc.fee}，不耗天数）</button>`;
