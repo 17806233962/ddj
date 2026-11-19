@@ -1,0 +1,762 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>汽车发展国 · 玩法克隆原型（不含开罗素材）</title>
+<style>
+  :root{--bg:#2b2b3a;--panel:#3a3a4e;--hi:#f2c14e;--ok:#7bc96f;--bad:#e06c6c;}
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:#eee;font:14px/1.5 "Microsoft YaHei",sans-serif;padding:12px;}
+  h1{font-size:20px;color:var(--hi);margin-bottom:8px;}
+  #topbar{display:flex;gap:18px;background:var(--panel);padding:10px 14px;border-radius:8px;margin-bottom:10px;flex-wrap:wrap;font-size:15px;}
+  #topbar b{color:var(--hi);}
+  #main{display:grid;grid-template-columns:1fr 1.4fr 1fr;gap:10px;}
+  .panel{background:var(--panel);border-radius:8px;padding:10px;min-height:300px;}
+  .panel h2{font-size:15px;color:var(--hi);border-bottom:1px solid #555;margin-bottom:8px;padding-bottom:4px;}
+  button{background:#5a5a78;color:#fff;border:none;border-radius:6px;padding:6px 12px;cursor:pointer;margin:2px;}
+  button:hover{background:#6e6e94;}
+  button:disabled{opacity:.4;cursor:not-allowed;}
+  button.primary{background:#c0392b;}
+  button.primary:hover{background:#e0503f;}
+  .emp{border-bottom:1px dashed #555;padding:4px 0;}
+  .emp .bar{display:inline-block;height:8px;background:var(--ok);border-radius:4px;vertical-align:middle;margin-right:3px;}
+  #log{height:220px;overflow-y:auto;background:#26262f;border-radius:6px;padding:8px;font-size:13px;}
+  #log p{margin:2px 0;}
+  .m1{color:#aaa;} .m2{color:#8fd0ff;} .m3{color:var(--ok);} .m4{color:var(--hi);}
+  .car-card{background:#26262f;border-radius:6px;padding:6px 8px;margin:6px 0;font-size:13px;}
+  .sel{display:inline-block;background:#4a4a66;border-radius:6px;padding:4px 10px;margin:3px;cursor:pointer;}
+  .sel.on{background:var(--hi);color:#222;}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  td,th{padding:3px 5px;border-bottom:1px solid #444;text-align:left;}
+  .modal{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;}
+  .modal.show{display:flex;}
+  .modal .box{background:var(--panel);border-radius:10px;padding:18px;max-width:560px;width:92%;max-height:85vh;overflow-y:auto;}
+  .tag{font-size:11px;background:#5a5a78;border-radius:4px;padding:1px 6px;margin-left:4px;}
+  /* Tab 导航 */
+  #tabs{display:flex;gap:6px;margin-bottom:10px;flex-wrap:wrap;}
+  #tabs button{font-size:15px;padding:8px 18px;border-radius:8px 8px 0 0;background:#33334a;color:#bbb;}
+  #tabs button.on{background:var(--panel);color:var(--hi);font-weight:bold;}
+  .tabpage{display:none;}
+  .tabpage.on{display:block;}
+</style>
+</head>
+<body>
+<h1>🚗 汽车发展国 <span style="font-size:12px;color:#999">玩法克隆原型 · 自制占位素材 · 仅供学习</span></h1>
+<div id="errbar" style="display:none;background:#e06c6c;color:#fff;padding:8px;border-radius:6px;margin-bottom:8px;font-size:13px"></div>
+<div id="topbar">
+  <span>📅 第 <b id="yr">1</b> 年 <b id="wk">1</b> 周</span>
+  <span>💰 资金 <b id="cash">0</b> 万</span>
+  <span>👥 员工 <b id="empn">0</b> 人</span>
+  <span>❤ 车迷 <b id="fans">0</b></span>
+  <span>🏆 大奖 <b id="awards">0</b></span>
+  <span>🆚 下届对手 <b id="rival">-</b></span>
+  <span>📈 趋势 <b id="fad">-</b></span>
+  <span style="flex:1"></span>
+  <button id="btnWeek" class="primary">▶ 推进一周</button>
+  <button id="btnAuto">⏩ 自动</button>
+  <button id="btnReset" title="清除存档重新开局">🔄 重开</button>
+</div>
+<div id="tabs">
+  <button data-tab="home" class="on">🏢 总览</button>
+  <button data-tab="dev">🚗 研发部</button>
+  <button data-tab="staff">👥 员工</button>
+  <button data-tab="tech">🔬 技术院</button>
+  <button data-tab="jobs">📋 外包</button>
+</div>
+<div id="main">
+  <!-- 总览 -->
+  <div class="tabpage on" id="tab-home">
+    <div class="panel" style="margin-bottom:10px">
+      <h2>📜 主线任务 <span id="tutProg" style="font-size:12px;color:#aaa"></span></h2>
+      <div id="guide"></div>
+    </div>
+    <div class="panel">
+      <h2>经营日志</h2>
+      <div id="log"></div>
+      <div style="margin-top:8px">
+        <button id="btnTrain">培训主力(20万)</button>
+        <button id="btnAd">打广告(15万)</button>
+        <button id="btnShow">参加车展(25万)</button>
+      </div>
+    </div>
+  </div>
+  <!-- 研发部 -->
+  <div class="tabpage" id="tab-dev">
+    <div class="panel">
+      <h2>研发部 <button id="btnDev" style="float:right">立项新车型</button></h2>
+      <div id="devArea"></div>
+      <h2 style="margin-top:10px">在售车型</h2>
+      <div id="carList"></div>
+    </div>
+  </div>
+  <!-- 员工 -->
+  <div class="tabpage" id="tab-staff">
+    <div class="panel">
+      <h2>员工 <button id="btnHire" style="float:right">招聘</button></h2>
+      <div id="empList"></div>
+    </div>
+  </div>
+  <!-- 技术院 -->
+  <div class="tabpage" id="tab-tech">
+    <div class="panel">
+      <h2>🔬 技术研究院</h2>
+      <p style="color:#aaa">付全款立项，研究期间逐周推进，完成后永久生效</p>
+      <div id="techArea"></div>
+    </div>
+  </div>
+  <!-- 外包 -->
+  <div class="tabpage" id="tab-jobs">
+    <div class="panel">
+      <h2>外包订单</h2>
+      <p style="color:#aaa">接外包赚快钱，完成还能给全员涨经验</p>
+      <div id="jobList"></div>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="modal"><div class="box" id="modalBox"></div></div>
+
+<script>
+/* 错误可视化：任何 JS 报错直接显示在页面顶部，避免无声失效 */
+window.onerror = function(msg, src, line){
+  var el = document.getElementById("errbar");
+  if (el) { el.style.display = "block"; el.textContent = "JS错误: " + msg + " @line " + line; }
+  return false;
+};
+function jsReady(){
+  var el = document.getElementById("errbar");
+  if (el && el.dataset.jsok !== "1") { el.style.display="block"; el.textContent="JS 未能初始化（若在预览器中查看，请下载后用浏览器打开）"; }
+}
+setTimeout(jsReady, 800);
+/* ================= 数值设计 ================= */
+// 车型类别 × 定位 相性表（0-5，自制设计，非开罗数据）
+const TYPES = ["微型车","轿车","SUV","跑车","皮卡","电动车"];
+const SEGS  = ["经济","家用","豪华","运动","越野","商务"];
+const AFFIN = { // [类型][定位]
+  "微型车":[5,3,1,1,0,2],
+  "轿车"  :[3,5,3,2,0,4],
+  "SUV"   :[2,4,3,2,4,3],
+  "跑车"  :[0,1,4,5,0,2],
+  "皮卡"  :[1,2,2,1,5,3],
+  "电动车":[4,3,3,3,1,3],
+};
+// 历年真实名车对手（来源：World Car Awards 世界年度风云车 2005-2025 实际获奖名单）
+const RIVAL_CARS = [
+  {y:"2005",name:"奥迪 A6",type:"轿车",q:62},
+  {y:"2006",name:"宝马 3系",type:"轿车",q:65},
+  {y:"2007",name:"雷克萨斯 LS460",type:"豪华",q:68},
+  {y:"2008",name:"马自达2",type:"微型车",q:70},
+  {y:"2009",name:"大众高尔夫6",type:"轿车",q:72},
+  {y:"2010",name:"大众Polo",type:"微型车",q:74},
+  {y:"2011",name:"日产聆风",type:"电动车",q:76},
+  {y:"2012",name:"大众up!",type:"微型车",q:78},
+  {y:"2013",name:"大众高尔夫7",type:"轿车",q:80},
+  {y:"2014",name:"奥迪 A3",type:"轿车",q:82},
+  {y:"2015",name:"奔驰C级",type:"豪华",q:84},
+  {y:"2016",name:"马自达MX-5",type:"跑车",q:86},
+  {y:"2017",name:"捷豹F-Pace",type:"SUV",q:88},
+  {y:"2018",name:"沃尔沃XC40",type:"SUV",q:90},
+  {y:"2019",name:"捷豹I-Pace",type:"电动车",q:93},
+  {y:"2020",name:"起亚Telluride",type:"SUV",q:96},
+  {y:"2021",name:"大众ID.4",type:"电动车",q:100},
+  {y:"2022",name:"现代IONIQ 5",type:"电动车",q:104},
+  {y:"2023",name:"现代IONIQ 6",type:"电动车",q:108},
+  {y:"2024",name:"起亚EV9",type:"电动车",q:112},
+  {y:"2025",name:"起亚EV3",type:"电动车",q:116},
+];
+// 市场趋势（每 2 年切换一次，命中趋势的项目销量加成）
+const FADS = {"微型车":0.6,"轿车":0.7,"SUV":1.2,"跑车":0.9,"皮卡":0.8,"电动车":1.3};
+const FAD_NAME = {"微型车":"复古微车热","轿车":"家轿换购潮","SUV":"SUV热潮","跑车":"驾驶文化热","皮卡":"皮卡解禁潮","电动车":"新能源浪潮"};
+// 定位定价基准（万元）
+const SEG_PRICE = {"经济":6,"家用":12,"豪华":35,"运动":28,"越野":20,"商务":18};
+// 员工职业
+const ROLES = ["设计师","工程师","测试员"];
+const ROLE_DESC = {"设计师":"提升外观","工程师":"提升性能","测试员":"提升可靠性"};
+
+/* ================= 游戏状态 ================= */
+const S = {
+  week:1, year:1, cash:80, fans:10, awards:0,
+  emps:[], cars:[], jobs:[], dev:null, salesLog:[], contestPool:[],
+  auto:false, fadKey:"轿车", tech:{cur:null,done:[]}, debtWeeks:0, gameOver:false, contestTotal:0,
+  tut:0, statDevs:0, statJobsDone:0, totalSold:0,
+};
+let uid = 1;
+const rnd = (a,b)=>Math.floor(Math.random()*(b-a+1))+a;
+const fmt = n=>Math.round(n).toLocaleString();
+
+function log(msg,cls="m1"){ const el=document.getElementById("log");
+  const p=document.createElement("p"); p.className=cls; p.textContent=`[Y${S.year}W${S.week}] ${msg}`;
+  el.prepend(p); while(el.children.length>60) el.lastChild.remove(); }
+
+// 普通员工名字池（真人风格）
+const NAMES_POOL = ["张伟","李强","王磊","刘洋","陈静","杨帆","赵磊","黄敏","周涛","吴昊",
+  "徐丽","孙鹏","马超","朱琳","胡军","郭涛","何雨","高翔","林峰","罗娜",
+  "郑凯","梁雪","谢东","宋佳","唐磊","韩冰","冯锐","曹阳","彭飞","萧然",
+  "阿May","大飞","老猫","阿彬","小马哥","强子","燕子","大鹏","老K","皮蛋"];
+// 传奇员工（高属性 + 专属特长）
+const LEGENDS = {
+  "陈润强" : {role:"设计师", bonus:"设计鬼才：外观贡献 ×2.0"},
+  "陈润刚" : {role:"工程师", bonus:"底盘大师：性能贡献 ×2.0"},
+  "王小鸟" : {role:"测试员", bonus:"火眼金睛：可靠性贡献 ×2.0"},
+  "电击小子": {role:"工程师", bonus:"电动狂人：电动车项目全员效率 +50%"},
+  "牙哥"   : {role:"设计师", bonus:"气场全开：全属性贡献 +30%"},
+  "hasaki王":{role:"工程师", bonus:"刀法精准：研发周期 -2 周"},
+  "陈马尧" : {role:"测试员", bonus:"细节狂魔：新车自带品质加成 +15"},
+  "小狗发" : {role:"设计师", bonus:"锦鲤附体：研发事件全为好事"},
+  "ddj"    : {role:"工程师", bonus:"全能车神：外观/性能/可靠性贡献全部 ×1.6"},
+};
+
+function makeEmp(min=10,max=40,legend=false,exclude=[]){
+  const r = ROLES[rnd(0,2)];
+  // 已被占用的名字：在职员工 + 本次排除名单（如同一批候选）
+  const taken = new Set([...S.emps.map(e=>e.name), ...exclude]);
+  let name;
+  if(legend){
+    const avail = Object.keys(LEGENDS).filter(n=>!taken.has(n));
+    if(avail.length===0) return makeEmp(min,max,false,exclude); // 传奇都签完了，降级为普通人
+    name = avail[rnd(0,avail.length-1)];
+  }else{
+    const avail = NAMES_POOL.filter(n=>!taken.has(n));
+    if(avail.length>0){
+      name = avail[rnd(0,avail.length-1)];
+    }else{
+      // 名字池用尽：同名带编号区分（同姓同名，另一个人）
+      let k=2;
+      while(taken.has(NAMES_POOL[0]+"·"+k)) k++;
+      name = NAMES_POOL[0]+"·"+k;
+    }
+  }
+  const base = legend ? {des:rnd(55,90),eng:rnd(55,90),test:rnd(55,90)} : {des:rnd(min,max),eng:rnd(min,max),test:rnd(min,max)};
+  const e = {id:uid++,name,role:r,legend,...base,stamina:100};
+  if(legend) e.role = LEGENDS[name].role;
+  return e;
+}
+function empScore(e){return e.des+e.eng+e.test;}
+function mainEmp(){return [...S.emps].sort((a,b)=>empScore(b)-empScore(a))[0];}
+
+/* ================= 研发 ================= */
+function startDev(type,seg,carName){
+  const n = S.emps.length;
+  if(n<1) return log("至少要有 1 名员工才能立项","m4");
+  if(S.dev) return log("已有研发中的项目","m4");
+  const weeks = Math.max(6, rnd(10,16) - (S.emps.some(e=>e.name==="hasaki王")?2:0));
+  const costPerWeek = 2 + n*1.2;
+  const affin = AFFIN[type][SEGS.indexOf(seg)];
+  S.dev = {type,seg,carName:(carName||"").slice(0,12),affin,week:0,totalWeeks:weeks,costPerWeek,des:0,eng:0,test:0,events:[]};
+  S.statDevs=(S.statDevs||0)+1;
+  log(`立项：${carName}（${type}×${seg}，相性 ${affin}/5），预计 ${weeks} 周，周耗 ${costPerWeek.toFixed(1)} 万`,"m2");
+  renderDev();
+}
+
+function devTick(){
+  const d=S.dev; if(!d) return;
+  const weeklyCost = hasTech("平台化架构") ? d.costPerWeek*0.7 : d.costPerWeek;
+  if(S.cash < weeklyCost){ log("资金不足，研发暂停！","m4"); return; }
+  S.cash -= weeklyCost;
+  d.week++;
+  // 员工贡献（角色加成 30%，体力影响效率，传奇员工另有专属特长；涡轮增压提升性能贡献）
+  const has = n => S.emps.some(e=>e.name===n);
+  const isEV = d.type==="电动车" && has("电击小子");
+  const turbo = hasTech("涡轮增压") ? 1.15 : 1;
+  for(const e of S.emps){
+    const f = ((e.stamina/100)*0.8 + 0.2) * (isEV?1.5:1);
+    let md=1,me=1,mt=1;
+    if(e.legend){
+      if(e.name==="陈润强") md=2.0;
+      if(e.name==="陈润刚") me=2.0;
+      if(e.name==="王小鸟") mt=2.0;
+      if(e.name==="ddj"){md=me=mt=1.6;}
+      if(e.name==="牙哥"){md=me=mt=1.3;}
+    }
+    d.des  += e.des * (e.role==="设计师"?1.3:0.7) * f * md/8;
+    d.eng  += e.eng * (e.role==="工程师"?1.3:0.7) * f * me * turbo/8;
+    d.test += e.test* (e.role==="测试员"?1.3:0.7) * f * mt/8;
+    e.stamina = Math.min(100, e.stamina-3);
+  }
+  // 随机研发事件（小狗发在场则必为好事）
+  if(Math.random()<0.25){
+    const pick = has("小狗发") ? rnd(0,1) : rnd(0,2);
+    if(pick===0){ d.des+=rnd(3,8); log(`设计部灵光一现，外观 +`,"m3"); }
+    if(pick===1){ d.eng+=rnd(3,8); log(`工程师解决了NVH问题，性能 +`,"m3"); }
+    if(pick===2){ log(`供应商涨价，额外支出 5 万`,"m4"); S.cash-=5; }
+  }
+  renderDev();
+  if(d.week>=d.totalWeeks) launchCar(d);
+}
+
+function launchCar(d){
+  let quality = Math.round(d.des*0.8 + d.eng*1.0 + d.test*0.9 + d.affin*6)
+    + (S.emps.some(e=>e.name==="陈马尧") ? 15 : 0); // 细节狂魔的品质加成
+  // 技术加成
+  if(hasTech("轻量化车身")) quality += 5;
+  if(hasTech("自动驾驶")) quality += 8;
+  if(hasTech("固态电池") && d.type==="电动车") quality += 15;
+  const cost = Math.round(quality*0.06 + rnd(2,5)); // 单车成本
+  const displayName = d.carName || d.type;
+  const car = {id:uid++, name:displayName,
+    type:d.type,seg:d.seg,quality,cost,price:0,week:0,sold:0,base:0};
+  S.dev=null;
+  S.contestTotal++;
+  log(`新车研发完成！品质 ${quality}`,"m3");
+  askPrice(car);
+}
+
+function askPrice(car){
+  const base = SEG_PRICE[car.seg]*(0.6+car.quality/120);
+  const box=document.getElementById("modalBox");
+  box.innerHTML = `<h2 style="color:var(--hi)">新车定价：${car.name}</h2>
+    <p>品质 ${car.quality} ｜ 单车成本 ${car.cost} 万 ｜ 建议零售价约 <b>${base.toFixed(0)} 万</b></p>
+    <p style="margin:10px 0">定价越高于建议价利润越高，但销量打折：</p>
+    <div id="priceBtns"></div>`;
+  const pb=box.querySelector("#priceBtns");
+  [0.8,0.9,1.0,1.15,1.3].forEach(k=>{
+    const b=document.createElement("button");
+    b.className="sel"; b.textContent=(base*k).toFixed(0)+" 万";
+    b.onclick=()=>{ car.price=Math.round(base*k);
+      car.base = car.quality * Math.pow(0.62,(k-1)*10) ; // 定价惩罚
+      S.cars.push(car);
+      S.contestPool.push(car); // 记入今年世界风云车大赛参赛池（销售期结束不影响参赛资格）
+      closeModal();
+      log(`《${car.name}》上市！定价 ${car.price} 万`, "m4");
+      render(); };
+    pb.appendChild(b);
+  });
+  document.getElementById("modal").classList.add("show");
+}
+
+// 技术研究院：预研技术，永久全局加成（req 为前置技术名）
+const TECHS = [
+  {name:"涡轮增压",  cost:60,  weeks:8,  req:null,     desc:"性能贡献 +15%"},
+  {name:"轻量化车身",cost:80,  weeks:10, req:null,     desc:"全部新车品质 +5"},
+  {name:"平台化架构",cost:100, weeks:12, req:"轻量化车身", desc:"研发周耗 -30%"},
+  {name:"混合动力",  cost:120, weeks:12, req:"涡轮增压", desc:"燃油车销量 +10%"},
+  {name:"固态电池",  cost:150, weeks:14, req:"混合动力", desc:"电动车品质 +15"},
+  {name:"自动驾驶",  cost:200, weeks:16, req:"平台化架构", desc:"全部新车品质 +8"},
+];
+function hasTech(n){ return S.tech.done.includes(n); }
+
+/* ================= 每周随机事件 ================= */
+function randomEvent(){
+  if(Math.random()>=0.08) return;
+  const roll = rnd(0,4);
+  if(roll===0 && S.cars.some(c=>c.week<=16 && c.sold>0)){
+    if(S.cash>=15){ S.cash-=15; log("⚠ 某批次零件缺陷启动召回，紧急处理花费 15 万","m4"); }
+    else { S.fans=Math.max(0,S.fans-30); log("⚠ 召回危机！没钱处理，口碑受损，粉丝 -30","m4"); }
+  }else if(roll===1){
+    S.cash+=20; log("利好：政府发放新能源产业补贴，入账 20 万","m3");
+  }else if(roll===2){
+    S.cash-=8; log("钢材/锂价上涨，本周原材料多花 8 万","m4");
+  }else if(roll===3){
+    S.fans+=25; log("媒体专题报道了你的公司，粉丝 +25","m3");
+  }else{
+    const legs = S.emps.filter(e=>e.legend);
+    if(legs.length){ const l=legs[rnd(0,legs.length-1)]; l.stamina=Math.max(10,l.stamina-20);
+      log(`八卦：竞对试图挖角 ${l.name}！虽被挽留，但闹得心力交瘁（体力-20）`,"m2"); }
+  }
+}
+
+/* ================= 主线任务（新手引导） ================= */
+const TUTORIAL = [
+  {tab:"dev",   text:"立项你的第一辆车",              hint:"去「研发部」→ 立项新车型，起个响亮的名字",              reward:15, done:()=> (S.statDevs||0)>=1},
+  {tab:"dev",   text:"新车研发完成并定价上市",          hint:"研发会逐周推进，完成后弹窗选定价，别定太高",            reward:20, done:()=> (S.contestTotal||0)>=1},
+  {tab:"home",  text:"累计卖出 500 台车",              hint:"推进周数，销量受定价/趋势/粉丝影响，低价好卖",          reward:25, done:()=> (S.totalSold||0)>=500},
+  {tab:"jobs",  text:"完成一单外包订单",               hint:"去「外包」页接单，赚快钱还给全员涨经验",                reward:15, done:()=> (S.statJobsDone||0)>=1},
+  {tab:"staff", text:"招聘一名新员工",                 hint:"去「员工」页招聘，有几率刷出★传奇员工（80万）",        reward:20, done:()=> (S.emps.length)>=3},
+  {tab:"tech",  text:"掌握第一项技术",                 hint:"去「技术院」立项研究，涡轮增压最便宜（60万/8周）",     reward:30, done:()=> S.tech.done.length>=1},
+  {tab:"home",  text:"赢得一次世界风云车大赛",          hint:"年末自动参赛，造一辆品质超过当届名车的车去夺魁！",      reward:100, done:()=> S.awards>=1},
+];
+function tutCheck(){
+  while(S.tut<TUTORIAL.length && TUTORIAL[S.tut].done()){
+    const t=TUTORIAL[S.tut];
+    S.cash+=t.reward;
+    log(`📜 主线任务完成：${t.text}！奖励 ${t.reward} 万`,"m4");
+    S.tut++;
+  }
+}
+function jumpTab(name){
+  document.querySelectorAll("#tabs button").forEach(b=>b.classList.toggle("on", b.dataset.tab===name));
+  document.querySelectorAll(".tabpage").forEach(p=>p.classList.toggle("on", p.id==="tab-"+name));
+}
+function renderGuide(){
+  const g=document.getElementById("guide"); if(!g) return;
+  const p=document.getElementById("tutProg");
+  if(S.tut>=TUTORIAL.length){
+    p.textContent="（已全部完成）";
+    g.innerHTML=`<p style="color:var(--ok)">🎓 新手毕业！之后的路自己闯：收集传奇员工、点满技术树、21 年连霸世界风云车。</p>`;
+    return;
+  }
+  p.textContent=`（${S.tut+1}/${TUTORIAL.length}）`;
+  g.innerHTML = TUTORIAL.map((t,i)=>{
+    const state = i<S.tut ? "✅" : (i===S.tut ? "👉" : "　");
+    const style = i===S.tut ? "color:var(--hi)" : (i<S.tut ? "color:#777;text-decoration:line-through" : "color:#999");
+    return `<div style="${style}">${state} ${t.text}${i===S.tut?`　<span style="color:#aaa;font-size:12px">${t.hint}</span> <button onclick="jumpTab('${t.tab}')" style="font-size:12px;padding:2px 8px">前往 ➜</button>`:""}</div>`;
+  }).join("");
+}
+
+/* ================= 破产风险 ================= */
+function bankruptcyTick(){
+  if(S.cash<0){
+    S.debtWeeks = (S.debtWeeks||0)+1;
+    if(S.debtWeeks===4) log("⚠ 银行警告：资金已连续 4 周为负，再撑 4 周就破产！","m4");
+    if(S.debtWeeks>=8) gameOver();
+  }else S.debtWeeks = 0;
+}
+function gameOver(){
+  if(S.gameOver) return;
+  S.gameOver = true; S.auto=false; saveGame();
+  const box=document.getElementById("modalBox");
+  box.innerHTML=`<h2 style="color:var(--bad)">💀 公司破产</h2>
+    <p>第 ${S.year} 年，资金连续 8 周为负，银行接管了工厂。</p>
+    <p style="margin:8px 0">最终成绩：大奖 ${S.awards} 座 ｜ 粉丝 ${fmt(S.fans)} ｜ 累计上市 ${S.contestTotal||0} 款车</p>
+    <button class="primary" onclick="resetGame()">🔄 重新创业</button>`;
+  document.getElementById("modal").classList.add("show");
+}
+
+/* ================= 技术研究院 ================= */
+function techTick(){
+  const t=S.tech.cur; if(!t) return;
+  t.week++;
+  if(t.week>=t.weeks){
+    S.tech.done.push(t.name); S.tech.cur=null;
+    log(`🔬 技术突破：「${t.name}」研发完成！${TECHS.find(x=>x.name===t.name).desc}`,"m4");
+    saveGame();
+  }
+}
+function renderTech(){
+  const c=document.getElementById("techArea");
+  if(!c) return;
+  c.innerHTML="";
+  // 研究中进度条置顶
+  if(S.tech.cur){
+    const t=TECHS.find(x=>x.name===S.tech.cur.name);
+    const p=Math.round(S.tech.cur.week/S.tech.cur.weeks*100);
+    const cur=document.createElement("div"); cur.className="car-card";
+    cur.style.borderColor="var(--hi)";
+    cur.innerHTML=`<b style="color:var(--hi)">⏳ 研究中：${S.tech.cur.name}</b>（第 ${S.tech.cur.week}/${S.tech.cur.weeks} 周）<br>
+      <div style="background:#26262f;border-radius:4px;margin-top:4px"><div style="background:var(--hi);height:10px;border-radius:4px;width:${p}%"></div></div>`;
+    c.appendChild(cur);
+  }
+  TECHS.forEach(t=>{
+    const done=hasTech(t.name), locked=t.req&&!hasTech(t.req);
+    const d=document.createElement("div"); d.className="car-card";
+    if(done){ d.style.opacity=.55; }
+    d.innerHTML=`<b style="${done?"color:var(--ok)":""}">${t.name}</b> ｜ ${t.cost}万 / ${t.weeks}周<br>
+      <span style="color:var(--ok)">${t.desc}</span>
+      ${t.req?`<br><span style="color:#aaa;font-size:12px">前置：${t.req}${hasTech(t.req)?" ✅":""}</span>`:""}
+      ${done?'<span class="tag" style="background:var(--ok)">已掌握</span>':""}`;
+    if(!done){
+      const b=document.createElement("button");
+      b.textContent = locked?"未解锁":(S.tech.cur?"研究中…":"立项");
+      b.disabled = locked||!!S.tech.cur;
+      b.onclick=()=>{
+        if(S.cash<t.cost) return log("钱不够","m4");
+        S.cash-=t.cost; S.tech.cur={name:t.name,week:0,weeks:t.weeks};
+        log(`立项研发技术：「${t.name}」（${t.weeks} 周）`,"m2");
+        saveGame(); render();
+      };
+      d.appendChild(b);
+    }
+    c.appendChild(d);
+  });
+}
+
+/* ================= 老车改款 ================= */
+function restyle(id){
+  const c=S.cars.find(x=>x.id===id) || S.contestPool.find(x=>x.id===id);
+  if(!c) return;
+  const fee=20;
+  if(S.cash<fee) return log("钱不够改款","m4");
+  S.cash-=fee;
+  const gain=rnd(8,15);
+  c.quality+=gain; c.week=0; c.base*=1.12; c.sold=0;
+  S.contestPool.push(c);
+  log(`《${c.name}》中期改款！品质 +${gain}，重新开卖`,"m3");
+  saveGame(); render();
+}
+
+
+function sellTick(){
+  for(const c of S.cars){
+    if(c.week>16) continue;
+    c.week++;
+    const decay = Math.max(0, 1 - c.week/17);
+    const fad = FADS[c.type]===undefined?1:1;
+    const trend = (c.type===S.fadKey)?1.4:0.85;
+    const hybrid = (hasTech("混合动力") && c.type!=="电动车") ? 1.1 : 1;
+    const fansF = 1 + Math.sqrt(S.fans)/12;
+    const weekly = Math.round(c.base * decay * trend * hybrid * fansF * (40/(c.price/ (c.cost+4))));
+    if(weekly>0){
+      const profit = weekly * (c.price - c.cost) / 50; // 缩放数值
+      c.sold += weekly;
+      S.totalSold=(S.totalSold||0)+weekly;
+      S.cash += Math.max(0,profit);
+      S.fans += Math.round(weekly/30);
+      if(c.week<=2) log(`《${c.name}》首销周 ${weekly} 台，入账 ${fmt(profit)} 万`, "m3");
+    }
+  }
+  S.cars = S.cars.filter(c=>c.week<=16 || c.sold===0);
+  // 年度世界风云车大赛：与历年真实名车（WCOTY 得主）同台竞技
+  if(S.week>52){ S.week=1; S.year++;
+    const rival = RIVAL_CARS[Math.min(S.year-1, RIVAL_CARS.length-1)];
+    const myCars = [...S.contestPool].sort((a,b)=>b.quality-a.quality);
+    const best = myCars[0];
+    S.contestPool = []; // 清空本年度参赛池
+    log(`🏁 第 ${S.year} 届世界风云车大赛开赛！对手是 ${rival.y} 年得主「${rival.name}」（实力 ${rival.q}）`,"m4");
+    if(best){
+      if(best.quality > rival.q){
+        const prize = Math.round(rival.q*1.5);
+        S.awards++; S.cash += prize; S.fans += Math.round(best.quality*2.5);
+        log(`🏆 《${best.name}》（品质${best.quality}）击败「${rival.name}」（${rival.q}），夺得世界风云车！奖金 ${prize} 万，粉丝暴涨！`,"m4");
+      }else{
+        const gap = rival.q - best.quality;
+        S.fans += Math.round(best.quality/4);
+        log(`😢 《${best.name}》（品质${best.quality}）惜败于「${rival.name}」（${rival.q}），差 ${gap} 点。回去继续打磨！`,"m2");
+      }
+    }else{
+      log(`本届无参赛车型，「${rival.name}」不战而胜`,"m1");
+    }
+    S.fadKey = TYPES[rnd(0,TYPES.length-1)];
+    log(`市场风向变了：${FAD_NAME[S.fadKey]}（${S.fadKey} 热销）`,"m2");
+    for(const e of S.emps) e.stamina=100;
+  }
+}
+
+/* ================= 外包 ================= */
+function genJobs(){
+  if(S.jobs.length>=3) return;
+  if(Math.random()<0.3){
+    const names=["给网约车公司改装饰件","代工一套进气歧管","帮驾校做教具车方案","某车队委托调校","给物流公司设计货箱"];
+    S.jobs.push({id:uid++,name:names[rnd(0,names.length-1)],pay:rnd(8,25),weeks:rnd(2,4),left:0});
+    log("收到新的外包订单","m1");
+  }
+}
+function acceptJob(j){
+  if(S.jobs.find(x=>x.left>0)) return log("已有进行中的外包","m4");
+  j.left=j.weeks; log(`接下外包：${j.name}`,"m2");
+}
+function jobTick(){
+  const j=S.jobs.find(x=>x.left>0);
+  if(j){ j.left--; if(j.left<=0){ S.cash+=j.pay; S.jobs=S.jobs.filter(x=>x!==j);
+    S.statJobsDone=(S.statJobsDone||0)+1;
+    for(const e of S.emps){ e.des+=rnd(0,2); e.eng+=rnd(0,2); e.test+=rnd(0,2); }
+    log(`外包《${j.name}》完成，入账 ${j.pay} 万，员工涨了经验`,"m3"); } }
+}
+
+/* ================= 每周推进 ================= */
+function weekTick(){
+  if(S.gameOver) return;
+  S.week++;
+  devTick(); jobTick(); genJobs(); sellTick(); techTick(); randomEvent();
+  // 周固定开销：工资（平台化架构省研发费用在 devTick 内体现）
+  const wage = S.emps.length*1.5;
+  S.cash -= wage;
+  bankruptcyTick();
+  render(); saveGame();
+}
+
+/* ================= 操作按钮 ================= */
+const HIRE_REFRESH_FEE = 10; // 每次刷新人选 10 万
+function rollHirePool(){
+  const LEG_CHANCE = 0.25;
+  const first = makeEmp(15,35);
+  const second = Math.random()<LEG_CHANCE ? makeEmp(0,0,true,[first.name]) : makeEmp(25,55,false,[first.name]);
+  S.hirePool = [first, second]; // 同批候选也保证不重名
+}
+function hire(){
+  if(!S.hirePool) rollHirePool();
+  const LEG_FEE = 80;
+  const box=document.getElementById("modalBox");
+  box.innerHTML=`<h2 style="color:var(--hi)">招聘</h2>
+    <p style="color:#aaa">普通人 30 万，<span style="color:var(--hi)">★传奇员工 80 万</span>｜
+    人选不满意可 <b style="color:var(--hi)">刷新（${HIRE_REFRESH_FEE} 万/次）</b></p>
+    <div id="cands"></div>
+    <button id="reroll" class="primary">🔄 刷新人选（${HIRE_REFRESH_FEE} 万）</button>
+    <button id="hireClose">离开</button>`;
+  const c=box.querySelector("#cands");
+  S.hirePool.forEach(e=>{
+    const fee = e.legend ? LEG_FEE : 30;
+    const d=document.createElement("div"); d.className="car-card";
+    if(e.legend){
+      d.style.borderColor="var(--hi)";
+      d.innerHTML=`<b style="color:var(--hi)">★ ${e.name}</b>（${ROLE_DESC[e.role]}）<span class="tag" style="background:var(--hi);color:#222">传奇</span><br>
+        设计${e.des} 工程${e.eng} 测试${e.test} ｜ 综合${empScore(e)}<br>
+        <span style="color:var(--ok)">特长：${LEGENDS[e.name].bonus}</span>`;
+    }else{
+      d.innerHTML=`<b>${e.name}</b>（${ROLE_DESC[e.role]}）｜ 设计${e.des} 工程${e.eng} 测试${e.test} ｜ 综合${empScore(e)}`;
+    }
+    const b=document.createElement("button"); b.textContent=`签约(${fee}万)`; b.className="primary";
+    b.onclick=()=>{ if(S.cash<fee) return log("钱不够","m4");
+      S.cash-=fee; S.emps.push(e); S.hirePool=null; closeModal();
+      log(e.legend?`🎉 签约传奇员工 ${e.name}！${LEGENDS[e.name].bonus}`:`签约了 ${e.name}（${e.role}）`, e.legend?"m4":"m2"); render(); };
+    d.appendChild(b); c.appendChild(d);
+  });
+  box.querySelector("#reroll").onclick=()=>{
+    if(S.cash<HIRE_REFRESH_FEE) return log("钱不够，刷不动","m4");
+    S.cash-=HIRE_REFRESH_FEE; rollHirePool();
+    log(`花 ${HIRE_REFRESH_FEE} 万刷新了招聘人选`,"m1");
+    closeModal(); hire(); // 重开弹窗显示新的人选
+  };
+  box.querySelector("#hireClose").onclick=closeModal;
+  document.getElementById("modal").classList.add("show");
+}
+function closeModal(){document.getElementById("modal").classList.remove("show");}
+function train(){
+  const m=mainEmp(); if(!m) return log("没有员工","m4");
+  if(S.cash<20) return log("钱不够","m4");
+  S.cash-=20; m.des+=rnd(2,6); m.eng+=rnd(2,6); m.test+=rnd(2,6);
+  log(`培训 ${m.name}，全属性提升`,"m3"); render();
+}
+function ad(){
+  if(S.cash<15) return log("钱不够","m4");
+  S.cash-=15; const f=rnd(20,60); S.fans+=f; log(`投放广告，粉丝 +${f}`,"m3"); render();
+}
+function showCar(){
+  if(S.cash<25) return log("钱不够","m4");
+  S.cash-=25; const f=rnd(40,120); S.fans+=f;
+  log(`参加车展！围观群众络绎不绝，粉丝 +${f}`,"m3"); render();
+}
+
+/* ================= 立项弹窗 ================= */
+function devModal(){
+  const box=document.getElementById("modalBox");
+  let selT=0, selS=0;
+  const draw=()=>{
+    const nameInput = box.querySelector("#carName");
+    const curName = nameInput ? nameInput.value : "";
+    box.innerHTML=`<h2 style="color:var(--hi)">立项新车型</h2>
+      <p>车名：<input id="carName" placeholder="请输入车名" value="${curName.replace(/"/g,"&quot;")}" style="width:60%;padding:6px;border-radius:6px;border:1px solid #666;background:#26262f;color:#eee"></p>
+      <p>选择 <b>车型类别</b> × <b>市场定位</b>（相性越高品质越好）：</p>
+      <div>${TYPES.map((t,i)=>`<span class="sel ${i===selT?"on":""}" data-t="${i}">${t}</span>`).join("")}</div>
+      <div>${SEGS.map((s,i)=>`<span class="sel ${i===selS?"on":""}" data-s="${i}">${s}</span>`).join("")}</div>
+      <p style="margin:8px 0">相性：<b style="color:var(--hi)">${"★".repeat(AFFIN[TYPES[selT]][selS])}${"☆".repeat(5-AFFIN[TYPES[selT]][selS])}</b>
+        ｜ 当前趋势是 <b>${FAD_NAME[S.fadKey]}</b>，顺应趋势销量 ×1.4</p>
+      <button id="go" class="primary">🚀 开始研发</button> <button id="cancel">取消</button>`;
+    box.querySelectorAll("[data-t]").forEach(el=>el.onclick=()=>{selT=+el.dataset.t;draw();});
+    box.querySelectorAll("[data-s]").forEach(el=>el.onclick=()=>{selS=+el.dataset.s;draw();});
+    box.querySelector("#cancel").onclick=closeModal;
+    box.querySelector("#go").onclick=()=>{
+      const inp = box.querySelector("#carName");
+      const name = inp.value.trim();
+      if(!name){ log("请输入车名","m4"); inp.focus(); return; }
+      closeModal();
+      startDev(TYPES[selT],SEGS[selS],name);
+      render();
+    };
+  };
+  draw();
+  document.getElementById("modal").classList.add("show");
+}
+
+function renderDev(){ render(); }
+/* ================= 渲染 ================= */
+function render(){
+  tutCheck(); renderGuide();
+  document.getElementById("yr").textContent=S.year;
+  document.getElementById("wk").textContent=S.week;
+  document.getElementById("cash").textContent=fmt(S.cash);
+  document.getElementById("empn").textContent=S.emps.length;
+  document.getElementById("fans").textContent=fmt(S.fans);
+  document.getElementById("awards").textContent=S.awards;
+  const nr = RIVAL_CARS[Math.min(S.year-1, RIVAL_CARS.length-1)];
+  document.getElementById("rival").textContent=`${nr.name}(${nr.q})`;
+  document.getElementById("fad").textContent=`${S.fadKey}(${FAD_NAME[S.fadKey]})`;
+  // 员工
+  document.getElementById("empList").innerHTML = S.emps.map(e=>`
+    <div class="emp"><b style="${e.legend?"color:var(--hi)":""}">${e.legend?"★ ":""}${e.name}</b>${e.legend?'<span class="tag" style="background:var(--hi);color:#222">传奇</span>':""}（${ROLE_DESC[e.role]}）<br>
+    设计<span class="bar" style="width:${e.des}px"></span>${e.des}
+    工程<span class="bar" style="width:${e.eng}px"></span>${e.eng}
+    测试<span class="bar" style="width:${e.test}px"></span>${e.test}
+    体力${Math.round(e.stamina)}%</div>`).join("") || "<p style='color:#999'>尚未招聘员工</p>";
+  // 外包
+  document.getElementById("jobList").innerHTML = S.jobs.map(j=>`
+    <div class="car-card">${j.name} ｜ 报酬 ${j.pay} 万 ｜ ${j.left>0?`进行中 剩${j.left}周`:`<button onclick="acceptJob(S.jobs.find(x=>x.id==${j.id}))">接单(${j.weeks}周)</button>`}</div>`).join("") || "<p style='color:#999'>暂无订单</p>";
+  // 研发
+  const d=S.dev;
+  document.getElementById("devArea").innerHTML = d ? `
+    <div class="car-card"><b>${d.carName||d.type}</b>（${d.type} × ${d.seg}，相性 ${d.affin}/5）<br>
+    进度 ${d.week}/${d.totalWeeks} 周<br>
+    外观 ${Math.round(d.des)} ｜ 性能 ${Math.round(d.eng)} ｜ 可靠 ${Math.round(d.test)}<br>
+    <div style="background:#26262f;border-radius:4px"><div style="background:var(--hi);height:10px;border-radius:4px;width:${d.week/d.totalWeeks*100}%"></div></div></div>`
+    : "<p style='color:#999'>当前没有研发项目</p>";
+  // 技术研究进度
+  const tc=S.tech.cur;
+  document.getElementById("devArea").innerHTML += tc ? `
+    <div class="car-card">🔬 技术「${tc.name}」研究中：第 ${tc.week}/${tc.weeks} 周</div>` : "";
+  // 在售
+  document.getElementById("carList").innerHTML = S.cars.map(c=>`
+    <div class="car-card"><b>${c.name}</b> ${c.type}×${c.seg} 品质${c.quality}<br>
+    售价${c.price}万 已售${fmt(c.sold)}台 第${c.week}/16销售周
+    <button onclick="restyle(${c.id})">🔧 改款(20万)</button></div>`).join("") || "<p style='color:#999'>还没有上市车型</p>";
+  renderTech();
+}
+
+/* ================= 存档（localStorage 自动保存/读取） ================= */
+const SAVE_KEY = "carDevStory_save_v1";
+function saveGame(){
+  try{
+    const data = {uid, state:S};
+    localStorage.setItem(SAVE_KEY, JSON.stringify(data));
+  }catch(e){ /* 存储不可用时静默跳过 */ }
+}
+function loadGame(){
+  try{
+    const raw = localStorage.getItem(SAVE_KEY);
+    if(!raw) return false;
+    const data = JSON.parse(raw);
+    if(!data || !data.state) return false;
+    Object.assign(S, data.state);
+    uid = data.uid || 1;
+    // 旧档字段兼容
+    if(!S.tech) S.tech={cur:null,done:[]};
+    S.tut=S.tut||0; S.statDevs=S.statDevs||0; S.statJobsDone=S.statJobsDone||0; S.totalSold=S.totalSold||0;
+    S.contestPool=S.contestPool||[]; S.debtWeeks=S.debtWeeks||0; S.gameOver=!!S.gameOver; S.contestTotal=S.contestTotal||0;
+    return true;
+  }catch(e){ return false; }
+}
+function resetGame(){
+  try{ localStorage.removeItem(SAVE_KEY); }catch(e){}
+  location.reload();
+}
+// 每周推进、签约、立项等关键动作后自动存档：直接挂在原 weekTick 外层
+const _weekTick = weekTick;
+weekTick = function(){ _weekTick(); saveGame(); };
+
+/* ================= 初始化 ================= */
+// Tab 切换
+document.querySelectorAll("#tabs button").forEach(btn=>{
+  btn.onclick=()=>{
+    document.querySelectorAll("#tabs button").forEach(b=>b.classList.remove("on"));
+    document.querySelectorAll(".tabpage").forEach(p=>p.classList.remove("on"));
+    btn.classList.add("on");
+    document.getElementById("tab-"+btn.dataset.tab).classList.add("on");
+  };
+});
+document.getElementById("btnWeek").onclick=weekTick;
+document.getElementById("btnHire").onclick=hire;
+document.getElementById("btnDev").onclick=devModal;
+document.getElementById("btnTrain").onclick=train;
+document.getElementById("btnAd").onclick=ad;
+document.getElementById("btnShow").onclick=showCar;
+document.getElementById("btnReset").onclick=function(){ if(confirm("确定清除存档、重新开局？")) resetGame(); };
+document.getElementById("btnAuto").onclick=function(){
+  S.auto=!S.auto; this.textContent=S.auto?"⏸ 停止":"⏩ 自动";
+  if(S.auto) autoLoop();
+};
+function autoLoop(){ if(S.auto) setTimeout(()=>{ if(!S.auto) return; weekTick(); autoLoop(); },300); }
+
+if(loadGame()){
+  log(`存档已恢复：第 ${S.year} 年第 ${S.week} 周，资金 ${fmt(S.cash)} 万，员工 ${S.emps.length} 人，大奖 ${S.awards}`,"m4");
+  if(!S.tech) S.tech={cur:null,done:[]}; // 旧档兼容
+  if(S.gameOver) gameOver();
+}else{
+  const a = makeEmp(20,35);
+  S.emps.push(a, makeEmp(15,30,false,[a.name])); // 初始两名员工，不重名
+  log("欢迎来到汽车发展国！跟着顶部「主线任务」走一遍，你就是合格的车企老板了","m4");
+  log("提示：留意右上角的市场趋势，造对风口的车赚得最多","m2");
+  saveGame();
+}
+render();
+document.getElementById("errbar").dataset.jsok = "1";
+</script>
+</body>
+</html>
