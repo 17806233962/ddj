@@ -5,43 +5,89 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>御剑求生录 · 仙侠肉鸽</title>
 <style>
-  :root{--bg:#0b0e14;--panel:#161c28;--hi:#e6c86e;--ok:#7bc96f;--bad:#e06c6c;--blue:#7aa2c9;}
+  :root{--bg:#0a0d13;--panel:rgba(20,26,38,.92);--hi:#e6c86e;--ok:#7bc96f;--bad:#e05c5c;--blue:#7aa2c9;--line:#2a3550;}
   *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;}
   html,body{height:100%;overflow:hidden;background:var(--bg);color:#eee;
     font:14px/1.5 "Microsoft YaHei",sans-serif;touch-action:none;}
   canvas{display:block;position:absolute;inset:0;}
-  #hud{position:absolute;top:8px;left:10px;right:10px;pointer-events:none;z-index:5;}
-  #hpbar,#xpbar{height:14px;background:#0008;border:1px solid #444;border-radius:7px;overflow:hidden;margin-bottom:4px;}
-  #hpfill{height:100%;background:linear-gradient(90deg,#a33,#e06c6c);width:100%;}
-  #xpfill{height:100%;background:linear-gradient(90deg,#4a7,#7bc96f);width:0%;}
-  #hudinfo{font-size:12px;color:#bbb;text-shadow:0 1px 2px #000;display:flex;gap:12px;flex-wrap:wrap;}
-  #skillsHud{position:absolute;top:64px;left:10px;z-index:5;pointer-events:none;font-size:11px;color:#ccc;}
-  #skillsHud span{display:inline-block;background:#0009;border:1px solid #345;border-radius:4px;padding:1px 6px;margin:2px;}
-  /* 摇杆 */
-  #stick{position:absolute;left:18px;bottom:18px;width:120px;height:120px;border:2px solid #4458;
-    border-radius:50%;background:#fff1;z-index:10;}
-  #stickKnob{position:absolute;left:35px;top:35px;width:50px;height:50px;border-radius:50%;background:rgba(138,187,255,.55);border:1px solid #ace;}
+  /* ---- HUD 顶栏 ---- */
+  #hud{position:absolute;top:10px;left:12px;right:12px;pointer-events:none;z-index:5;}
+  #hpwrap{position:relative;height:18px;border-radius:9px;overflow:hidden;
+    background:linear-gradient(#000c,#0009);border:1px solid #3a2030;box-shadow:0 2px 8px #0008;}
+  #hpfill{height:100%;width:100%;border-radius:8px;
+    background:linear-gradient(180deg,#f08a8a,#c03b3b 60%,#8f2424);transition:width .15s;}
+  #hptext{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;
+    font-size:11px;color:#ffd;text-shadow:0 1px 2px #000;letter-spacing:1px;}
+  #xpwrap{margin-top:4px;height:8px;border-radius:4px;overflow:hidden;background:#000a;border:1px solid #243a2a;}
+  #xpfill{height:100%;width:0%;border-radius:4px;background:linear-gradient(90deg,#3f8f5a,#8fe0a8);transition:width .15s;}
+  #hudinfo{margin-top:6px;font-size:12px;color:#cdd6e4;text-shadow:0 1px 3px #000;
+    display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
+  #hudinfo b{color:var(--hi);font-weight:600;}
+  .pill{display:inline-flex;align-items:center;gap:4px;background:rgba(10,14,22,.62);
+    border:1px solid var(--line);border-radius:20px;padding:2px 10px;backdrop-filter:blur(3px);}
+  /* ---- 技能栏 ---- */
+  #skillsHud{position:absolute;top:78px;left:12px;z-index:5;pointer-events:none;
+    display:flex;flex-direction:column;gap:5px;}
+  #skillsHud .sk{display:flex;align-items:center;gap:6px;background:rgba(12,16,26,.72);
+    border:1px solid var(--line);border-left:3px solid var(--hi);border-radius:8px;
+    padding:3px 9px 3px 6px;font-size:12px;color:#dde;backdrop-filter:blur(3px);}
+  #skillsHud .sk .ico{font-size:15px;filter:drop-shadow(0 0 4px #e6c86e66);}
+  #skillsHud .sk .dir{color:#9aa8c0;font-size:11px;}
+  /* ---- 摇杆 ---- */
+  #stick{position:absolute;left:20px;bottom:26px;width:128px;height:128px;border-radius:50%;
+    border:1.5px solid rgba(140,170,230,.35);background:radial-gradient(circle,rgba(30,40,60,.35),rgba(10,14,22,.15));
+    box-shadow:inset 0 0 24px #0006, 0 4px 18px #0007;z-index:10;}
+  #stick::after{content:"";position:absolute;inset:22%;border-radius:50%;border:1px dashed rgba(140,170,230,.22);}
+  #stickKnob{position:absolute;left:39px;top:39px;width:50px;height:50px;border-radius:50%;
+    background:radial-gradient(circle at 35% 30%,#b9d4ff,#5f86c9 65%,#3c5a95);
+    box-shadow:0 3px 12px #000a, inset 0 -4px 8px #0006, 0 0 14px #7aa2c955;}
+  /* ---- 圆形按钮 ---- */
+  .cbtn{width:58px;height:58px;border-radius:50%;font-size:13px;color:#dce6f5;
+    border:1.5px solid rgba(140,170,230,.4);background:radial-gradient(circle at 35% 30%,rgba(60,80,120,.85),rgba(20,28,44,.9));
+    box-shadow:0 4px 14px #0008, inset 0 1px 2px #fff2;}
+  .cbtn:active{transform:scale(.94);filter:brightness(1.2);}
+  /* ---- 弹窗 ---- */
+  #overlay{position:absolute;inset:0;background:rgba(4,6,10,.72);backdrop-filter:blur(4px);
+    z-index:20;display:none;align-items:center;justify-content:center;}
+  #overlayBox{background:var(--panel);border:1px solid var(--line);border-radius:16px;
+    padding:22px;max-width:540px;width:92%;max-height:88vh;overflow-y:auto;
+    box-shadow:0 20px 60px #000c, inset 0 1px 0 #ffffff14;}
+  .upcard{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin:9px 0;
+    cursor:pointer;background:linear-gradient(135deg,rgba(38,48,70,.5),rgba(20,26,40,.5));
+    transition:border-color .12s, transform .12s, box-shadow .12s;}
+  .upcard:hover{border-color:var(--hi);transform:translateY(-2px);
+    box-shadow:0 6px 20px #0009, 0 0 18px #e6c86e22;}
+  .upcard .t{font-size:16px;color:var(--hi);}
+  .upcard .tagA{color:#e8b96a;border-color:#e8b96a66;}
+  .upcard .tagB{color:#8fc1ee;border-color:#8fc1ee66;}
+  .upsub{font-size:11px;border:1px solid;border-radius:10px;padding:0 8px;margin-left:8px;vertical-align:2px;}
+  h2.ot{font-size:22px;letter-spacing:6px;text-align:center;
+    background:linear-gradient(90deg,#c9a24a,#f5e3a0,#c9a24a);-webkit-background-clip:text;background-clip:text;color:transparent;}
+  .bigbtn{padding:12px 26px;border:none;border-radius:10px;font-size:16px;letter-spacing:4px;color:#fff;
+    background:linear-gradient(180deg,#c94b3f,#9e2f26);box-shadow:0 4px 16px #000a, inset 0 1px 0 #fff3;}
+  .bigbtn:active{transform:scale(.97);}
+  .bigbtn.alt{background:linear-gradient(180deg,#3a5578,#263a55);}
 </style>
 </head>
 <body>
 <canvas id="cv"></canvas>
 <div id="hud">
-  <div id="hpbar"><div id="hpfill"></div></div>
-  <div id="xpbar"><div id="xpfill"></div></div>
+  <div id="hpwrap"><div id="hpfill"></div><div id="hptext">100 / 100</div></div>
+  <div id="xpwrap"><div id="xpfill"></div></div>
   <div id="hudinfo">
-    <span>境界:<b id="lvl">炼气一层</b></span><span>灵石:<b id="gems">0</b></span>
-    <span>击杀:<b id="kills">0</b></span><span>时间:<b id="time">0:00</b></span>
-    <span>波次:<b id="wave">1</b></span>
+    <span class="pill">☯ <b id="lvl">炼气一层</b></span>
+    <span class="pill">💎 <b id="gems">0</b></span>
+    <span class="pill">☠ <b id="kills">0</b></span>
+    <span class="pill">⏱ <b id="time">0:00</b></span>
+    <span class="pill">🌊 <b id="wave">1</b></span>
   </div>
 </div>
 <div id="skillsHud"></div>
 <div id="stick"><div id="stickKnob"></div></div>
-<div style="position:absolute;right:14px;bottom:30px;z-index:10;display:flex;flex-direction:column;gap:12px;">
-  <button id="btnPause" style="width:58px;height:58px;border-radius:50%;border:2px solid #445;background:#fff2;color:#cde;font-size:12px;">暂停</button>
+<div style="position:absolute;right:16px;bottom:32px;z-index:10;">
+  <button id="btnPause" class="cbtn">暂停</button>
 </div>
-<div id="overlay" style="position:absolute;inset:0;background:#000b;z-index:20;display:none;align-items:center;justify-content:center;">
-  <div id="overlayBox" style="background:var(--panel);border-radius:14px;padding:20px;max-width:520px;width:92%;max-height:88vh;overflow-y:auto;"></div>
-</div>
+<div id="overlay"><div id="overlayBox"></div></div>
 <script>
 /* ================= 工具 ================= */
 const cv=document.getElementById("cv"),ctx=cv.getContext("2d");
@@ -238,6 +284,7 @@ function qiTick(dt){
   }
 }
 function fx(x,y,c,r){G.fx.push({x,y,c,r:r||26,kind:"ring",life:0.3,t:0.3});}
+function banner(txt){G.fx.push({x:W/2,y:H*0.3,kind:"banner",life:1.6,t:1.6,txt});}
 
 /* ================= 敌人 ================= */
 function spawnWave(dt){
@@ -261,10 +308,11 @@ function spawnWave(dt){
     if(G.wave%4===0){ // boss 波
       const a=rnd(0,Math.PI*2),d=Math.max(W,H)*0.6;
       G.enemies.push(mkEnemy(ETYPES[4],W/2+Math.cos(a)*d,H/2+Math.sin(a)*d,1+G.wave*0.15));
-      log("妖王现身！击败它有大量灵石");
+      banner("⚠ 妖王降世 ⚠");
     }else{
       const a=rnd(0,Math.PI*2),d=Math.max(W,H)*0.6;
       G.enemies.push(mkEnemy(ETYPES[3],W/2+Math.cos(a)*d,H/2+Math.sin(a)*d,1+G.wave*0.15));
+      banner(`第 ${G.wave} 波 · 妖将出击`);
     }
   }
 }
@@ -274,6 +322,7 @@ function mkEnemy(t,x,y,hpMul){
 }
 function hurtEnemy(e,dmg){
   e.hp-=dmg;
+  if(dmg>=1)G.fx.push({x:e.x+rnd(-6,6),y:e.y-e.r-4,c:dmg>=30?"#ff9a54":"#ffe9b0",kind:"dmg",life:0.6,t:0.6,txt:Math.round(dmg)});
   if(e.hp<=0&&!e.dead){
     e.dead=true;G.kills++;
     const n=e.type.gem;G.gemRun=(G.gemRun||0)+n;
@@ -348,14 +397,14 @@ function levelUpModal(){
   G.paused=true;
   const opts=rollUpgrades();
   const box=document.getElementById("overlayBox");
-  box.innerHTML=`<h2 style="color:var(--hi);text-align:center">⚔ 突破！${realmName(G.p.lv)}</h2>
-    <p style="text-align:center;color:#999;font-size:12px">三选一，选一个方向</p><div id="ups"></div>`;
+  box.innerHTML=`<h2 class="ot">突破 · ${realmName(G.p.lv)}</h2>
+    <p style="text-align:center;color:#8896ad;font-size:12px;margin:4px 0 10px">道心抉择，三选其一</p><div id="ups"></div>`;
   const c=box.querySelector("#ups");
   opts.forEach(o=>{
     const d=document.createElement("div");
-    d.style.cssText="border:1px solid #345;border-radius:10px;padding:10px;margin:8px 0;cursor:pointer";
-    d.innerHTML=`<b style="color:var(--hi)">${o.title}</b>　<span style="color:#888;font-size:12px">${o.sub}</span><br>
-      <span style="color:#bbc;font-size:13px">${o.desc}</span>`;
+    d.className="upcard";
+    d.innerHTML=`<span class="t">${o.title}</span><span class="upsub ${o.sub==="方向A"?"tagA":o.sub==="方向B"?"tagB":""}">${o.sub}</span><br>
+      <span style="color:#aeb9cc;font-size:13px">${o.desc}</span>`;
     d.onclick=()=>{o.apply();G.paused=false;
       document.getElementById("overlay").style.display="none";
       renderSkillHud();saveMeta();};
@@ -462,68 +511,138 @@ function tick(dt){
 
 /* ================= 渲染 ================= */
 function draw(){
-  ctx.fillStyle="#0b0e14";ctx.fillRect(0,0,W,H);
-  // 背景星点
-  ctx.fillStyle="#1c2433";
-  for(let i=0;i<40;i++){
-    const x=(i*173.3)%W,y=(i*97.7)%H;
-    ctx.fillRect(x,y,2,2);
+  // 背景：深色渐变 + 远山淡纹 + 星点
+  const bg=ctx.createRadialGradient(W/2,H*0.42,0,W/2,H*0.42,Math.max(W,H)*0.8);
+  bg.addColorStop(0,"#131a2a");bg.addColorStop(1,"#070a10");
+  ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+  ctx.globalAlpha=0.5;ctx.fillStyle="#1a2334";
+  for(let i=0;i<26;i++){ // 云纹
+    const x=(i*211.7)%W,y=(i*137.3)%H;
+    ctx.beginPath();ctx.ellipse(x,y,26,5,0,0,7);ctx.fill();
   }
+  ctx.globalAlpha=0.8;ctx.fillStyle="#2c3a55";
+  for(let i=0;i<48;i++){const x=(i*173.3)%W,y=(i*97.7)%H;ctx.fillRect(x,y,2,2);}
+  ctx.globalAlpha=1;
   if(!G)return;
   const p=G.p;
-  // 灵气球
+  // 灵气球：辉光小星
   for(const o of G.orbs){
-    ctx.fillStyle="#7bc96f";ctx.beginPath();ctx.arc(o.x,o.y,4,0,7);ctx.fill();
+    ctx.fillStyle="#7bc96f44";ctx.beginPath();ctx.arc(o.x,o.y,8,0,7);ctx.fill();
+    ctx.fillStyle="#a8e890";ctx.beginPath();ctx.arc(o.x,o.y,3.4,0,7);ctx.fill();
   }
-  // 敌人
-  for(const e of G.enemies){
-    ctx.fillStyle=e.type.color;
-    ctx.beginPath();ctx.arc(e.x,e.y,e.r,0,7);ctx.fill();
-    // 血条
-    if(e.hp<e.maxhp){
-      ctx.fillStyle="#000a";ctx.fillRect(e.x-e.r,e.y-e.r-8,e.r*2,4);
-      ctx.fillStyle="#e06c6c";ctx.fillRect(e.x-e.r,e.y-e.r-8,e.r*2*e.hp/e.maxhp,4);
-    }
-    if(e.stun>0){ctx.strokeStyle="#8ef";ctx.strokeRect(e.x-e.r-2,e.y-e.r-2,e.r*2+4,e.r*2+4);}
+  // 灼烧地带先画（在敌人下面）
+  for(const f of G.fx)if(f.kind==="zone"){
+    ctx.fillStyle=f.c;ctx.globalAlpha=0.16;
+    ctx.beginPath();ctx.arc(f.x,f.y,f.r,0,7);ctx.fill();
+    ctx.globalAlpha=0.5;ctx.strokeStyle=f.c;ctx.stroke();ctx.globalAlpha=1;
   }
-  // 弹幕
+  // 敌人：按种类分形状
+  for(const e of G.enemies)drawEnemy(e);
+  // 弹幕：拖尾方向感
   for(const s of G.shots){
-    ctx.fillStyle=s.kind==="sword"?"#cde":s.kind==="fire"?"#f84":s.kind==="ice"?"#8cf":"#fff";
-    ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,7);ctx.fill();
+    const c=s.kind==="sword"?"#dce8ff":s.kind==="fire"?"#ff9a54":s.kind==="ice"?"#9ad8ff":"#fff";
+    ctx.strokeStyle=c;ctx.globalAlpha=0.45;ctx.lineWidth=s.r*1.2;
+    ctx.beginPath();ctx.moveTo(s.x-s.vx*0.035,s.y-s.vy*0.035);ctx.lineTo(s.x,s.y);ctx.stroke();
+    ctx.globalAlpha=1;ctx.lineWidth=1;
+    ctx.fillStyle=c;ctx.beginPath();ctx.arc(s.x,s.y,s.r,0,7);ctx.fill();
+    ctx.fillStyle="#fff8";ctx.beginPath();ctx.arc(s.x,s.y,s.r*0.4,0,7);ctx.fill();
   }
   // 罡气球
   if(p.skills.qi&&p.skills.qi.orbs){
     for(const o of p.skills.qi.orbs){
-      ctx.fillStyle="#8ab4";ctx.beginPath();ctx.arc(o.x,o.y,9,0,7);ctx.fill();
-      ctx.strokeStyle="#ace";ctx.stroke();
+      ctx.fillStyle="rgba(138,187,255,.35)";
+      ctx.beginPath();ctx.arc(o.x,o.y,11,0,7);ctx.fill();
+      ctx.strokeStyle="#bcd8ff";ctx.lineWidth=1.5;ctx.stroke();ctx.lineWidth=1;
+      ctx.fillStyle="#e8f2ff";ctx.beginPath();ctx.arc(o.x,o.y,3.5,0,7);ctx.fill();
     }
   }
+  // 主角：灵光 + 修士
+  const pulse=1+Math.sin(G.t*4)*0.08;
+  const aura=ctx.createRadialGradient(p.x,p.y,2,p.x,p.y,p.r*2.6*pulse);
+  aura.addColorStop(0,"rgba(230,200,110,.5)");aura.addColorStop(1,"rgba(230,200,110,0)");
+  ctx.fillStyle=aura;ctx.beginPath();ctx.arc(p.x,p.y,p.r*2.6*pulse,0,7);ctx.fill();
+  if(p.iframe>0&&(G.t*20|0)%2===0)ctx.globalAlpha=0.45;
+  ctx.fillStyle="#f2d98a";ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,7);ctx.fill();
+  ctx.strokeStyle="#fffbe8";ctx.lineWidth=2;ctx.stroke();ctx.lineWidth=1;
+  // 道袍纹（一竖）
+  ctx.strokeStyle="#8a6d2f";ctx.beginPath();ctx.moveTo(p.x,p.y-p.r+3);ctx.lineTo(p.x,p.y+p.r-3);ctx.stroke();
+  ctx.globalAlpha=1;
   // 特效
   for(const f of G.fx){
     const k=f.life/(f.t||0.3);
     if(f.kind==="ring"){
-      ctx.strokeStyle=f.c;ctx.globalAlpha=k;
+      ctx.strokeStyle=f.c;ctx.globalAlpha=k;ctx.lineWidth=2.5;
       ctx.beginPath();ctx.arc(f.x,f.y,f.r*(1.4-k*0.4),0,7);ctx.stroke();
-      ctx.globalAlpha=1;
-    }else if(f.kind==="zone"){
-      ctx.fillStyle=f.c;ctx.globalAlpha=0.18;
-      ctx.beginPath();ctx.arc(f.x,f.y,f.r,0,7);ctx.fill();ctx.globalAlpha=1;
+      ctx.globalAlpha=1;ctx.lineWidth=1;
     }else if(f.kind==="bolt"){
-      ctx.strokeStyle="#8ef";ctx.globalAlpha=k;ctx.lineWidth=3;
+      ctx.strokeStyle="#bfe8ff";ctx.globalAlpha=k;ctx.lineWidth=3.5;
+      ctx.shadowColor="#8ef";ctx.shadowBlur=8;
       ctx.beginPath();ctx.moveTo(f.x,f.y);
       let x=f.x,y=f.y;
       for(let i=0;i<4;i++){x+=rnd(-14,14);y+=(f.y2-f.y)/4;ctx.lineTo(x,y);}
-      ctx.lineTo(f.x2,f.y2);ctx.stroke();ctx.globalAlpha=1;ctx.lineWidth=1;
+      ctx.lineTo(f.x2,f.y2);ctx.stroke();
+      ctx.shadowBlur=0;ctx.globalAlpha=1;ctx.lineWidth=1;
+    }else if(f.kind==="dmg"){ // 伤害飘字
+      ctx.globalAlpha=Math.min(1,k*1.4);
+      ctx.font="bold 13px sans-serif";ctx.fillStyle=f.c||"#ffd";ctx.textAlign="center";
+      ctx.fillText(f.txt,f.x,f.y-(1-k)*26);
+      ctx.globalAlpha=1;ctx.textAlign="left";
+    }else if(f.kind==="banner"){
+      ctx.globalAlpha=Math.min(1,k*2)>1?1:Math.min(1,k*2);
+      ctx.font="bold 26px 'Microsoft YaHei'";ctx.textAlign="center";
+      ctx.shadowColor="#000";ctx.shadowBlur=10;
+      ctx.fillStyle="#e6c86e";ctx.fillText(f.txt,W/2,f.y);
+      ctx.shadowBlur=0;ctx.globalAlpha=1;ctx.textAlign="left";
     }
   }
-  // 主角
-  if(p.iframe>0&&(G.t*20|0)%2===0)ctx.globalAlpha=0.4;
-  ctx.fillStyle="#e6c86e";ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,7);ctx.fill();
-  ctx.strokeStyle="#fff";ctx.stroke();ctx.globalAlpha=1;
+}
+function drawEnemy(e){
+  const t=e.type;
+  ctx.save();ctx.translate(e.x,e.y);
+  // 阴影
+  ctx.fillStyle="rgba(0,0,0,.3)";
+  ctx.beginPath();ctx.ellipse(0,e.r*0.8,e.r*0.9,e.r*0.32,0,0,7);ctx.fill();
+  if(e.stun>0)ctx.globalAlpha=0.7;
+  ctx.fillStyle=t.color;
+  if(t.id==="wolf"){ // 三角狼
+    ctx.beginPath();ctx.moveTo(0,-e.r);ctx.lineTo(e.r,e.r*0.7);ctx.lineTo(-e.r,e.r*0.7);ctx.closePath();ctx.fill();
+    ctx.fillStyle="#ffde";ctx.beginPath();ctx.arc(-e.r*0.3,-e.r*0.15,1.8,0,7);ctx.arc(e.r*0.3,-e.r*0.15,1.8,0,7);ctx.fill();
+  }else if(t.id==="boar"){ // 六边甲兽
+    ctx.beginPath();for(let i=0;i<6;i++){const a=Math.PI/6+i*Math.PI/3;
+      ctx[i?"lineTo":"moveTo"](Math.cos(a)*e.r,Math.sin(a)*e.r);}ctx.closePath();ctx.fill();
+    ctx.strokeStyle="#0004";ctx.stroke();
+  }else if(t.id==="ghost"){ // 幽光
+    const fl=1+Math.sin(Date.now()/200+e.x)*0.12;
+    ctx.fillStyle="rgba(138,180,220,.75)";
+    ctx.beginPath();ctx.arc(0,0,e.r*fl,0,7);ctx.fill();
+    ctx.fillStyle="#dff4ff";ctx.beginPath();ctx.arc(-e.r*0.3,-e.r*0.2,2,0,7);ctx.arc(e.r*0.3,-e.r*0.2,2,0,7);ctx.fill();
+  }else if(t.id==="elite"){ // 妖将：菱形+角
+    ctx.beginPath();ctx.moveTo(0,-e.r);ctx.lineTo(e.r,0);ctx.lineTo(0,e.r);ctx.lineTo(-e.r,0);ctx.closePath();ctx.fill();
+    ctx.strokeStyle="#fff5";ctx.lineWidth=2;ctx.stroke();ctx.lineWidth=1;
+    ctx.fillStyle="#fff";ctx.beginPath();ctx.moveTo(-4,-e.r);ctx.lineTo(0,-e.r-7);ctx.lineTo(4,-e.r);ctx.closePath();ctx.fill();
+  }else{ // boss 妖王：大圆 + 王冠
+    ctx.beginPath();ctx.arc(0,0,e.r,0,7);ctx.fill();
+    ctx.strokeStyle="#fff6";ctx.lineWidth=3;ctx.stroke();ctx.lineWidth=1;
+    ctx.fillStyle="#ffd700";
+    ctx.beginPath();ctx.moveTo(-10,-e.r+2);ctx.lineTo(-5,-e.r-10);ctx.lineTo(0,-e.r+2);
+    ctx.lineTo(5,-e.r-10);ctx.lineTo(10,-e.r+2);ctx.closePath();ctx.fill();
+  }
+  ctx.restore();
+  if(e.slowT>0){ctx.strokeStyle="#9ad8ff";ctx.globalAlpha=.6;
+    ctx.beginPath();ctx.arc(e.x,e.y,e.r+3,0,7);ctx.stroke();ctx.globalAlpha=1;}
+  if(e.stun>0){ctx.strokeStyle="#8ef";ctx.strokeRect(e.x-e.r-2,e.y-e.r-2,e.r*2+4,e.r*2+4);}
+  // 血条
+  if(e.hp<e.maxhp){
+    const w=e.r*2;
+    ctx.fillStyle="rgba(0,0,0,.55)";ctx.fillRect(e.x-e.r,e.y-e.r-9,w,3.6);
+    ctx.fillStyle=t.id==="boss"?"#ffb347":"#e05c5c";
+    ctx.fillRect(e.x-e.r,e.y-e.r-9,w*Math.max(0,e.hp/e.maxhp),3.6);
+  }
 }
 function hud(){
   const p=G.p;
   document.getElementById("hpfill").style.width=(p.hp/p.maxhp*100)+"%";
+  document.getElementById("hptext").textContent=`${Math.ceil(p.hp)} / ${Math.round(p.maxhp)}`;
   document.getElementById("xpfill").style.width=(p.xp/p.xpn*100)+"%";
   document.getElementById("lvl").textContent=realmName(p.lv)+"("+p.lv+")";
   document.getElementById("gems").textContent=(G.gemRun||0);
@@ -536,7 +655,7 @@ function renderSkillHud(){
   const el=document.getElementById("skillsHud");
   el.innerHTML=Object.entries(G.p.skills).map(([id,s])=>{
     const sk=SKILLS[id],dir=s.a||s.b?(s.a>=s.b?sk.a.name:sk.b.name):"未定向";
-    return `<span>${sk.icon}${sk.name}Lv${s.lv}·${dir}</span>`;
+    return `<div class="sk"><span class="ico">${sk.icon}</span><span>${sk.name}<b style="color:var(--hi)">Lv${s.lv}</b></span><span class="dir">${dir}</span></div>`;
   }).join("");
 }
 
@@ -552,12 +671,14 @@ function gameOver(){
   const gemsEarned=G.gemRun||0;
   META.gems+=gemsEarned;saveMeta();
   const box=document.getElementById("overlayBox");
-  box.innerHTML=`<h2 style="color:var(--bad);text-align:center">💀 道陨</h2>
-    <p style="text-align:center;color:#aaa">坚守 ${Math.floor(G.t/60)}分${Math.floor(G.t%60)}秒 · ${realmName(G.p.lv)} · 击杀 ${G.kills} · 波次 ${G.wave}</p>
-    <p style="text-align:center;color:var(--hi);font-size:18px;margin:10px 0">获得灵石 💎 ${gemsEarned}</p>
-    <div style="display:flex;gap:10px;justify-content:center">
-      <button style="padding:10px 22px;border:none;border-radius:8px;background:#c0392b;color:#fff" onclick="restart()">轮回再战</button>
-      <button style="padding:10px 22px;border:none;border-radius:8px;background:#345;color:#fff" onclick="showCave()">洞府修炼</button>
+  box.innerHTML=`<h2 class="ot" style="background:linear-gradient(90deg,#a04,#f79,#a04);-webkit-background-clip:text;background-clip:text;">道 陨</h2>
+    <p style="text-align:center;color:#8896ad;font-size:13px;margin:6px 0">
+      坚守 <b style="color:#cde">${Math.floor(G.t/60)}分${Math.floor(G.t%60)}秒</b> ·
+      ${realmName(G.p.lv)} · 击杀 <b style="color:#cde">${G.kills}</b> · 波次 <b style="color:#cde">${G.wave}</b></p>
+    <p style="text-align:center;font-size:20px;margin:14px 0;color:var(--hi);text-shadow:0 0 12px #e6c86e44">💎 灵石 +${gemsEarned}</p>
+    <div style="display:flex;gap:12px;justify-content:center;margin-top:8px">
+      <button class="bigbtn" onclick="restart()">轮回再战</button>
+      <button class="bigbtn alt" onclick="showCave()">洞府修炼</button>
     </div>`;
   document.getElementById("overlay").style.display="flex";
 }
@@ -568,20 +689,24 @@ function restart(){
 /* ================= 洞府（元进度） ================= */
 function showCave(){
   const box=document.getElementById("overlayBox");
-  box.innerHTML=`<h2 style="color:var(--hi);text-align:center">🏠 洞府 · 长生大道</h2>
-    <p style="text-align:center;color:var(--hi)">灵石 💎 ${META.gems}</p>
+  box.innerHTML=`<h2 class="ot">洞 府 · 长生大道</h2>
+    <p style="text-align:center;font-size:17px;margin:8px 0;color:var(--hi);text-shadow:0 0 12px #e6c86e44">💎 ${META.gems}</p>
     <div id="mups"></div>
-    <div style="text-align:center;margin-top:12px">
-      <button style="padding:10px 22px;border:none;border-radius:8px;background:#c0392b;color:#fff" onclick="restart()">出战</button>
+    <div style="text-align:center;margin-top:14px">
+      <button class="bigbtn" onclick="restart()">出 战</button>
     </div>`;
   const c=box.querySelector("#mups");
   Object.entries(META_UPS).forEach(([k,u])=>{
     const lv=META.ups[k],maxed=lv>=u.max,cost=u.cost(lv);
     const d=document.createElement("div");
-    d.style.cssText="border:1px solid #345;border-radius:10px;padding:8px 10px;margin:6px 0;display:flex;align-items:center;justify-content:space-between";
-    d.innerHTML=`<div><b>${u.name} Lv${lv}/${u.max}</b><br><span style="color:#99a;font-size:12px">${u.desc}</span></div>
-      <button ${maxed||META.gems<cost?"disabled":""} style="padding:8px 12px;border:none;border-radius:8px;background:${maxed?"#555":"#4a7"};color:#fff">
-        ${maxed?"圆满":`💎${cost}`}</button>`;
+    d.className="upcard";
+    d.innerHTML=`<div style="display:flex;align-items:center;justify-content:space-between">
+      <div><span class="t" style="font-size:15px">${u.name}</span>
+      <span style="color:#66748c;font-size:12px;margin-left:8px">Lv${lv}/${u.max}</span>
+      <br><span style="color:#aeb9cc;font-size:12px">${u.desc}</span></div>
+      <button ${maxed||META.gems<cost?"disabled":""} style="padding:8px 14px;border:none;border-radius:8px;font-size:14px;
+        background:${maxed?"#3a4152":META.gems<cost?"#3a4152":"linear-gradient(180deg,#4a9d68,#357a4c)"};color:${maxed||META.gems<cost?"#778":"#fff"}">
+        ${maxed?"圆满":`💎 ${cost}`}</button></div>`;
     d.querySelector("button").onclick=()=>{
       if(META.gems>=cost&&!maxed){META.gems-=cost;META.ups[k]++;saveMeta();showCave();}
     };
@@ -590,7 +715,7 @@ function showCave(){
   document.getElementById("overlay").style.display="flex";
 }
 function saveMeta(){try{localStorage.setItem(SAVE_KEY,JSON.stringify(META));}catch(e){}}
-function showLevelTip(){log("妖兽来袭！移动躲避，技能自动施放");}
+function showLevelTip(){banner("妖兽来袭！走位躲避，神通自施");}
 
 /* ================= 按钮 ================= */
 document.getElementById("btnPause").onclick=function(){
@@ -599,10 +724,9 @@ document.getElementById("btnPause").onclick=function(){
 
 /* ================= 启动 ================= */
 newGame();
-// 破产判断用不到了，但保留错误提示
 window.onerror=function(msg,src,line){
-  const b=document.getElementById("hpbar");
-  if(b)b.style.outline="2px solid #e06c6c";
+  const b=document.getElementById("hpwrap");
+  if(b)b.style.outline="2px solid #e05c5c";
   return false;
 };
 requestAnimationFrame(loop);
