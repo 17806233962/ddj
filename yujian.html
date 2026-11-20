@@ -123,6 +123,17 @@ const SKILLS={
 };
 const REALMS=["炼气一层","炼气三层","炼气六层","筑基","结丹","元婴","化神","炼虚","合体","大乘","渡劫","仙人"];
 
+/* ================= 精灵贴图（DCSS 素材，base64 内嵌） ================= */
+const SPR_SRC={"player": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAB80lEQVR42u1WMWvCQBT+LkjX2uLi0MZFAh3aQeLsKP6ECP0BXYoOXd0dlP4FoV1LBzs5CG4GIVAQJEvUwUXKze1wHZIcMSamdwmWQg9Ccsnl3fe+9733Dvgf6QbzLumhpNmcvT1i2m8jDQhFevP3FwCArqmpQORkkZujCX8emnNpGklaBszRBLqmgjTupewpqRhYr9znxfKoImQdo85p1zUVQ3OOjlGX0gGRUT5nwfNc11Q+r7Z6QnaJzOZRG/tzURBExnNcXLp3TwPhuQgI4TQ0F0vo4Zfr1R4rWYZgh/pqq+cXHgCAvdmiXCzA3mzR7A4QXpu0hyLiuWeQe6lrKoxaBQBQLhZcj9x6kEkasr3YR4B6Hs8iv4VKNBMFEGw0e3QG423UKrA3W9ibLQ9rkIWkhnVQhL7RgHEAwPzsGvl8Hq+f7vzr6hSWZe2xk0kz8uMeFJPjOCiVSnyNZVmglO6Iu9rqMZ8BGQCENO5ZXKZQSuE4zs48LsMO2UkSIYn4iU37begnH6CU8gsA7m7O8fRwGxVrcigVhQuRrqluGo5naHYHAIBpvy1cgLI4kmUypACYi6XvPfEEdxQALEnRMufDvxmCXwUQ0+WIaBMSBZAYf1kdKDLngZjCwlkQAZH7Ke3hhhQ3/Pbsnw8yOxMK/COyFt827f8yeo0bCQAAAABJRU5ErkJggg==", "wolf": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAD60lEQVR42q1XPYgbRxT+Rlk43NqJ4cBcYe+FRMXaOgwufDYYIdIEI5DYJhLIYCGsxuaKLZYrhDlUqLjysJCLA10RZB3ItaxOV6SRki3UaJu4sasUqYwxPBfmjd+MVvdja2BZaffNvO9973tvZhURYZVDKUUAQETqPPapVTvvd7oXm0REK7kAUL/TpS9Lnn9ealWRh0HN+M+pOGs4WPHgFEzmY9ggknThnCWgi4rK9TzEUQS/UIdfqAMA4igyAMm1HFtAxWo5MSqlFC0DQUTqSxpMEPIOAGEAzKaxsZZz3qguCkJGPpmPsbW5rS8OmIiUc1oty3HUOzRASBsG9fV5W2uBHU7mY/2/5FcwGI4WNcBOmLokJqTqZTQMgMHwM1kdDGRrcxthUINSigwA6YyrnUiHcRShsbePOIqQz2WRzrjY2tzW7/udrhaZzUaz1TYAhEFNgwDaZh/giFg4veMD3LpzE8VqWT8r+RXMprG2k0DzuazuASzqfqerWSAixYA4JY6kVEbfOz4AG0saXc9Dw9tHY3cHJb+igfiFOno4QMmv6MUluDAwGxYHoYjIEF0Y1OAX6mjs7iCdcQEAfqFuaIJLlYUmNcP0StExm9IxAAyGIygAFAY1NFttsLAkE3IwK6wDmbbTnEtwPH8wHIGI1A8AGk8rz/Dxw//47f5DAMCb8TH+ePQY7/+d49qP63gzPsbapzXce/A7Xrx8gV9uXMdP65e1s/UrGwCA9SsbmMzHmE1jdLqv4P56FWuf1jTAd/+9xb27t9HpvoLRiH5OX8JgOMJgOEJ00kex+pWNo96hpm5QHenFmEoGIZmwRS1Ft9BzWANJ+zg7T2dczKaxLr9itYx8Lrtgz2lpttoL+mBmmHpjL7A7G4uRVT6Zj7Vz6UwKymZGVoDreUsZSCVtlbYYpeNitQybLW6rHKFNOZdpya/oXrH0PBAGNcymsXbKJcR6+PuvfxBHEbY2t7VDTof83Wy1jTU4DZwm7pqpJArTGRdHvUNdPrNpjKPeIRp7+wa1kgHpXLI1mY+1cztFCwzYWmC6mdaSHxnR2OlTSpEEIXdHfm5rJ/FMyDTlc1nd9YhI8Z4gh+z/NgMymMFwZFQTv196KE1nXF0yUqAMSC4k9wuelzR4jmTAOe10u+xwUqyWIc8Dg+FIb1zLnCeVqZECm0J7H0/qcq7nJXbAs4ZkLpX0wkbJabDTYYsxyZbto5M+0hkXzxtPDFvHpl42k6QDqLTl3e20cz+PP18PtW2z1TZsKTrpk7yf9QkWBjXK57IUBjUCcOHPMXk54gwHeV8mRCk+jui8Hy3f9HWslKLopA/Oo0399zgHgM+R7GUQU+uAjwAAAABJRU5ErkJggg==", "boar": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAD/UlEQVR42sVXv2tbVxT+ruMOKUno0EWTjYyQ5C4FgSyQJrlQCH5bHm98WgTCQ/8BW7ya8iCzhkfAizUaZ3NIJnsoCUgOLnSIftREkRIHDWmbpmTo1NMhOtfnXj2p6lB84cLzfUfn+853frxrRUS4zrWEa14LEVBKkVLqeggopSgIIwD4X0gsnALX8Q0S/0WViS3F/WZhAuuFDX4kpRTZhGLA9LPr+AjCCHFKLkQgkV41lMil8hj0uoYqEozPGXjT9wAAnVZ7yvfyLMkAKLtFXcfXSgx6XQx6Xa2KfNdptTlaJNKrGPeH6LTaODpuwnV8dXTcnK2AVXTkOj7G/SES6VWsFzbQabWxXthAMpOdIsZK8TODPzo40OALKSAj4L/ZIa9Br4vzizOjPk6ah9j0PYz7Q03aXkfHTUhlp2SeFAgFYWQ4kA5PmodgGaXUbMekZUoEYQNzaV7hsTMJPu4PNfik2KYi5Xx3Wm0NDgC5VH6hLqAgjHDSPNTRSnCuZDvv0nbT9xCEEY6Omxj0uka9zK0BLkB2yjJKWTka0QFaLTErNNFkJqttzy/OkEvlFddOXBGqvZ1tCsJIO7Dyp9f5xZmOjFPExccpmEg+f0oaFXmVG+Ifn1+cQaoi1Zi0lo48kV5F7d5dmW+DcGFlDa3RSwPXUICIJAkkM1lsVSpTNcCTDWKgsGJxUTP4ylqCCcxuQzEJdeQc9b+pwDXDZDh1DD56OTYIEJFatkF5cR08OjjQZ1uVylTEDCR73gYHMAXOmEv80KhX4ZVLGnxvZxvrhQ1sVSrYqlSQzGSxt7NtkOLqTmayBjDLDkCD2uB6DjD4s2ddHJ4+RW03VHs728aQ4e+A6/h6CMk2tFuTbTigWeAAoBr1Kn33w37sV8+ecHaLJTNZDSa7BoCWfmUtgWLxU7tykHLdePLjT98DQKNexZ3lz/Hi1Wt8lf4a7y7f4ubNW7j95RcY94f4+NsfV7Phl59RKn6jiYx/f6u3Vy7hxavXuPzwHpcf3uP235/hz49/4c2bX1EsZjWG0X2NepUATG3X8SkIIwrCiFzHj7WRu7CyprdXLsXaxGCZh67jUy6Vp9FoRJOBRLlUngDQaDSiXCpvkIkD88olatSrsYFJWx4B+pAjZmA+Y0A+sxWZFfUsIoadfBmEET14+NhQI+75wcPHmqgNFic9v4slAIBquyFquyHf7QwS9mZwQ4HNbzEnx7HnmsT+6XPsnz43ilKmgm+4ccXIs4K/I/MISBW8eyV45ZKeE9KBvlKzPJKYUAHi+q3BvXJpVvXDkv6KABEZm0nI6OwhZUc+K3rpk1MsbD7dJ20C9tcx7kyei/94pgBsn7XdEPcbVdxvVLWPfwC/i45GzwkHHwAAAABJRU5ErkJggg==", "ghost": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAAAyklEQVR42u2W0Q3AIAhEGdHRHMERHIHN7BeJvfSibYD+yA81afIuh4AiJ15E732IiKjqLafCWU6Ft9byRNRabxA7p4oopYynjCLCQkWGioz5O1XEDJ3FsHL8UgbLqfBfHTB4qAibdNiCoXAcsyu462TEWY8XbBf+SQQbtwhnDrk4gFAGRxhzJASO5QnZDbsOMNEuTrBW280uLWnw3TK5zoXV0Hnboi4OsDLh/6GPlRWcORWyqNgKTllUKzgTk/KKRujqTqUEE3XixAWiyvI91HnAZAAAAABJRU5ErkJggg==", "elite": "data:image/png;base64,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", "boss": "data:image/png;base64,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"};
+const SPR={};for(const k in SPR_SRC){const _i=new Image();_i.src=SPR_SRC[k];SPR[k]=_i;}
+function drawSpr(name,x,y,size,alpha){
+  const img=SPR[name];
+  ctx.save();if(alpha!==undefined)ctx.globalAlpha=alpha;
+  ctx.imageSmoothingEnabled=false;
+  if(img&&img.complete&&img.naturalWidth)ctx.drawImage(img,x-size/2,y-size/2,size,size);
+  else{ctx.fillStyle="#99a";ctx.fillRect(x-size/2,y-size/2,size,size);}
+  ctx.restore();
+}
 /* ================= 敌人 ================= */
 const ETYPES=[
   {id:"wolf",name:"妖狼",hp:14,spd:62,dmg:6,r:12,gem:1,xp:1,color:"#b55",emoji:"🐺"},
@@ -260,7 +271,7 @@ function castSkills(dt){
 }
 function zap(e,p,dmg,chain){
   fx(e.x,e.y-30,"#8ef",10);hurtEnemy(e,dmg);
-  G.fx.push({x:e.x,y:e.y,kind:"emoji",em:"⚡",size:34,life:0.25,t:0.25});
+  G.fx.push({x:e.x,y:e.y,kind:"burst",c:"#bfe8ff",size:26,life:0.22,t:0.22});
   G.fx.push({x:e.x,y:e.y-120,x2:e.x,y2:e.y,kind:"bolt",life:0.18,t:0.18});
 }
 function nearestN(n){
@@ -372,7 +383,7 @@ function shotTick(dt){
 }
 function explode(s){
   fx(s.x,s.y,"#f94",s.radius);
-  G.fx.push({x:s.x,y:s.y,kind:"emoji",em:"💥",size:s.radius*1.4,life:0.35,t:0.35});
+  G.fx.push({x:s.x,y:s.y,kind:"burst",c:"#ffb066",size:s.radius*0.9,life:0.35,t:0.35});
   G.enemies.forEach(e=>{if(dist(e,s)<s.radius+e.r)hurtEnemy(e,s.dmg);});
   if(s.burn)G.fx.push({x:s.x,y:s.y,c:"#f74",r:s.radius,kind:"zone",life:2,t:2,dps:metaMul("atk",6)});
 }
@@ -527,10 +538,13 @@ function draw(){
   ctx.globalAlpha=1;
   if(!G)return;
   const p=G.p;
-  // 灵气球：辉光灵星
+  // 灵气球：辉光灵钻
   for(const o of G.orbs){
     ctx.fillStyle="#7bc96f44";ctx.beginPath();ctx.arc(o.x,o.y,9,0,7);ctx.fill();
-    drawEmoji("✨",o.x,o.y+Math.sin(G.t*5+o.x)*2,13);
+    const by=o.y+Math.sin(G.t*5+o.x)*2;
+    ctx.fillStyle="#a8e890";
+    ctx.beginPath();ctx.moveTo(o.x,by-6);ctx.lineTo(o.x+4,by);ctx.lineTo(o.x,by+6);ctx.lineTo(o.x-4,by);ctx.closePath();ctx.fill();
+    ctx.fillStyle="#e8ffd8";ctx.beginPath();ctx.arc(o.x,by-2,1.5,0,7);ctx.fill();
   }
   // 灼烧地带先画（在敌人下面）
   for(const f of G.fx)if(f.kind==="zone"){
@@ -540,32 +554,52 @@ function draw(){
   }
   // 敌人：按种类分形状
   for(const e of G.enemies)drawEnemy(e);
-  // 弹幕：贴图精灵，飞剑转向飞行方向
+  // 弹幕：程序绘制，飞剑转向飞行方向
   for(const s of G.shots){
-    const em=s.kind==="sword"?"🗡️":s.kind==="fire"?"🔥":s.kind==="ice"?"❄️":"●";
     const ang=Math.atan2(s.vy,s.vx);
     ctx.save();ctx.translate(s.x,s.y);
-    if(s.kind==="sword")ctx.rotate(ang+Math.PI/4); // 剑尖朝前
-    else if(s.kind==="fire")ctx.rotate(G.t*8);
-    drawEmoji(em,0,0,s.kind==="sword"?22:s.r*3.2);
+    if(s.kind==="sword"){
+      ctx.rotate(ang);
+      // 剑形：银刃金柄
+      ctx.fillStyle="#dfe9ff";
+      ctx.beginPath();ctx.moveTo(14,0);ctx.lineTo(2,-3.4);ctx.lineTo(-8,-2);ctx.lineTo(-8,2);ctx.lineTo(2,3.4);ctx.closePath();ctx.fill();
+      ctx.strokeStyle="#9ab8ff";ctx.stroke();
+      ctx.fillStyle="#e6c86e";ctx.fillRect(-11,-4,4,8);
+    }else if(s.kind==="fire"){
+      // 火符：旋转火球带尾焰
+      ctx.rotate(G.t*8);
+      const g=ctx.createRadialGradient(0,0,1,0,0,10);
+      g.addColorStop(0,"#fff2b0");g.addColorStop(.5,"#ff9a3c");g.addColorStop(1,"#e04a10");
+      ctx.fillStyle=g;ctx.beginPath();ctx.arc(0,0,9,0,7);ctx.fill();
+    }else if(s.kind==="ice"){
+      // 冰晶：六角星
+      ctx.rotate(G.t*3);
+      ctx.strokeStyle="#cfeaff";ctx.lineWidth=2;
+      for(let i=0;i<3;i++){ctx.rotate(Math.PI/3);
+        ctx.beginPath();ctx.moveTo(-8,0);ctx.lineTo(8,0);ctx.stroke();}
+      ctx.fillStyle="#eaf7ff";ctx.beginPath();ctx.arc(0,0,3,0,7);ctx.fill();
+      ctx.lineWidth=1;
+    }
     ctx.restore();
+    // 拖尾光晕
+    ctx.fillStyle=s.kind==="sword"?"#dce8ff33":s.kind==="fire"?"#ff9a5433":"#9ad8ff33";
+    ctx.beginPath();ctx.arc(s.x-s.vx*0.02,s.y-s.vy*0.02,s.r+3,0,7);ctx.fill();
   }
   // 罡气球
   if(p.skills.qi&&p.skills.qi.orbs){
     for(const o of p.skills.qi.orbs){
       ctx.fillStyle="rgba(138,187,255,.30)";
       ctx.beginPath();ctx.arc(o.x,o.y,12,0,7);ctx.fill();
-      drawEmoji("🛡️",o.x,o.y,15);
+      ctx.fillStyle="#cfe2ff";ctx.beginPath();ctx.arc(o.x,o.y,5,0,7);ctx.fill();
+      ctx.strokeStyle="#eaf3ff";ctx.stroke();
     }
   }
-  // 主角：修士 + 灵光
+  // 主角：修士贴图 + 灵光
   const pulse=1+Math.sin(G.t*4)*0.08;
   const aura=ctx.createRadialGradient(p.x,p.y,2,p.x,p.y,p.r*2.6*pulse);
   aura.addColorStop(0,"rgba(230,200,110,.45)");aura.addColorStop(1,"rgba(230,200,110,0)");
   ctx.fillStyle=aura;ctx.beginPath();ctx.arc(p.x,p.y,p.r*2.6*pulse,0,7);ctx.fill();
-  if(p.iframe>0&&(G.t*20|0)%2===0)ctx.globalAlpha=0.45;
-  drawEmoji("🧙",p.x,p.y+Math.sin(G.t*6)*1.5,34);
-  ctx.globalAlpha=1;
+  drawSpr("player",p.x,p.y+Math.sin(G.t*6)*1.5,40,p.iframe>0&&(G.t*20|0)%2===0?0.45:1);
   // 特效
   for(const f of G.fx){
     const k=f.life/(f.t||0.3);
@@ -586,12 +620,13 @@ function draw(){
       ctx.font="bold 13px sans-serif";ctx.fillStyle=f.c||"#ffd";ctx.textAlign="center";
       ctx.fillText(f.txt,f.x,f.y-(1-k)*26);
       ctx.globalAlpha=1;ctx.textAlign="left";
-    }else if(f.kind==="emoji"){
-      ctx.globalAlpha=Math.min(1,k*1.5);
-      const sc=1+(1-k)*0.5; // 弹开缩放
-      ctx.save();ctx.translate(f.x,f.y);ctx.scale(sc,sc);
-      drawEmoji(f.em,0,0,f.size);
-      ctx.restore();ctx.globalAlpha=1;
+    }else if(f.kind==="burst"){ // 爆闪
+      ctx.globalAlpha=k*0.9;
+      const r=f.size*(1.6-k*0.6);
+      const g=ctx.createRadialGradient(f.x,f.y,1,f.x,f.y,r);
+      g.addColorStop(0,"#ffffff");g.addColorStop(0.4,f.c);g.addColorStop(1,"rgba(255,255,255,0)");
+      ctx.fillStyle=g;ctx.beginPath();ctx.arc(f.x,f.y,r,0,7);ctx.fill();
+      ctx.globalAlpha=1;
     }else if(f.kind==="banner"){
       ctx.globalAlpha=Math.min(1,k*2);
       ctx.font="bold 26px 'Microsoft YaHei'";ctx.textAlign="center";
@@ -608,19 +643,21 @@ function drawEmoji(em,x,y,size){
 }
 function drawEnemy(e){
   const t=e.type;
+  const spr={wolf:"wolf",boar:"boar",ghost:"ghost",elite:"elite",boss:"boss"}[t.id]||"wolf";
   // 阴影
   ctx.fillStyle="rgba(0,0,0,.3)";
   ctx.beginPath();ctx.ellipse(e.x,e.y+e.r*0.85,e.r*0.8,e.r*0.28,0,0,7);ctx.fill();
-  if(e.stun>0)ctx.globalAlpha=0.7;
   // 悬浮/奔跑起伏
   const bob=Math.sin(G.t*7+e.x*0.1)*2;
-  if(e.stun>0){ // 麻痹：星星环绕
-    drawEmoji(t.emoji,e.x,e.y+bob*0.3,e.r*2.1);
-    drawEmoji("💫",e.x+Math.cos(G.t*5)*e.r,e.y-e.r-6+Math.sin(G.t*5)*3,13);
-  }else{
-    drawEmoji(t.emoji,e.x,e.y+bob,e.r*2.1);
+  const alpha=t.id==="ghost"?0.8:(e.stun>0?0.65:1);
+  drawSpr(spr,e.x,e.y+bob,e.r*2.6,alpha);
+  if(e.stun>0){ // 麻痹：黄色火花环绕
+    for(let i=0;i<3;i++){
+      const a=G.t*5+i*2.09;
+      const sx=e.x+Math.cos(a)*(e.r+8),sy=e.y-e.r+Math.sin(a)*5;
+      ctx.fillStyle="#ffe066";ctx.beginPath();ctx.arc(sx,sy,2.5,0,7);ctx.fill();
+    }
   }
-  ctx.globalAlpha=1;
   if(e.slowT>0){ctx.strokeStyle="#9ad8ff";ctx.globalAlpha=.6;
     ctx.beginPath();ctx.arc(e.x,e.y,e.r+4,0,7);ctx.stroke();ctx.globalAlpha=1;}
   // 血条
