@@ -411,8 +411,16 @@ function gainXp(v){
     levelUpModal();
   }
 }
+function resetInput(){
+  input.x=input.y=0;input.kx=input.ky=0;
+  try{
+    stickId=null;
+    knob.style.left="39px";knob.style.top="39px";
+  }catch(e){}
+}
 function levelUpModal(){
   G.paused=true;
+  resetInput(); // 弹窗时释放摇杆，防止 touchend 被弹窗吃掉导致输入卡死
   const opts=rollUpgrades();
   const box=document.getElementById("overlayBox");
   box.innerHTML=`<h2 class="ot">突破 · ${realmName(G.p.lv)}</h2>
@@ -709,6 +717,7 @@ function log(msg){
 function gameOver(){
   if(G.over)return;
   G.over=true;G.paused=true;
+  resetInput();
   const gemsEarned=G.gemRun||0;
   META.gems+=gemsEarned;saveMeta();
   const box=document.getElementById("overlayBox");
@@ -762,6 +771,11 @@ function showLevelTip(){banner("妖兽来袭！走位躲避，神通自施");}
 document.getElementById("btnPause").onclick=function(){
   if(!G)return;G.paused=!G.paused;this.textContent=G.paused?"继续":"暂停";
 };
+// 切后台自动暂停，回来不会暴毙
+document.addEventListener("visibilitychange",function(){
+  if(document.hidden&&G&&!G.over){G.paused=true;
+    document.getElementById("btnPause").textContent="继续";}
+});
 
 /* ================= 启动 ================= */
 newGame();
