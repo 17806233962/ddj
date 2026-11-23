@@ -136,11 +136,11 @@ function drawSpr(name,x,y,size,alpha){
 }
 /* ================= 敌人 ================= */
 const ETYPES=[
-  {id:"wolf",name:"妖狼",hp:12,spd:40,dmg:3,r:12,gem:1,xp:1,color:"#b55"},
-  {id:"boar",name:"石甲兽",hp:38,spd:22,dmg:8,r:16,gem:2,xp:3,color:"#886"},
-  {id:"ghost",name:"鬼火",hp:8,spd:54,dmg:3,r:11,gem:1,xp:2,color:"#8ac"},
-  {id:"elite",name:"妖将",hp:110,spd:27,dmg:10,r:20,gem:12,xp:15,color:"#d9a"},
-  {id:"boss",name:"妖王",hp:480,spd:21,dmg:14,r:32,gem:60,xp:80,color:"#f4a"},
+  {id:"wolf",name:"妖狼",hp:12,spd:56,dmg:3,r:12,gem:1,xp:1,color:"#b55"},
+  {id:"boar",name:"石甲兽",hp:38,spd:30,dmg:8,r:16,gem:2,xp:3,color:"#886"},
+  {id:"ghost",name:"鬼火",hp:8,spd:78,dmg:3,r:11,gem:1,xp:2,color:"#8ac"},
+  {id:"elite",name:"妖将",hp:110,spd:38,dmg:10,r:20,gem:12,xp:15,color:"#d9a"},
+  {id:"boss",name:"妖王",hp:480,spd:30,dmg:14,r:32,gem:60,xp:80,color:"#f4a"},
 ];
 
 /* ================= 游戏状态 ================= */
@@ -167,7 +167,7 @@ function metaMul(k,base){ // 元进度乘区
 function newGame(){
   G={t:0,wave:1,kills:0,over:false,paused:false,
     p:{x:W/2,y:H/2,r:12,hp:metaMul("hp",150),maxhp:metaMul("hp",150),
-       spd:metaMul("spd",165),lv:1,xp:0,xpn:8,
+       spd:metaMul("spd",135),lv:1,xp:0,xpn:8,
        hurtCd:0,iframe:0,
        skills:{}}, // id -> {lv, a:0, b:0}
     enemies:[],shots:[],orbs:[],fx:[],
@@ -191,7 +191,7 @@ function castSkills(dt){
     if(p.skills.sword.t<=0){
       const n=1+(p.skills.sword.b||0);
       const pierce=2+(p.skills.sword.a||0)*2;
-      const dmg=metaMul("atk",20+p.skills.sword.lv*6)*(1+(p.skills.sword.a||0)*0.3);
+      const dmg=metaMul("atk",18+p.skills.sword.lv*4)*(1+(p.skills.sword.a||0)*0.3);
       const targets=nearestN(n);
       for(const e of targets){
         const ang=Math.atan2(e.y-p.y,e.x-p.x);
@@ -268,7 +268,7 @@ function zap(e,p,dmg,chain){
   G.fx.push({x:e.x,y:e.y-120,x2:e.x,y2:e.y,kind:"bolt",life:0.18,t:0.18});
 }
 function nearestN(n){
-  return [...G.enemies].filter(e=>dist(e,G.p)<600)
+  return [...G.enemies].filter(e=>dist(e,G.p)<280)
     .sort((a,b)=>dist(a,G.p)-dist(b,G.p)).slice(0,n);
 }
 /* 罡气护体：每帧环绕 */
@@ -297,13 +297,22 @@ function spawnWave(dt){
   if(G.spawnT<=0){
     G.spawnT=Math.max(0.9,1.8-G.wave*0.06); // 刷怪更快
     const level=G.wave;
-    if(G.enemies.length<60){ // 场上限流
+    // 阶梯难度：5 波后血量/速度/伤害开始陡增
+    const hpMul=1+level*0.15+Math.max(0,level-5)*0.16;
+    const spdMul=Math.min(2.0,1+Math.max(0,level-4)*0.03);
+    const dmgMul=Math.min(2.6,1+Math.max(0,level-3)*0.055);
+    if(G.enemies.length<60+Math.min(80,G.wave*6)){ // 场上限随波次增长（后期怪海封路）
       const pool=ETYPES.filter(t=>t.id!=="elite"&&t.id!=="boss");
       const t=pool[ri(0,pool.length-1)];
-      const hpMul=1+level*0.15;
-      for(let i=0;i<ri(2,3+Math.min(2,level/4|0));i++){ // 每批 2-5 只
+      for(let i=0;i<ri(2,3+Math.min(6,level/2.5|0));i++){ // 每批最多 9 只随波次增长
         const a=rnd(0,Math.PI*2),d=rnd(Math.max(W,H)*0.55,Math.max(W,H)*0.75);
-        G.enemies.push(mkEnemy(t,W/2+Math.cos(a)*d,H/2+Math.sin(a)*d,hpMul));
+        // 4 波后：部分怪从玩家附近刷新（绕圈风筝不再安全）
+        let sx=W/2+Math.cos(a)*d, sy=H/2+Math.sin(a)*d;
+        if(level>=4&&Math.random()<0.35){
+          sx=clamp(G.p.x+Math.cos(a)*Math.max(W,H)*0.35,30,W-30);
+          sy=clamp(G.p.y+Math.sin(a)*Math.max(W,H)*0.35,30,H-30);
+        }
+        G.enemies.push(mkEnemy(t,sx,sy,hpMul,spdMul,dmgMul));
       }
     }
   }
@@ -313,18 +322,36 @@ function spawnWave(dt){
     G.wave++;
     if(G.wave%5===0){ // boss 波（每 5 波）
       const a=rnd(0,Math.PI*2),d=Math.max(W,H)*0.6;
-      G.enemies.push(mkEnemy(ETYPES[4],W/2+Math.cos(a)*d,H/2+Math.sin(a)*d,1+G.wave*0.08));
+      const bhp=1+G.wave*0.1;
+      const bspd=Math.min(1.6,1+Math.max(0,G.wave-4)*0.025);
+      const bdmg=Math.min(2.6,1+G.wave*0.03);
+      G.enemies.push(mkEnemy(ETYPES[4],W/2+Math.cos(a)*d,H/2+Math.sin(a)*d,bhp,bspd,bdmg));
+      if(G.wave>=10){ // 10 波后双 Boss
+        const a2=rnd(0,Math.PI*2);
+        G.enemies.push(mkEnemy(ETYPES[4],W/2+Math.cos(a2)*d,H/2+Math.sin(a2)*d,bhp*0.7,bspd,bdmg));
+      }
       banner("⚠ 妖王降世 ⚠");
     }else if(G.wave>1){
       const a=rnd(0,Math.PI*2),d=Math.max(W,H)*0.6;
-      G.enemies.push(mkEnemy(ETYPES[3],W/2+Math.cos(a)*d,H/2+Math.sin(a)*d,1+G.wave*0.08));
+      const ehp=1+G.wave*0.08+Math.max(0,G.wave-5)*0.1;
+      const espd=Math.min(2.0,1+Math.max(0,G.wave-4)*0.03);
+      G.enemies.push(mkEnemy(ETYPES[3],W/2+Math.cos(a)*d,H/2+Math.sin(a)*d,ehp,espd,Math.min(2.6,1+G.wave*0.035)));
+      if(G.wave>=7){ // 7 波后精英成对出现
+        const a2=rnd(0,Math.PI*2);
+        G.enemies.push(mkEnemy(ETYPES[3],W/2+Math.cos(a2)*d,H/2+Math.sin(a2)*d,ehp*0.8,espd,Math.min(2.6,1+G.wave*0.035)));
+      }
+      if(G.wave>=12){ // 12 波后精英三连
+        const a3=rnd(0,Math.PI*2);
+        G.enemies.push(mkEnemy(ETYPES[3],W/2+Math.cos(a3)*d,H/2+Math.sin(a3)*d,ehp*0.6,espd,Math.min(2.6,1+G.wave*0.035)));
+      }
       banner(`第 ${G.wave} 波 · 妖将出击`);
     }
   }
 }
-function mkEnemy(t,x,y,hpMul){
-  return {type:t,hp:t.hp*hpMul,maxhp:t.hp*hpMul,x,y,spd:t.spd*rnd(0.9,1.1),
-    dmg:t.dmg,r:t.r,stun:0,slowT:0,qiCd:0,hitCd:0};
+function mkEnemy(t,x,y,hpMul,spdMul,dmgMul){
+  spdMul=spdMul||1;dmgMul=dmgMul||1;
+  return {type:t,hp:t.hp*hpMul,maxhp:t.hp*hpMul,x,y,spd:t.spd*spdMul*rnd(0.9,1.1),
+    dmg:Math.round(t.dmg*dmgMul),r:t.r,stun:0,slowT:0,qiCd:0,hitCd:0};
 }
 function hurtEnemy(e,dmg){
   e.hp-=dmg;
@@ -407,7 +434,7 @@ function gainXp(v){
   const p=G.p;p.xp+=v*metaMul("xp",1);
   while(p.xp>=p.xpn){
     p.xp-=p.xpn;p.lv++;p.xpn=Math.round(p.xpn*1.33+3);
-    p.maxhp+=10;p.hp=Math.min(p.maxhp,p.hp+p.maxhp*0.5); // 突破回半血
+    p.maxhp+=10;p.hp=Math.min(p.maxhp,p.hp+p.maxhp*0.3); // 突破回 30% 血
     levelUpModal();
   }
 }
