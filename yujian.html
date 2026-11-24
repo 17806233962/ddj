@@ -166,6 +166,9 @@ const META_UPS={
 function metaMul(k,base){ // 元进度乘区
   const m={atk:1+META.ups.atk*0.08,hp:1+META.ups.hp*0.12,spd:1+META.ups.spd*0.04,
            xp:1+META.ups.xp*0.08}[k]||1;
+  if(k==="atk"&&G){ // 境界成长 + 磨砺锋芒：功力随突破提升，后期伤害跟得上怪血
+    return base*m*(1+(G.p.lv-1)*0.08)*(G.p.atkBuff||1);
+  }
   return base*m;
 }
 
@@ -196,7 +199,7 @@ function castSkills(dt){
     if(p.skills.sword.t<=0){
       const n=1+(p.skills.sword.b||0);
       const pierce=2+(p.skills.sword.a||0)*2;
-      const dmg=metaMul("atk",18+p.skills.sword.lv*4)*(1+(p.skills.sword.a||0)*0.3);
+      const dmg=metaMul("atk",18+p.skills.sword.lv*5)*(1+(p.skills.sword.a||0)*0.3);
       const targets=nearestN(n);
       for(const e of targets){
         const ang=Math.atan2(e.y-p.y,e.x-p.x);
@@ -572,7 +575,7 @@ function rollUpgrades(){
   // 通用强化兜底
   while(opts.length<3){
     const g=[["❤ 淬炼肉身","生命上限 +25，并回满",()=>{p.maxhp+=25;p.hp=p.maxhp;}],
-      ["🗡 磨砺锋芒","全伤害 +10%",()=>{META?0:0;p.atkBuff=(p.atkBuff||1)*1.1;}],
+      ["🗡 磨砺锋芒","全伤害 +15%",()=>{p.atkBuff=(p.atkBuff||1)*1.15;}],
       ["👟 步罡踏斗","移速 +12%",()=>{p.spd*=1.12;}]][opts.length%3];
     opts.push({title:g[0],sub:"通用",desc:g[1],apply:g[2]});
   }
