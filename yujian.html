@@ -93,8 +93,8 @@
 <script>
 /* ================= 工具 ================= */
 const cv=document.getElementById("cv"),ctx=cv.getContext("2d");
-let W=0,H=0;
-function resize(){W=cv.width=innerWidth;H=cv.height=innerHeight;}
+let W=0,H=0,bgCv=null,bgOk=false;
+function resize(){W=cv.width=innerWidth;H=cv.height=innerHeight;renderBg();}
 addEventListener("resize",resize);resize();
 const rnd=(a,b)=>Math.random()*(b-a)+a;
 const ri=(a,b)=>Math.floor(rnd(a,b+1));
@@ -732,6 +732,8 @@ function tick(dt){
   castSkills(dt);qiTick(dt);
   spawnWave(dt);enemyTick(dt);shotTick(dt);orbTick(dt);itemTick(dt);
   hudT=Math.max(0,hudT-dt);
+  // 灵气球溢出保护：超 150 个时旧的自动飞向玩家（防堆积卡顿）
+  if(G.orbs.length>150)for(let i=0;i<G.orbs.length-150;i++)G.orbs[i].magnet=true;
   // 灼烧地带
   for(const f of G.fx)if(f.kind==="zone")
     G.enemies.forEach(e=>{if(dist(e,f)<f.r)e.hp-=f.dps*dt,e.hp<=0&&!e.dead&&hurtEnemy(e,0.01);});
@@ -742,20 +744,38 @@ function tick(dt){
 }
 
 /* ================= 渲染 ================= */
+// 静态背景离屏缓存：渐变/云纹/星点只画一次，每帧一张 drawImage
+function renderBg(){
+  bgCv=document.createElement("canvas");bgCv.width=W;bgCv.height=H;
+  const c=bgCv.getContext?bgCv.getContext("2d"):null;
+  if(!c){bgOk=false;return;} // 无 canvas 环境（测试桩）时走旧路径
+  const bg=c.createRadialGradient(W/2,H*0.42,0,W/2,H*0.42,Math.max(W,H)*0.8);
+  bg.addColorStop(0,"#131a2a");bg.addColorStop(1,"#070a10");
+  c.fillStyle=bg;c.fillRect(0,0,W,H);
+  c.globalAlpha=0.5;c.fillStyle="#1a2334";
+  for(let i=0;i<26;i++){const x=(i*211.7)%W,y=(i*137.3)%H;
+    c.beginPath();c.ellipse(x,y,26,5,0,0,7);c.fill();}
+  c.globalAlpha=0.8;c.fillStyle="#2c3a55";
+  for(let i=0;i<48;i++){const x=(i*173.3)%W,y=(i*97.7)%H;c.fillRect(x,y,2,2);}
+  c.globalAlpha=1;
+  bgOk=true;
+}
 function draw(){
   ctx.imageSmoothingEnabled=false; // 像素风全局设置一次，不再每精灵切换
-  // 背景：深色渐变 + 远山淡纹 + 星点
-  const bg=ctx.createRadialGradient(W/2,H*0.42,0,W/2,H*0.42,Math.max(W,H)*0.8);
-  bg.addColorStop(0,"#131a2a");bg.addColorStop(1,"#070a10");
-  ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
-  ctx.globalAlpha=0.5;ctx.fillStyle="#1a2334";
-  for(let i=0;i<26;i++){ // 云纹
-    const x=(i*211.7)%W,y=(i*137.3)%H;
-    ctx.beginPath();ctx.ellipse(x,y,26,5,0,0,7);ctx.fill();
+  if(bgOk){
+    ctx.drawImage(bgCv,0,0); // 一张图搞定背景
+  }else{
+    // 兜底：直接绘制
+    const bg=ctx.createRadialGradient(W/2,H*0.42,0,W/2,H*0.42,Math.max(W,H)*0.8);
+    bg.addColorStop(0,"#131a2a");bg.addColorStop(1,"#070a10");
+    ctx.fillStyle=bg;ctx.fillRect(0,0,W,H);
+    ctx.globalAlpha=0.5;ctx.fillStyle="#1a2334";
+    for(let i=0;i<26;i++){const x=(i*211.7)%W,y=(i*137.3)%H;
+      ctx.beginPath();ctx.ellipse(x,y,26,5,0,0,7);ctx.fill();}
+    ctx.globalAlpha=0.8;ctx.fillStyle="#2c3a55";
+    for(let i=0;i<48;i++){const x=(i*173.3)%W,y=(i*97.7)%H;ctx.fillRect(x,y,2,2);}
+    ctx.globalAlpha=1;
   }
-  ctx.globalAlpha=0.8;ctx.fillStyle="#2c3a55";
-  for(let i=0;i<48;i++){const x=(i*173.3)%W,y=(i*97.7)%H;ctx.fillRect(x,y,2,2);}
-  ctx.globalAlpha=1;
   if(!G)return;
   const p=G.p;
   // 灵气球/回血丹
@@ -872,9 +892,11 @@ function drawEmoji(em,x,y,size){
 function drawEnemy(e){
   const t=e.type;
   const spr={wolf:"wolf",boar:"boar",ghost:"ghost",bat:"bat",spider:"spider",skel:"skel",elite:"elite",boss:"boss"}[t.id]||"wolf";
-  // 阴影
-  ctx.fillStyle="rgba(0,0,0,.3)";
-  ctx.beginPath();ctx.ellipse(e.x,e.y+e.r*0.85,e.r*0.8,e.r*0.28,0,0,7);ctx.fill();
+  // 阴影（怪海时跳过，省一次椭圆填充）
+  if(G.enemies.length<90){
+    ctx.fillStyle="rgba(0,0,0,.3)";
+    ctx.beginPath();ctx.ellipse(e.x,e.y+e.r*0.85,e.r*0.8,e.r*0.28,0,0,7);ctx.fill();
+  }
   // 悬浮/奔跑起伏
   const bob=Math.sin(G.t*7+e.x*0.1)*2;
   const alpha=t.id==="ghost"?0.8:(e.stun>0?0.65:1);
