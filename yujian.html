@@ -295,7 +295,7 @@ function banner(txt){G.fx.push({x:W/2,y:H*0.3,kind:"banner",life:1.6,t:1.6,txt})
 function spawnWave(dt){
   G.spawnT-=dt;
   if(G.spawnT<=0){
-    G.spawnT=Math.max(0.9,1.8-G.wave*0.06); // 刷怪更快
+    G.spawnT=Math.max(0.6,1.2-G.wave*0.06); // 基础刷怪速率 ×1.5
     const level=G.wave;
     // 阶梯难度：5 波后血量/速度/伤害开始陡增
     const hpMul=1+level*0.15+Math.max(0,level-5)*0.16;
