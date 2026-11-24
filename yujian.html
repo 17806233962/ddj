@@ -206,6 +206,15 @@ function castSkills(dt){
         G.shots.push({kind:"sword",x:p.x,y:p.y,vx:Math.cos(ang)*420,vy:Math.sin(ang)*420,
           dmg,pierce,hitset:new Set(),r:6,life:1.2});
       }
+      // 进化·万剑归宗：8 剑环射全场
+      if(p.skills.sword.evolved){
+        for(let i=0;i<8;i++){
+          const a2=i*Math.PI/4+rnd(-0.08,0.08);
+          G.shots.push({kind:"sword",x:p.x,y:p.y,vx:Math.cos(a2)*440,vy:Math.sin(a2)*440,
+            dmg:dmg*0.8,pierce,hitset:new Set(),r:6,life:1.2});
+        }
+        fx(p.x,p.y,"#dce8ff",70);
+      }
       p.skills.sword.t=cd;
     }
   }
@@ -224,6 +233,13 @@ function castSkills(dt){
         zap(nx,p,metaMul("atk",13+s.lv*4),0);used.add(nx);cur=nx;chain--;
       }
       if(s.b)G.enemies.forEach(x=>{if(dist(x,e)<90)x.stun=Math.max(x.stun||0,0.6);});
+      // 进化·九天雷劫：额外轰击 4 只随机妖兽
+      if(s.evolved){
+        for(let i=0;i<4;i++){
+          const t2=G.enemies[ri(0,G.enemies.length-1)];
+          if(t2&&dist(t2,p)<420)zap(t2,p,metaMul("atk",11+s.lv*3),0);
+        }
+      }
       s.t=cd;
     }
   }
@@ -234,11 +250,12 @@ function castSkills(dt){
     if(s.t<=0&&G.enemies.length){
       const cd=2.5-s.lv*0.12;
       const n=1+(s.b||0)*2;
+      const evoR=s.evolved?1.5:1, evoBurn=s.evolved||!!(s.a||0);
       for(let i=0;i<n;i++){
         const e=nearestN(1)[0]||G.enemies[0];
         const ang=Math.atan2(e.y-p.y,e.x-p.x)+rnd(-0.3,0.3);
         G.shots.push({kind:"fire",x:p.x,y:p.y,vx:Math.cos(ang)*300,vy:Math.sin(ang)*300,
-          dmg:metaMul("atk",14+s.lv*5),r:8,life:1.5,burn:s.a||0,radius:46*(1+(s.a||0)*0.6)});
+          dmg:metaMul("atk",14+s.lv*5),r:8,life:1.5,burn:evoBurn,radius:46*(1+(s.a||0)*0.6)*evoR});
       }
       s.t=cd;
     }
@@ -253,6 +270,11 @@ function castSkills(dt){
       const ang=Math.atan2(e.y-p.y,e.x-p.x);
       G.shots.push({kind:"ice",x:p.x,y:p.y,vx:Math.cos(ang)*380,vy:Math.sin(ang)*380,
         dmg:metaMul("atk",10+s.lv*3.5)*(1+(s.b||0)*0.8),r:6,life:1.4,freeze:s.a||0,slow:true});
+      // 进化·冰狱寒渊：冰封周身 200 内妖兽
+      if(s.evolved){
+        G.enemies.forEach(x=>{if(dist(x,p)<200)x.stun=Math.max(x.stun||0,1);});
+        fx(p.x,p.y,"#9ad8ff",200);
+      }
       s.t=cd;
     }
   }
@@ -262,8 +284,10 @@ function castSkills(dt){
     s.t=(s.t||0)-dt;
     if(s.t<=0){
       const cd=Math.max(2,(6-s.lv*0.3))*(1-(s.b||0)*0.4);
-      const amt=(4+s.lv*2)*(1+(s.a||0)*0.6);
+      const amt=(4+s.lv*2)*(1+(s.a||0)*0.6)*(s.evolved?2:1);
       p.hp=Math.min(p.maxhp,p.hp+amt);
+      // 进化·长生大道：回血时获得 0.6 秒护体
+      if(s.evolved)p.iframe=Math.max(p.iframe,0.6);
       G.fx.push({x:p.x+rnd(-6,6),y:p.y-24,c:"#8fe08f",kind:"dmg",life:0.7,t:0.7,txt:"+"+Math.round(amt)});
       fx(p.x,p.y,"#8fe08f",18);
       s.t=cd;
@@ -283,8 +307,10 @@ function nearestN(n){
 function qiTick(dt){
   const p=G.p,s=p.skills.qi;if(!s)return;
   s.ang=(s.ang||0)+dt*(2.2+(s.b||0)*1.32);
-  const n=1+s.lv-1+(s.a||0); // 1球起步，升级+1，金刚罡再+1
-  s.orbs=[];const R=46*(1+(s.b||0)*0.35);
+  const n=1+s.lv-1+(s.a||0)+(s.evolved?3:0); // 进化·玄武真罡：+3 球
+  s.orbs=[];const R=46*(1+(s.b||0)*0.35)*(s.evolved?1.4:1);
+  // 进化：罡内妖兽减速
+  if(s.evolved)G.enemies.forEach(e=>{if(dist(e,p)<R+30)e.slowT=Math.max(e.slowT||0,0.3);});
   for(let i=0;i<n;i++){
     const a=s.ang+i*Math.PI*2/n;
     const ox=p.x+Math.cos(a)*R,oy=p.y+Math.sin(a)*R;
@@ -499,7 +525,7 @@ function orbTick(dt){
   const p=G.p;
   for(const o of G.orbs){
     const d=dist(o,p);
-    const pull=o.magnet?1600:300, range=o.magnet?9999:150; // 聚灵状态全场高速吸取
+    const pull=o.magnet?1600:300, range=o.magnet?9999:(p.magR||150); // 聚灵状态全场高速吸取
     if(d<range){o.x+=(p.x-o.x)/d*pull*dt;o.y+=(p.y-o.y)/d*pull*dt;}
     if(d<16){
       o.dead=true;
@@ -513,7 +539,7 @@ function orbTick(dt){
   G.orbs=G.orbs.filter(o=>!o.dead);
 }
 function gainXp(v){
-  const p=G.p;p.xp+=v*metaMul("xp",1);
+  const p=G.p;p.xp+=v*metaMul("xp",1)*(p.xpBuff||1);
   while(p.xp>=p.xpn){
     p.xp-=p.xpn;p.lv++;p.xpn=Math.round(p.xpn*1.33+3);
     p.maxhp+=10;p.hp=Math.min(p.maxhp,p.hp+p.maxhp*0.2); // 突破回 20% 血
@@ -544,42 +570,82 @@ function levelUpModal(){
   });
   document.getElementById("overlay").style.display="flex";
 }
+/* ================= 技能进化（Lv6 满级后解锁，改变形态） ================= */
+const EVO={
+  sword:{name:"万剑归宗·剑阵",desc:"每次施放额外激发 8 剑环射全场",
+    apply:s=>{s.evolved=true;}},
+  thunder:{name:"九天雷劫",desc:"每击额外轰击 4 只随机妖兽",
+    apply:s=>{s.evolved=true;}},
+  fire:{name:"焚天火海",desc:"爆炸范围 +50%，且必留灼烧地带",
+    apply:s=>{s.evolved=true;}},
+  ice:{name:"冰狱寒渊",desc:"每次施放冰封周身 200 内妖兽 1 秒",
+    apply:s=>{s.evolved=true;}},
+  qi:{name:"玄武真罡",desc:"罡气球 +3 且范围 +40%，罡内妖兽减速",
+    apply:s=>{s.evolved=true;}},
+  heal:{name:"长生大道",desc:"回复量翻倍，且回血时获得 0.6 秒护体",
+    apply:s=>{s.evolved=true;}},
+};
 function rollUpgrades(){
-  const p=G.p,opts=[];
-  const owned=Object.keys(p.skills);
-  // 新技能
-  const unowned=Object.keys(SKILLS).filter(id=>!p.skills[id]);
-  if(unowned.length){
-    const id=unowned[ri(0,unowned.length-1)];
-    opts.push({title:SKILLS[id].icon+" 习得「"+SKILLS[id].name+"」",sub:"新技能",
+  const p=G.p,pool=[];
+  // 候选1：未拥有的新技能
+  Object.keys(SKILLS).filter(id=>!p.skills[id]).forEach(id=>{
+    pool.push({title:`${SKILLS[id].icon} 习得「${SKILLS[id].name}」`,sub:"新技能",
       desc:SKILLS[id].desc,apply:()=>grantSkill(id)});
-  }
-  // 已有技能升级：提供两个方向分支
-  const upgradable=owned.filter(id=>p.skills[id].lv<6);
-  while(opts.length<3&&upgradable.length){
-    const idx=ri(0,upgradable.length-1);
-    const id=upgradable.splice(idx,1)[0];
+  });
+  // 候选2：已有技能升级（Lv1 时随机出 A 或 B 一个方向，不再同屏双卡）
+  Object.keys(p.skills).forEach(id=>{
     const s=p.skills[id],sk=SKILLS[id];
-    if(s.lv===1){ // 第一次升级：两个方向任选
-      opts.push({title:`${sk.icon}「${sk.name}」→ ${sk.a.name}`,sub:"方向A",desc:sk.a.desc,
-        apply:()=>{s.lv++;s.a=1;}});
-      opts.push({title:`${sk.icon}「${sk.name}」→ ${sk.b.name}`,sub:"方向B",desc:sk.b.desc,
-        apply:()=>{s.lv++;s.b=1;}});
-    }else{
-      // 沿已选方向深化，或转另一方向
-      const mainA=s.a>=s.b;
-      opts.push({title:`${sk.icon}「${sk.name}」精进`,sub:`${mainA?sk.a.name:sk.b.name} Lv${s.lv}`,
-        desc:`${mainA?sk.a.desc:sk.b.desc}（效果叠加）`,apply:()=>{s.lv++;if(mainA)s.a++;else s.b++;}});
+    if(s.lv<6){
+      if(s.lv===1){ // 初次升级：A/B 都入池（各自独立候选，随机抽到哪个看运气）
+        pool.push({title:`${sk.icon}「${sk.name}」→ ${sk.a.name}`,sub:"方向A",desc:sk.a.desc,
+          apply:()=>{s.lv++;s.a=(s.a||0)+1;}});
+        pool.push({title:`${sk.icon}「${sk.name}」→ ${sk.b.name}`,sub:"方向B",desc:sk.b.desc,
+          apply:()=>{s.lv++;s.b=(s.b||0)+1;}});
+      }else{
+        // 主方向深化；若另一方向未开，小概率出转向卡
+        const mainA=s.a>=s.b;
+        if(Math.random()<0.25&&((mainA&&s.b===0)||(!mainA&&s.a===0))){
+          const key=mainA?"b":"a",br=mainA?sk.b:sk.a;
+          pool.push({title:`${sk.icon}「${sk.name}」→ ${br.name}`,sub:"转向",desc:br.desc,
+            apply:()=>{s.lv++;s[key]=1;}});
+        }else{
+          pool.push({title:`${sk.icon}「${sk.name}」精进`,sub:`${mainA?sk.a.name:sk.b.name} Lv${s.lv}`,
+            desc:`${mainA?sk.a.desc:sk.b.desc}（效果叠加）`,
+            apply:()=>{s.lv++;if(mainA)s.a++;else s.b++;}});
+        }
+      }
     }
+  });
+  // 候选3：满级技能的进化（双倍权重，让高光时刻更容易出现）
+  Object.keys(p.skills).forEach(id=>{
+    const s=p.skills[id];
+    if(s.lv>=6&&!s.evolved){
+      const e=EVO[id];
+      for(let w=0;w<2;w++)
+        pool.push({title:`${SKILLS[id].icon}「${SKILLS[id].name}」进化 · ${e.name}`,sub:"★进化",
+          desc:e.desc,apply:()=>{e.apply(s);banner(`${SKILLS[id].icon} ${e.name}！`);}});
+    }
+  });
+  // 候选4：通用强化（多种随机）
+  const gens=[
+    ["❤ 淬炼肉身","生命上限 +25，并回满",()=>{p.maxhp+=25;p.hp=p.maxhp;}],
+    ["🗡 磨砺锋芒","全伤害 +15%",()=>{p.atkBuff=(p.atkBuff||1)*1.15;}],
+    ["👟 步罡踏斗","移速 +10%",()=>{p.spd*=1.10;}],
+    ["🔮 摄灵之瞳","灵气吸取范围 +40%",()=>{p.magR=(p.magR||150)*1.4;}],
+    ["☯ 悟性顿开","灵气获取 +12%",()=>{p.xpBuff=(p.xpBuff||1)*1.12;}],
+  ];
+  gens.forEach(g=>pool.push({title:g[0],sub:"通用",desc:g[1],apply:g[2]}));
+  // Fisher-Yates 洗牌后取 3
+  for(let i=pool.length-1;i>0;i--){
+    const j=ri(0,i);[pool[i],pool[j]]=[pool[j],pool[i]];
   }
-  // 通用强化兜底
-  while(opts.length<3){
-    const g=[["❤ 淬炼肉身","生命上限 +25，并回满",()=>{p.maxhp+=25;p.hp=p.maxhp;}],
-      ["🗡 磨砺锋芒","全伤害 +15%",()=>{p.atkBuff=(p.atkBuff||1)*1.15;}],
-      ["👟 步罡踏斗","移速 +12%",()=>{p.spd*=1.12;}]][opts.length%3];
-    opts.push({title:g[0],sub:"通用",desc:g[1],apply:g[2]});
-  }
-  return opts.slice(0,3);
+  // 优先保证：有进化卡时必出一张（高光时刻）
+  const evo=pool.find(o=>o.sub==="★进化");
+  const rest=pool.filter(o=>o!==evo);
+  const picks=[];
+  if(evo)picks.push(evo);
+  while(picks.length<3&&rest.length)picks.push(rest.pop());
+  return picks.slice(0,3);
 }
 
 /* ================= 输入 ================= */
@@ -846,8 +912,9 @@ function hud(){
 function renderSkillHud(){
   const el=document.getElementById("skillsHud");
   el.innerHTML=Object.entries(G.p.skills).map(([id,s])=>{
-    const sk=SKILLS[id],dir=s.a||s.b?(s.a>=s.b?sk.a.name:sk.b.name):"未定向";
-    return `<div class="sk"><span class="ico">${sk.icon}</span><span>${sk.name}<b style="color:var(--hi)">Lv${s.lv}</b></span><span class="dir">${dir}</span></div>`;
+    const sk=SKILLS[id];
+    const dir=s.evolved?`★${EVO[id].name}`:(s.a||s.b?(s.a>=s.b?sk.a.name:sk.b.name):"未定向");
+    return `<div class="sk"${s.evolved?' style="border-left-color:#f0a"':""}><span class="ico">${sk.icon}</span><span>${sk.name}<b style="color:var(--hi)">Lv${s.lv}</b></span><span class="dir"${s.evolved?' style="color:#f8a"':""}>${dir}</span></div>`;
   }).join("");
 }
 
