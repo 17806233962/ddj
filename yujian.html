@@ -130,11 +130,13 @@ const SPR_SRC={"player": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQ
 const SPR={};for(const k in SPR_SRC){const _i=new Image();_i.src=SPR_SRC[k];SPR[k]=_i;}
 function drawSpr(name,x,y,size,alpha){
   const img=SPR[name];
-  ctx.save();if(alpha!==undefined)ctx.globalAlpha=alpha;
-  ctx.imageSmoothingEnabled=false;
-  if(img&&img.complete&&img.naturalWidth)ctx.drawImage(img,x-size/2,y-size/2,size,size);
-  else{ctx.fillStyle="#99a";ctx.fillRect(x-size/2,y-size/2,size,size);}
-  ctx.restore();
+  if(alpha!==undefined&&alpha<1){ // 仅半透明时才动用状态栈
+    ctx.save();ctx.globalAlpha=alpha;
+    ctx.drawImage(img,x-size/2,y-size/2,size,size);
+    ctx.restore();
+  }else{
+    ctx.drawImage(img,x-size/2,y-size/2,size,size);
+  }
 }
 /* ================= 敌人 ================= */
 const ETYPES=[
@@ -450,7 +452,9 @@ function mkEnemy(t,x,y,hpMul,spdMul,dmgMul){
 }
 function hurtEnemy(e,dmg){
   e.hp-=dmg;
-  if(dmg>=1)G.fx.push({x:e.x+rnd(-6,6),y:e.y-e.r-4,c:dmg>=30?"#ff9a54":"#ffe9b0",kind:"dmg",life:0.6,t:0.6,txt:Math.round(dmg)});
+  // 飘字限流：只显示高伤或抽样，且总量封顶（防低端机卡死）
+  if(dmg>=1&&G.fx.length<50&&(dmg>=25||Math.random()<0.3))
+    G.fx.push({x:e.x+rnd(-6,6),y:e.y-e.r-4,c:dmg>=30?"#ff9a54":"#ffe9b0",kind:"dmg",life:0.6,t:0.6,txt:Math.round(dmg)});
   if(e.hp<=0&&!e.dead){
     e.dead=true;G.kills++;
     const n=e.type.gem;G.gemRun=(G.gemRun||0)+n;
@@ -727,16 +731,19 @@ function tick(dt){
   p.hp=Math.min(p.maxhp,p.hp+(0.5+META.ups.regen*0.5)*dt); // 基础回血 0.5/秒
   castSkills(dt);qiTick(dt);
   spawnWave(dt);enemyTick(dt);shotTick(dt);orbTick(dt);itemTick(dt);
+  hudT=Math.max(0,hudT-dt);
   // 灼烧地带
   for(const f of G.fx)if(f.kind==="zone")
     G.enemies.forEach(e=>{if(dist(e,f)<f.r)e.hp-=f.dps*dt,e.hp<=0&&!e.dead&&hurtEnemy(e,0.01);});
   G.fx.forEach(f=>{f.life-=dt;});
   G.fx=G.fx.filter(f=>f.life>0);
+  if(G.fx.length>70)G.fx.splice(0,G.fx.length-70); // 特效硬上限，防堆积
   hud();
 }
 
 /* ================= 渲染 ================= */
 function draw(){
+  ctx.imageSmoothingEnabled=false; // 像素风全局设置一次，不再每精灵切换
   // 背景：深色渐变 + 远山淡纹 + 星点
   const bg=ctx.createRadialGradient(W/2,H*0.42,0,W/2,H*0.42,Math.max(W,H)*0.8);
   bg.addColorStop(0,"#131a2a");bg.addColorStop(1,"#070a10");
@@ -889,7 +896,9 @@ function drawEnemy(e){
     ctx.fillRect(e.x-w/2,e.y-e.r-12,w*Math.max(0,e.hp/e.maxhp),4);
   }
 }
+let hudT=0;
 function hud(){
+  if(hudT>0)return; hudT=0.15; // 节流：约 6.6 次/秒，避免每帧重排
   const p=G.p;
   document.getElementById("hpfill").style.width=(p.hp/p.maxhp*100)+"%";
   document.getElementById("hptext").textContent=`${Math.ceil(p.hp)} / ${Math.round(p.maxhp)}`;
