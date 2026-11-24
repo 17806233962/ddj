@@ -34,13 +34,15 @@
   #skillsHud .sk .ico{font-size:15px;filter:drop-shadow(0 0 4px #e6c86e66);}
   #skillsHud .sk .dir{color:#9aa8c0;font-size:11px;}
   /* ---- 摇杆 ---- */
-  #stick{position:absolute;right:20px;bottom:26px;width:128px;height:128px;border-radius:50%;
+  #stick{position:absolute;right:20px;bottom:26px;width:104px;height:104px;border-radius:50%;
     border:1.5px solid rgba(140,170,230,.35);background:radial-gradient(circle,rgba(30,40,60,.35),rgba(10,14,22,.15));
-    box-shadow:inset 0 0 24px #0006, 0 4px 18px #0007;z-index:10;}
+    box-shadow:inset 0 0 24px #0006, 0 4px 18px #0007;z-index:10;transition:opacity .15s;touch-action:none;}
+  #stick.live{border-color:rgba(170,200,255,.55);box-shadow:inset 0 0 24px #0006, 0 0 22px rgba(122,162,201,.25);}
   #stick::after{content:"";position:absolute;inset:22%;border-radius:50%;border:1px dashed rgba(140,170,230,.22);}
-  #stickKnob{position:absolute;left:39px;top:39px;width:50px;height:50px;border-radius:50%;
+  stickKnob{position:absolute;left:29px;top:29px;width:46px;height:46px;border-radius:50%;
     background:radial-gradient(circle at 35% 30%,#b9d4ff,#5f86c9 65%,#3c5a95);
-    box-shadow:0 3px 12px #000a, inset 0 -4px 8px #0006, 0 0 14px #7aa2c955;}
+    box-shadow:0 3px 12px #000a, inset 0 -4px 8px #0006, 0 0 14px #7aa2c955;
+    transition:left .08s ease-out,top .08s ease-out;}
   /* ---- 圆形按钮 ---- */
   .cbtn{width:58px;height:58px;border-radius:50%;font-size:13px;color:#dce6f5;
     border:1.5px solid rgba(140,170,230,.4);background:radial-gradient(circle at 35% 30%,rgba(60,80,120,.85),rgba(20,28,44,.9));
@@ -439,11 +441,8 @@ function gainXp(v){
   }
 }
 function resetInput(){
-  input.x=input.y=0;input.kx=input.ky=0;
-  try{
-    stickId=null;
-    knob.style.left="39px";knob.style.top="39px";
-  }catch(e){}
+  input.x=input.y=0;input.kx=input.ky=0;input.mag=0;
+  try{ stickReset(); }catch(e){}
 }
 function levelUpModal(){
   G.paused=true;
@@ -516,22 +515,52 @@ addEventListener("keyup",e=>{
   if(e.key==="a"||e.key==="d"||e.key==="ArrowLeft"||e.key==="ArrowRight")input.kx=0;
 });
 const stick=document.getElementById("stick"),knob=document.getElementById("stickKnob");
-let stickId=null;
-function stickMove(t){
-  const r=stick.getBoundingClientRect();
-  const cx=r.left+r.width/2,cy=r.top+r.height/2;
-  let dx=t.clientX-cx,dy=t.clientY-cy;
-  const m=Math.hypot(dx,dy),max=r.width/2-20;
-  if(m>max){dx=dx/m*max;dy=dy/m*max;}
-  knob.style.left=(35+dx)+"px";knob.style.top=(35+dy)+"px";
-  input.x=dx/max;input.y=dy/max;
+let stickId=null,stickCX=0,stickCY=0;
+const STICK_R=52, KNOCK_R=29, DEAD=0.14; // 摇杆半径/旋钮复位/死区
+function stickCenter(cx,cy){ // 浮动摇杆：把底盘挪到手指落点
+  stickCX=cx;stickCY=cy;
+  stick.style.left=(cx-STICK_R)+"px";stick.style.top=(cy-STICK_R)+"px";
+  stick.style.right="auto";stick.style.bottom="auto";
+  stick.classList.add("live");
 }
-stick.addEventListener("touchstart",e=>{stickId=e.changedTouches[0].identifier;stickMove(e.changedTouches[0]);e.preventDefault();},{passive:false});
-addEventListener("touchmove",e=>{for(const t of e.changedTouches)if(t.identifier===stickId)stickMove(t);},{passive:false});
-addEventListener("touchend",e=>{for(const t of e.changedTouches)if(t.identifier===stickId){stickId=null;input.x=input.y=0;knob.style.left="35px";knob.style.top="35px";}});
-stick.addEventListener("mousedown",e=>{stickId="m";stickMove(e);});
+function stickReset(){
+  stickId=null;input.x=input.y=0;input.mag=0;
+  knob.style.left=KNOCK_R+"px";knob.style.top=KNOCK_R+"px";
+  stick.classList.remove("live");
+  stick.style.left="";stick.style.top="";
+  stick.style.right="20px";stick.style.bottom="26px"; // 回到右下待命位
+}
+function stickMove(t){
+  let dx=t.clientX-stickCX,dy=t.clientY-stickCY;
+  const m=Math.hypot(dx,dy);
+  if(m>STICK_R){dx=dx/m*STICK_R;dy=dy/m*STICK_R;}
+  knob.style.left=(KNOCK_R+dx)+"px";knob.style.top=(KNOCK_R+dy)+"px";
+  // 归一化偏移（含幅度，供模拟量速度）
+  input.x=dx/STICK_R;input.y=dy/STICK_R;input.mag=Math.min(1,m/STICK_R);
+}
+// 触屏：按在屏幕任意非按钮区域即出现浮动摇杆
+addEventListener("touchstart",e=>{
+  if(stickId!==null)return;
+  const t=e.changedTouches[0];
+  const el=document.elementFromPoint(t.clientX,t.clientY);
+  if(el&&(el.closest("button")||el.closest("#overlay")))return; // 按钮/弹窗不触发
+  stickId=t.identifier;
+  stickCenter(t.clientX,t.clientY);
+  stickMove(t);
+  e.preventDefault();
+},{passive:false});
+addEventListener("touchmove",e=>{for(const t of e.changedTouches)if(t.identifier===stickId)stickMove(t);e.preventDefault();},{passive:false});
+addEventListener("touchend",e=>{for(const t of e.changedTouches)if(t.identifier===stickId)stickReset();});
+addEventListener("touchcancel",e=>{for(const t of e.changedTouches)if(t.identifier===stickId)stickReset();});
+// 鼠标（桌面调试）：按住任意位置拖动
+addEventListener("mousedown",e=>{
+  if(stickId!==null)return;
+  const el=e.target;
+  if(el&&(el.closest&&el.closest("button")))return;
+  stickId="m";stickCenter(e.clientX,e.clientY);stickMove(e);
+});
 addEventListener("mousemove",e=>{if(stickId==="m")stickMove(e);});
-addEventListener("mouseup",()=>{if(stickId==="m"){stickId=null;input.x=input.y=0;knob.style.left="35px";knob.style.top="35px";}});
+addEventListener("mouseup",()=>{if(stickId==="m")stickReset();});
 
 /* ================= 主循环 ================= */
 let last=0;
@@ -546,10 +575,16 @@ function loop(ts){
 function tick(dt){
   G.t+=dt;
   const p=G.p;
-  // 移动
+  // 移动（模拟量：死区 14%，幅度线性映射到速度）
   let mx=input.x||(input.kx||0),my=input.y||(input.ky||0);
   const mm=Math.hypot(mx,my);
-  if(mm>0.15){p.x=clamp(p.x+mx/mm*p.spd*dt,16,W-16);p.y=clamp(p.y+my/mm*p.spd*dt,16,H-16);}
+  let mag=input.kx||input.ky ? 1 : (input.mag||mm);
+  if(mm>0.01&&mag<DEAD)mag=0;
+  if(mm>0.01&&mag>DEAD){
+    const speedScale=Math.min(1,(mag-DEAD)/(1-DEAD)*1.15); // 过死区后快速到全速
+    const v=speedScale*p.spd;
+    p.x=clamp(p.x+mx/mm*v*dt,16,W-16);p.y=clamp(p.y+my/mm*v*dt,16,H-16);
+  }
   p.iframe=Math.max(0,p.iframe-dt);
   p.hp=Math.min(p.maxhp,p.hp+(1.5+META.ups.regen*0.5)*dt); // 基础回血 1.5/秒
   castSkills(dt);qiTick(dt);
