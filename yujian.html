@@ -327,7 +327,6 @@ function banner(txt){G.fx.push({x:W/2,y:H*0.3,kind:"banner",life:1.6,t:1.6,txt})
 
 /* ================= 道具系统 ================= */
 const ITEMS={
-  clear:{name:"五雷符",icon:"🌩",desc:"天雷清屏，全场妖兽受重创",c:"#bfe8ff"},
   magnet:{name:"聚灵珠",icon:"🧲",desc:"吸引全场灵气入体",c:"#a8e890"},
   invuln:{name:"金身符",icon:"✨",desc:"5 秒金身无敌",c:"#e6c86e"},
 };
@@ -353,14 +352,7 @@ function itemTick(dt){
 }
 function applyItem(k){
   const p=G.p,info=ITEMS[k];
-  if(k==="clear"){
-    const dmg=metaMul("atk",150+G.wave*12);
-    const victims=[...G.enemies];
-    victims.forEach(e=>hurtEnemy(e,dmg));
-    fx(p.x,p.y,"#bfe8ff",Math.max(W,H));
-    for(let i=0;i<8;i++)G.fx.push({x:rnd(0,W),y:-40,x2:rnd(0,W),y2:rnd(0,H),kind:"bolt",life:0.3,t:0.3});
-    banner("🌩 五雷符·天雷清屏！");
-  }else if(k==="magnet"){
+  if(k==="magnet"){
     G.orbs.forEach(o=>{o.magnet=true;});
     banner("🧲 聚灵珠·灵气归元！");
   }else if(k==="invuln"){
