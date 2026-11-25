@@ -457,6 +457,7 @@ function spawnWave(dt){
         G.enemies.push(mkEnemy(ETYPES.find(t=>t.id==="boss"),W/2+Math.cos(a2)*d,H/2+Math.sin(a2)*d,bhp*0.7,bspd,bdmg));
       }
       banner(`⚠ ${bt.name} 降世 ⚠`);
+      G.shake=Math.max(G.shake||0,0.35); // Boss 降世震屏
     }else if(G.wave>1){
       const a=rnd(0,Math.PI*2),d=Math.max(W,H)*0.6;
       const ehp=1+G.wave*0.08+Math.max(0,G.wave-5)*0.1;
@@ -481,6 +482,7 @@ function mkEnemy(t,x,y,hpMul,spdMul,dmgMul){
 }
 function hurtEnemy(e,dmg){
   e.hp-=dmg;
+  e.flashT=0.08; // 受击白闪反馈
   // 飘字限流：只显示高伤或抽样，且总量封顶（防低端机卡死）
   if(dmg>=1&&G.fx.length<50&&(dmg>=25||Math.random()<0.3))
     G.fx.push({x:e.x+rnd(-6,6),y:e.y-e.r-4,c:dmg>=30?"#ff9a54":"#ffe9b0",kind:"dmg",life:0.6,t:0.6,txt:Math.round(dmg)});
@@ -524,6 +526,7 @@ function enemyTick(dt){
     if(dist(e,p)<e.r+p.r&&e.hitCd<=0&&p.iframe<=0){
       const dmg=e.dashT>0?e.dmg*2:e.dmg; // 冲刺双倍
       e.hitCd=1.0;p.hp-=dmg;p.iframe=0.55;fx(p.x,p.y,"#e06c6c",30);
+      G.shake=Math.max(G.shake||0,0.1); // 受击轻震
       if(p.hp<=0)gameOver();
     }
   }
@@ -592,6 +595,7 @@ function jieTick(dt){
       if(alive){ // 魔尊在场才降劫
         for(let i=0;i<10;i++)G.fx.push({x:rnd(0,W),y:-60,x2:rnd(0,W),y2:rnd(0,H),kind:"bolt",life:0.35,t:0.35});
         fx(G.p.x,G.p.y,"#ff4040",Math.max(W,H)*0.5);
+        G.shake=Math.max(G.shake||0,0.5); // 天劫大震屏
         if(G.p.iframe<=0){ // 金身符是唯一解
           G.p.hp=-1;gameOver();
           banner("💀 天劫·身死道消");
@@ -625,6 +629,7 @@ function shotTick(dt){
 }
 function explode(s){
   fx(s.x,s.y,"#f94",s.radius);
+  G.shake=Math.max(G.shake||0,0.12); // 爆炸小震
   G.fx.push({x:s.x,y:s.y,kind:"burst",c:"#ffb066",size:s.radius*0.9,life:0.35,t:0.35});
   spark(s.x,s.y,"#ffb066",8,160,60); // 火星升腾
   G.enemies.forEach(e=>{if(dist(e,s)<s.radius+e.r)hurtEnemy(e,s.dmg);});
@@ -922,7 +927,10 @@ function draw(){
     for(let i=0;i<48;i++){const x=(i*173.3)%W,y=(i*97.7)%H;ctx.fillRect(x,y,2,2);}
     ctx.globalAlpha=1;
   }
-  if(!G)return;
+  if(!G){return;}
+  // 屏幕震动：Boss降世/爆炸/天劫
+  ctx.save();
+  if(G.shake>0){G.shake-=1/60;ctx.translate(rnd(-1,1)*G.shake*14,rnd(-1,1)*G.shake*14);}
   const p=G.p;
   // 灵气球/回血丹
   for(const o of G.orbs){
@@ -1063,6 +1071,7 @@ function draw(){
       ctx.shadowBlur=0;ctx.globalAlpha=1;ctx.textAlign="left";
     }
   }
+  ctx.restore(); // 震屏结束
 }
 function drawEmoji(em,x,y,size){
   ctx.font=size+"px serif";ctx.textAlign="center";ctx.textBaseline="middle";
@@ -1077,6 +1086,12 @@ function drawEnemy(e){
   if(G.enemies.length<90){
     ctx.fillStyle="rgba(0,0,0,.3)";
     ctx.beginPath();ctx.ellipse(e.x,e.y+e.r*0.85,e.r*0.8,e.r*0.28,0,0,7);ctx.fill();
+  }
+  // 受击白闪
+  if(e.flashT>0){
+    e.flashT-=1/60;
+    ctx.fillStyle=`rgba(255,255,255,${e.flashT*6})`;
+    ctx.beginPath();ctx.arc(e.x,e.y,e.r*1.05,0,7);ctx.fill();
   }
   // 悬浮/奔跑起伏
   const bob=Math.sin(G.t*7+e.x*0.1)*2;
