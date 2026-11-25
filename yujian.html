@@ -493,8 +493,8 @@ function hurtEnemy(e,dmg){
   if(e.hp<=0&&!e.dead){
     e.dead=true;G.kills++;
     const n=e.type.gem;G.gemRun=(G.gemRun||0)+n;
-    // 12% 掉落回血丹；3% 掉道具（精英 35%，妖王必掉）
-    if(Math.random()<0.12)
+    // 4% 掉落回血丹；道具另算（精英 12%，妖王 80%）
+    if(Math.random()<0.04)
       G.orbs.push({x:e.x,y:e.y,pill:true});
     else if(e.type.id==="elite"||e.type.id.startsWith("boss")){
       // 精英/妖王：大经验珠（经验随波次成长）
@@ -509,6 +509,11 @@ function hurtEnemy(e,dmg){
     else if(e.type.id==="elite")dropItem(e.x,e.y,0.12); // 妖将 12%
     else dropItem(e.x,e.y,0.006);                      // 普通怪 0.6%
     if(e.type.id==="boss_mie")victory(); // 斩杀灭世魔尊 = 飞升结局
+    if(e.type.id.startsWith("boss")&&e.type.id!=="boss_mie"&&!G.over){
+      // 斩杀 Boss：境界直接突破一级（含三选一）
+      G.p.xp=G.p.xpn; gainXp(0.001);
+      log(`斩杀 ${e.type.name}，道行大进，直接突破！`);
+    }
   }
 }
 function enemyTick(dt){
