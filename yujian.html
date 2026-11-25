@@ -140,12 +140,12 @@ function drawSpr(name,x,y,size,alpha){
 }
 /* ================= 敌人 ================= */
 const ETYPES=[
-  {id:"wolf",name:"妖狼",hp:12,spd:56,dmg:3,r:12,gem:1,xp:1,color:"#b55"},
-  {id:"boar",name:"石甲兽",hp:38,spd:30,dmg:8,r:16,gem:2,xp:3,color:"#886"},
-  {id:"ghost",name:"鬼火",hp:8,spd:78,dmg:3,r:11,gem:1,xp:2,color:"#8ac"},
-  {id:"bat",name:"妖蝠",hp:6,spd:95,dmg:2,r:10,gem:1,xp:1,color:"#96e"},
-  {id:"spider",name:"妖蛛",hp:16,spd:48,dmg:5,r:12,gem:2,xp:2,color:"#46e"},
-  {id:"skel",name:"骨将",hp:26,spd:62,dmg:6,r:12,gem:3,xp:4,color:"#eee"},
+  {id:"wolf",name:"妖狼",hp:18,spd:56,dmg:3,r:12,gem:1,xp:1,color:"#b55"},
+  {id:"boar",name:"石甲兽",hp:60,spd:30,dmg:8,r:16,gem:2,xp:3,color:"#886"},
+  {id:"ghost",name:"鬼火",hp:12,spd:78,dmg:3,r:11,gem:1,xp:2,color:"#8ac"},
+  {id:"bat",name:"妖蝠",hp:10,spd:95,dmg:2,r:10,gem:1,xp:1,color:"#96e"},
+  {id:"spider",name:"妖蛛",hp:26,spd:48,dmg:5,r:12,gem:2,xp:2,color:"#46e"},
+  {id:"skel",name:"骨将",hp:40,spd:62,dmg:6,r:12,gem:3,xp:4,color:"#eee"},
   {id:"elite",name:"妖将",hp:110,spd:38,dmg:10,r:20,gem:12,xp:40,color:"#d9a"},
   {id:"boss",name:"妖王",hp:9600,spd:30,dmg:14,r:32,gem:60,xp:110,color:"#f4a"},
   {id:"boss_lei",name:"雷罡妖王",hp:11200,spd:26,dmg:12,r:32,gem:70,xp:130,color:"#a6f",ai:"lei",aiCd:4},
@@ -213,15 +213,18 @@ function castSkills(dt){
         G.shots.push({kind:"sword",x:p.x,y:p.y,vx:Math.cos(ang)*420,vy:Math.sin(ang)*420,
           dmg,pierce,hitset:new Set(),r:6,life:1.2});
       }
-      // 进化·万剑归宗：8 剑环射全场
+      // 进化·万剑归宗：6 剑环射全场（轻量绘制防卡顿）
       if(p.skills.sword.evolved){
-        for(let i=0;i<8;i++){
-          const a2=i*Math.PI/4+rnd(-0.08,0.08);
+        for(let i=0;i<6;i++){
+          const a2=i*Math.PI/3+rnd(-0.08,0.08);
           G.shots.push({kind:"sword",x:p.x,y:p.y,vx:Math.cos(a2)*440,vy:Math.sin(a2)*440,
-            dmg:dmg*0.8,pierce,hitset:new Set(),r:6,life:1.2});
+            dmg:dmg*0.8,pierce,hitset:new Set(),r:6,life:1.2,ring:true});
         }
-        fx(p.x,p.y,"#e6c86e",80);
-        spark(p.x,p.y,"#e6c86e",14,180); // 金色剑气迸发
+        if(!p.skills.sword.alt){ // 特效降频：隔次施放才出粒子环
+          fx(p.x,p.y,"#e6c86e",80);
+          spark(p.x,p.y,"#e6c86e",8,180);
+        }
+        p.skills.sword.alt=!p.skills.sword.alt;
       }
       p.skills.sword.t=cd;
     }
@@ -338,7 +341,7 @@ function fx(x,y,c,r){G.fx.push({x,y,c,r:r||26,kind:"ring",life:0.3,t:0.3});}
 function banner(txt){G.fx.push({x:W/2,y:H*0.3,kind:"banner",life:1.6,t:1.6,txt});}
 /* 粒子：轻量发光点，总量封顶 */
 function spark(x,y,c,n,spd,rise){
-  if(G.parts.length>110)return;
+  if(G.parts.length>70)return; // 粒子上限收紧（移动端）
   for(let i=0;i<n;i++){
     const a=rnd(0,Math.PI*2),v=rnd(spd*0.3,spd);
     G.parts.push({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v-(rise||0),
@@ -351,7 +354,7 @@ function partsTick(dt){
     q.vx*=0.96;q.vy=q.vy*0.96+30*dt*(q.vy>0?1:0.2);
   }
   G.parts=G.parts.filter(q=>q.life>0);
-  if(G.parts.length>110)G.parts.splice(0,G.parts.length-110);
+  if(G.parts.length>70)G.parts.splice(0,G.parts.length-70);
 }
 
 /* ================= 道具系统 ================= */
@@ -419,8 +422,8 @@ function spawnWave(dt){
   if(G.spawnT<=0){
     G.spawnT=Math.max(0.6,1.2-G.wave*0.06); // 基础刷怪速率 ×1.5
     const level=G.wave;
-    // 阶梯难度：5 波后血量/速度/伤害开始陡增；15 波后再加一档（防后期站撸）
-    const hpMul=1+level*0.15+Math.max(0,level-5)*0.16+Math.max(0,level-15)*0.1;
+    // 阶梯难度：血量成长全面加码，防秒怪
+    const hpMul=1+level*0.25+Math.max(0,level-5)*0.22+Math.max(0,level-15)*0.15;
     const spdMul=Math.min(2.0,1+Math.max(0,level-4)*0.03);
     const dmgMul=Math.min(3.5,1+Math.max(0,level-3)*0.055);
     if(G.enemies.length<60+Math.min(80,G.wave*6)){ // 场上限随波次增长（后期怪海封路）
@@ -975,9 +978,16 @@ function draw(){
   }
   // 敌人：按种类分形状
   for(const e of G.enemies)drawEnemy(e);
-  // 弹幕：程序绘制，飞剑转向飞行方向
+  // 弹幕：程序绘制，飞剑转向飞行方向（环形剑阵走轻量路径）
   for(const s of G.shots){
     const ang=Math.atan2(s.vy,s.vx);
+    if(s.ring){ // 环形剑：单层剑形，无拖尾光晕
+      ctx.save();ctx.translate(s.x,s.y);ctx.rotate(ang);
+      ctx.fillStyle="#f2e2a0";
+      ctx.beginPath();ctx.moveTo(13,0);ctx.lineTo(-7,-3);ctx.lineTo(-7,3);ctx.closePath();ctx.fill();
+      ctx.restore();
+      continue;
+    }
     ctx.save();ctx.translate(s.x,s.y);
     if(s.kind==="sword"){
       ctx.rotate(ang);
