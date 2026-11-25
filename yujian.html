@@ -180,7 +180,7 @@ function newGame(){
        spd:metaMul("spd",135),lv:1,xp:0,xpn:8,
        hurtCd:0,iframe:0,
        skills:{}}, // id -> {lv, a:0, b:0}
-    enemies:[],shots:[],orbs:[],items:[],fx:[],
+    enemies:[],shots:[],orbs:[],items:[],fx:[],rerolls:5,recentOffers:[],
     spawnT:0,eliteT:42, // 波次计时器：满 42 秒才进第 2 波，开局不会立刻跳波
   };
   grantSkill("sword");
@@ -549,21 +549,32 @@ function resetInput(){
 function levelUpModal(){
   G.paused=true;
   resetInput(); // 弹窗时释放摇杆，防止 touchend 被弹窗吃掉导致输入卡死
+  showUpgrades();
+}
+function showUpgrades(){
   const opts=rollUpgrades();
   const box=document.getElementById("overlayBox");
   box.innerHTML=`<h2 class="ot">突破 · ${realmName(G.p.lv)}</h2>
-    <p style="text-align:center;color:#8896ad;font-size:12px;margin:4px 0 10px">道心抉择，三选其一</p><div id="ups"></div>`;
+    <p style="text-align:center;color:#8896ad;font-size:12px;margin:4px 0 10px">道心抉择，三选其一</p><div id="ups"></div>
+    <div style="text-align:center;margin-top:6px">
+      <button id="rerollBtn" class="bigbtn alt" style="padding:8px 20px;font-size:14px;letter-spacing:2px" ${G.rerolls<=0?"disabled":""}>🔄 重抽天机（剩 ${G.rerolls} 次）</button>
+    </div>`;
   const c=box.querySelector("#ups");
   opts.forEach(o=>{
     const d=document.createElement("div");
     d.className="upcard";
-    d.innerHTML=`<span class="t">${o.title}</span><span class="upsub ${o.sub==="方向A"?"tagA":o.sub==="方向B"?"tagB":""}">${o.sub}</span><br>
+    d.innerHTML=`<span class="t">${o.title}</span><span class="upsub ${o.sub==="方向A"?"tagA":o.sub==="方向B"?"tagB":o.sub==="★进化"?"tagA":""}">${o.sub}</span><br>
       <span style="color:#aeb9cc;font-size:13px">${o.desc}</span>`;
     d.onclick=()=>{o.apply();G.paused=false;
       document.getElementById("overlay").style.display="none";
       renderSkillHud();saveMeta();};
     c.appendChild(d);
   });
+  box.querySelector("#rerollBtn").onclick=()=>{
+    if(G.rerolls<=0)return;
+    G.rerolls--;
+    showUpgrades(); // 重抽一轮新选项
+  };
   document.getElementById("overlay").style.display="flex";
 }
 /* ================= 技能进化（Lv6 满级后解锁，改变形态） ================= */
@@ -585,44 +596,42 @@ function rollUpgrades(){
   const p=G.p,pool=[];
   // 候选1：未拥有的新技能
   Object.keys(SKILLS).filter(id=>!p.skills[id]).forEach(id=>{
-    pool.push({title:`${SKILLS[id].icon} 习得「${SKILLS[id].name}」`,sub:"新技能",
+    pool.push({key:"new:"+id,title:`${SKILLS[id].icon} 习得「${SKILLS[id].name}」`,sub:"新技能",
       desc:SKILLS[id].desc,apply:()=>grantSkill(id)});
   });
-  // 候选2：已有技能升级（Lv1 时随机出 A 或 B 一个方向，不再同屏双卡）
+  // 候选2：已有技能升级（Lv1 的 A/B 各自独立入池）
   Object.keys(p.skills).forEach(id=>{
     const s=p.skills[id],sk=SKILLS[id];
     if(s.lv<6){
-      if(s.lv===1){ // 初次升级：A/B 都入池（各自独立候选，随机抽到哪个看运气）
-        pool.push({title:`${sk.icon}「${sk.name}」→ ${sk.a.name}`,sub:"方向A",desc:sk.a.desc,
+      if(s.lv===1){
+        pool.push({key:"sk:"+id+"A",title:`${sk.icon}「${sk.name}」→ ${sk.a.name}`,sub:"方向A",desc:sk.a.desc,
           apply:()=>{s.lv++;s.a=(s.a||0)+1;}});
-        pool.push({title:`${sk.icon}「${sk.name}」→ ${sk.b.name}`,sub:"方向B",desc:sk.b.desc,
+        pool.push({key:"sk:"+id+"B",title:`${sk.icon}「${sk.name}」→ ${sk.b.name}`,sub:"方向B",desc:sk.b.desc,
           apply:()=>{s.lv++;s.b=(s.b||0)+1;}});
       }else{
-        // 主方向深化；若另一方向未开，小概率出转向卡
         const mainA=s.a>=s.b;
         if(Math.random()<0.25&&((mainA&&s.b===0)||(!mainA&&s.a===0))){
           const key=mainA?"b":"a",br=mainA?sk.b:sk.a;
-          pool.push({title:`${sk.icon}「${sk.name}」→ ${br.name}`,sub:"转向",desc:br.desc,
+          pool.push({key:"sk:"+id+key,title:`${sk.icon}「${sk.name}」→ ${br.name}`,sub:"转向",desc:br.desc,
             apply:()=>{s.lv++;s[key]=1;}});
         }else{
-          pool.push({title:`${sk.icon}「${sk.name}」精进`,sub:`${mainA?sk.a.name:sk.b.name} Lv${s.lv}`,
+          pool.push({key:"sk:"+id+"m",title:`${sk.icon}「${sk.name}」精进`,sub:`${mainA?sk.a.name:sk.b.name} Lv${s.lv}`,
             desc:`${mainA?sk.a.desc:sk.b.desc}（效果叠加）`,
             apply:()=>{s.lv++;if(mainA)s.a++;else s.b++;}});
         }
       }
     }
   });
-  // 候选3：满级技能的进化（双倍权重，让高光时刻更容易出现）
+  // 候选3：满级技能的进化（高优先）
   Object.keys(p.skills).forEach(id=>{
     const s=p.skills[id];
     if(s.lv>=6&&!s.evolved){
       const e=EVO[id];
-      for(let w=0;w<2;w++)
-        pool.push({title:`${SKILLS[id].icon}「${SKILLS[id].name}」进化 · ${e.name}`,sub:"★进化",
-          desc:e.desc,apply:()=>{e.apply(s);banner(`${SKILLS[id].icon} ${e.name}！`);}});
+      pool.push({key:"evo:"+id,title:`${SKILLS[id].icon}「${SKILLS[id].name}」进化 · ${e.name}`,sub:"★进化",
+        desc:e.desc,apply:()=>{e.apply(s);banner(`${SKILLS[id].icon} ${e.name}！`);}});
     }
   });
-  // 候选4：通用强化（多种随机）
+  // 候选4：通用强化
   const gens=[
     ["❤ 淬炼肉身","生命上限 +25，并回满",()=>{p.maxhp+=25;p.hp=p.maxhp;}],
     ["🗡 磨砺锋芒","全伤害 +15%",()=>{p.atkBuff=(p.atkBuff||1)*1.15;}],
@@ -630,18 +639,28 @@ function rollUpgrades(){
     ["🔮 摄灵之瞳","灵气吸取范围 +40%",()=>{p.magR=(p.magR||150)*1.4;}],
     ["☯ 悟性顿开","灵气获取 +12%",()=>{p.xpBuff=(p.xpBuff||1)*1.12;}],
   ];
-  gens.forEach(g=>pool.push({title:g[0],sub:"通用",desc:g[1],apply:g[2]}));
-  // Fisher-Yates 洗牌后取 3
-  for(let i=pool.length-1;i>0;i--){
-    const j=ri(0,i);[pool[i],pool[j]]=[pool[j],pool[i]];
-  }
-  // 优先保证：有进化卡时必出一张（高光时刻）
-  const evo=pool.find(o=>o.sub==="★进化");
-  const rest=pool.filter(o=>o!==evo);
-  const picks=[];
-  if(evo)picks.push(evo);
-  while(picks.length<3&&rest.length)picks.push(rest.pop());
-  return picks.slice(0,3);
+  gens.forEach(g=>pool.push({key:"gen:"+g[0],title:g[0],sub:"通用",desc:g[1],apply:g[2]}));
+  // 选卡：进化优先 → 避开上一次出过的卡 → 同技能去重 → 补满 3 张
+  const recent=(G.recentOffers||[]);
+  const pick3=(avoid)=>{
+    const evo=pool.find(o=>o.sub==="★进化"&&!avoid.includes(o.key));
+    const rest=pool.filter(o=>o!==evo&&!avoid.includes(o.key));
+    // 洗牌 rest
+    for(let i=rest.length-1;i>0;i--){const j=ri(0,i);[rest[i],rest[j]]=[rest[j],rest[i]];}
+    const picks=evo?[evo]:[];
+    const usedSkills=new Set(picks.map(o=>o.key.split(":")[1]));
+    for(const o of rest){
+      if(picks.length>=3)break;
+      const skillId=o.key.split(":")[1];
+      if(usedSkills.has(skillId))continue; // 同技能只出一张卡
+      picks.push(o);usedSkills.add(skillId);
+    }
+    return picks.slice(0,3);
+  };
+  let picks=pick3(recent);
+  if(picks.length<3)picks=pick3([]); // 池子太小就放弃避让
+  G.recentOffers=picks.map(o=>o.key); // 记住这次出过的，下次尽量换新
+  return picks;
 }
 
 /* ================= 输入 ================= */
