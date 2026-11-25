@@ -126,7 +126,7 @@ const SKILLS={
 const REALMS=["炼气一层","炼气三层","炼气六层","筑基","结丹","元婴","化神","炼虚","合体","大乘","渡劫","仙人"];
 
 /* ================= 精灵贴图（手绘 16x16 圆润像素风，base64 内嵌） ================= */
-const SPR_SRC={"player": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAwklEQVR42mNgoCUQEdP4LyKm8R+fGhZ8mqWklGDc/29e3WDEpo6JCM0MUlJKDLhcgtUFUlJKDIdmhKGI2WWsYnjz6gZxLjg0I4xBL2oWAwMDA5z+8OkDVq8y4gqDDycWoDhZwCKBkWgviIhp/P/07QCGGLaAZMSm+cq1M1hdpaNlwoBuCBO+OP51KYfh16UcBpLTwYFL76CsJggF5xNIB/icz8DAwHDl2hmM9MCCy3YrhjoU8WMMTUguIyLt42IPPgAAN9dKzUT7PcUAAAAASUVORK5CYII=", "wolf": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAhUlEQVR42mNgGDlAREzjv4iYxn/SJaHys1Yc+D9rxQEMdUwwRtukGQzYDBER0/jfNmkGTpcxMTAwMLx5dYOxKi8Dbggyhmn2+9GA1QAWdAFctm3iaMDtAkLOxAcwXHDhwgUUvoGBAZxdlZfB8ObVDUZkeUZiAwuXAVijEj1a8UUzE8MoAABj5D41nC/N+AAAAABJRU5ErkJggg==", "boar": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAo0lEQVR42mNgGPKAEZugiJjGf2zib17dwFDPgk3jlCQFrLblzGP4j24QE7LmKUkKDFw8Qjidy8UjxDAlSQHFhUzoirrC+HAagE2OCdn2TYduwSXwsZFdwYhsACkgZ94DhjevbjDCvXDpziuiXXDpzivMaBQR0/ifZsfFoKcihtPWS3deMcw69A0lFhixRWOaHRdWA2Yd+oYzPaAYAjMIF3uYAQAHy05+ZLWx4QAAAABJRU5ErkJggg==", "ghost": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAkklEQVR42mNgGPKAEZugiJjGf2zib17dYMRrAEzj7ktnsNrmqmeC0yAGETGN/+dffPl//sWX/3JKVnA2NjFkFzLCNOOyFRdw1TNhePPqBiMTPkX+Vm4M/lZueA1iwSe58dgugi6Bu+DknTdEOx9ZLRMuCWI0YxiQYaPAePLOGwYYNpTgweAzMDAw1AR5YI/KEQoAs4dXo3Bzp20AAAAASUVORK5CYII=", "elite": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAvUlEQVR42mNgoCYQEdP4LyKm8Z8UeSZkyTIXJoYyFyYGbIbgkmdBV9i15x9cAzZXdO35x/Dm1Q1GrAY8cFBgCHPA7cUHDAwMDHvuMWB4QURM439YixIDAwMDQx3bN6yaYeJhLUoormNCV9j0iwurAbjEWbAJKhx4wIDuNVwAqwH4NKADJgYGBoY3r24wrqq5R5SGVTX3UGIBJRAfXHuBV/ODay8wAhFrKuuK0vrfFaWFwSaUUrEmV6I0DW0AAFszTz0o1stRAAAAAElFTkSuQmCC", "boss": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAA0klEQVR42tVSvQnCQBT+cmSAK47jBkhxZcgEFikygQOIhBAcIGOkDCLW4gQWKZwgXGnhAIdYZIOzC+HlIkRtfNXj8b4/+IBfjJDaCandJ/9MSO3ahC8WbRMOIbVj9DBWKavalVXt6H0sGFLWtNNuvSmQmxOinQUA5IZjH9fufGxA3QY+VgCIDqthv2+vkwhp1+P5uAXhXEYfiIIHB9SFsT2yRg2AS2ERKz4BAwCj7BQMAFmjYGzvdcO+7VBAC9Im3KsWKz6x/7Zhc/uimi6t+J/OCw0rYF1uYstFAAAAAElFTkSuQmCC", "bat": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAlklEQVR42mNgGBRAREzjv4iYxn+y1IuIafyflnfi/7S8E0QZgq6eCVmyKWIBA8wQmC3ItomIafxviliAYiAjLgl84MaNcwzLLkxiePPqBiMTAwMDw5tXNxjrViTAFQQZVTAEGVVgaISJa2gYoboA2X/EuKRuRQLDm1c3GDEMQDfkxo1zDAwMDHAbkTWSFK2kRvMooDcAAM27SYGBKOooAAAAAElFTkSuQmCC", "spider": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAg0lEQVR42mNgGDRAREzjv4iYxn+y1cAkcCkgJI+hCBnj08iIrtlIwwinBedunGNgYGBgePPqBlwfE4yBLLgo6RmGZpgYsjoUA5BB3DwposRQvIDsFSkhMQYJMRm42ItXTxievXuFYTsDAwMDC7pmqCJ4gME0EopijFDGFucEDRkF5AEAODs/2CBo61AAAAAASUVORK5CYII=", "skel": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAkElEQVR42mNgoBAwoguIiGn8R+a/eXWDkWjTRMQ0/r948QEFoxuIDpiwCZpZecHpK5dOMBAyBK8riHaBiJgGTsXoco/2JfzH6oUrl04wXLl0gkFHz4IBXZykMCDkRawGvHl1gxFmM7qNEhICjLDoRI9WrC6QkBBglJAQICr+MQxA9j96WIiIafxHDsBRQCUAAOZ8S3QuZylNAAAAAElFTkSuQmCC"};
+const SPR_SRC={"player": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAwklEQVR42mNgoCUQEdP4LyKm8R+fGhZ8mqWklGDc/29e3WDEpo6JCM0MUlJKDLhcgtUFUlJKDIdmhKGI2WWsYnjz6gZxLjg0I4xBL2oWAwMDA5z+8OkDVq8y4gqDDycWoDhZwCKBkWgviIhp/P/07QCGGLaAZMSm+cq1M1hdpaNlwoBuCBO+OP51KYfh16UcBpLTwYFL76CsJggF5xNIB/icz8DAwHDl2hmM9MCCy3YrhjoU8WMMTUguIyLt42IPPgAAN9dKzUT7PcUAAAAASUVORK5CYII=", "wolf": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAhUlEQVR42mNgGDlAREzjv4iYxn/SJaHys1Yc+D9rxQEMdUwwRtukGQzYDBER0/jfNmkGTpcxMTAwMLx5dYOxKi8Dbggyhmn2+9GA1QAWdAFctm3iaMDtAkLOxAcwXHDhwgUUvoGBAZxdlZfB8ObVDUZkeUZiAwuXAVijEj1a8UUzE8MoAABj5D41nC/N+AAAAABJRU5ErkJggg==", "boar": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAo0lEQVR42mNgGPKAEZugiJjGf2zib17dwFDPgk3jlCQFrLblzGP4j24QE7LmKUkKDFw8Qjidy8UjxDAlSQHFhUzoirrC+HAagE2OCdn2TYduwSXwsZFdwYhsACkgZ94DhjevbjDCvXDpziuiXXDpzivMaBQR0/ifZsfFoKcihtPWS3deMcw69A0lFhixRWOaHRdWA2Yd+oYzPaAYAjMIF3uYAQAHy05+ZLWx4QAAAABJRU5ErkJggg==", "ghost": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAkklEQVR42mNgGPKAEZugiJjGf2zib17dYMRrAEzj7ktnsNrmqmeC0yAGETGN/+dffPl//sWX/3JKVnA2NjFkFzLCNOOyFRdw1TNhePPqBiMTPkX+Vm4M/lZueA1iwSe58dgugi6Bu+DknTdEOx9ZLRMuCWI0YxiQYaPAePLOGwYYNpTgweAzMDAw1AR5YI/KEQoAs4dXo3Bzp20AAAAASUVORK5CYII=", "elite": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAvUlEQVR42mNgoCYQEdP4LyKm8Z8UeSZkyTIXJoYyFyYGbIbgkmdBV9i15x9cAzZXdO35x/Dm1Q1GrAY8cFBgCHPA7cUHDAwMDHvuMWB4QURM439YixIDAwMDQx3bN6yaYeJhLUoormNCV9j0iwurAbjEWbAJKhx4wIDuNVwAqwH4NKADJgYGBoY3r24wrqq5R5SGVTX3UGIBJRAfXHuBV/ODay8wAhFrKuuK0vrfFaWFwSaUUrEmV6I0DW0AAFszTz0o1stRAAAAAElFTkSuQmCC", "boss": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAA0klEQVR42tVSvQnCQBT+cmSAK47jBkhxZcgEFikygQOIhBAcIGOkDCLW4gQWKZwgXGnhAIdYZIOzC+HlIkRtfNXj8b4/+IBfjJDaCandJ/9MSO3ahC8WbRMOIbVj9DBWKavalVXt6H0sGFLWtNNuvSmQmxOinQUA5IZjH9fufGxA3QY+VgCIDqthv2+vkwhp1+P5uAXhXEYfiIIHB9SFsT2yRg2AS2ERKz4BAwCj7BQMAFmjYGzvdcO+7VBAC9Im3KsWKz6x/7Zhc/uimi6t+J/OCw0rYF1uYstFAAAAAElFTkSuQmCC", "bat": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAlklEQVR42mNgGBRAREzjv4iYxn+y1IuIafyflnfi/7S8E0QZgq6eCVmyKWIBA8wQmC3ItomIafxviliAYiAjLgl84MaNcwzLLkxiePPqBiMTAwMDw5tXNxjrViTAFQQZVTAEGVVgaISJa2gYoboA2X/EuKRuRQLDm1c3GDEMQDfkxo1zDAwMDHAbkTWSFK2kRvMooDcAAM27SYGBKOooAAAAAElFTkSuQmCC", "spider": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAg0lEQVR42mNgGDRAREzjv4iYxn+y1cAkcCkgJI+hCBnj08iIrtlIwwinBedunGNgYGBgePPqBlwfE4yBLLgo6RmGZpgYsjoUA5BB3DwposRQvIDsFSkhMQYJMRm42ItXTxievXuFYTsDAwMDC7pmqCJ4gME0EopijFDGFucEDRkF5AEAODs/2CBo61AAAAAASUVORK5CYII=", "skel": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAkElEQVR42mNgoBAwoguIiGn8R+a/eXWDkWjTRMQ0/r948QEFoxuIDpiwCZpZecHpK5dOMBAyBK8riHaBiJgGTsXoco/2JfzH6oUrl04wXLl0gkFHz4IBXZykMCDkRawGvHl1gxFmM7qNEhICjLDoRI9WrC6QkBBglJAQICr+MQxA9j96WIiIafxHDsBRQCUAAOZ8S3QuZylNAAAAAElFTkSuQmCC", "boss_lei": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAxUlEQVR42mNgoAbg1xL8z68l+J8c9Uz8WoL/rV6cJNlSqxcnGfi1BP8zoQsg25I/PfV//vTU/+jiyBYyYTM1f3rqf6sXJxkmHpvKMPHYVAarFycZYAahu5YRm6kMDAwM270V4GzPrQ8wvHBMwpzh47X3jCy4/IhNE7pmuAvQXfHsxzmG/bzecA2On7cySHEYYWjGCANsmhkYGBj283ozPPtxDqtrmChNQ4zoCcTqxUmstklxGGE4H28Kw8UmKZmSmsSHKAAADcBnYIv/xe0AAAAASUVORK5CYII=", "boss_xue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAxElEQVR42mNgoAbgEVf7zyOu9p8c9Uw84mr/d77mJNnSna85GXjE1f4zoQsg2xJR1fE/oqrjP7o4soVM2EyNqOr4v/M1J0O/ygGGfpUDDDtfczLADEJ3LSM2UxkYGBiU5kjC2fdSnmN4wV30O8OXl7cYWXD5EZsmdM1wF6C74vLfHwwuOXfhGvZMUWbQZebA0IwRBtg0MzAwMLjk3GW4/PcHVtcwUZqGGNETyM7XnFht02XmwHA+3hSGi01SMiU1iQ9RAACnDGXSBk2YVwAAAABJRU5ErkJggg==", "boss_bing": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAwUlEQVR42tVSPQrCMBT+Gty6NLcwJW49hlBw7Bl6k96hdHqjIHiK0i1SvYWh0Pk5WUuSClUX3/R45PsLH/CL0UqyVpI/eS+0kmzJrBa1ZKCVZOEe5ip1VXJdleze54IixFpXJVsyaIcG7dDAksGTyHUbhVgBYH/cTvv5cPMiJMUOl+s92ixlDIFc8OTAdTH2HRLKX9GKE+I088DeH4TAAJBQjrHvgm7Etx2K3IJYMkG1OM08+28btrSvqunaiv/pPAC5yG5Yxkdy0AAAAABJRU5ErkJggg==", "boss_mie": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAwUlEQVR42tVSzQqCQBD+XEwPjosevRQYu3d9A5/c90gK6lDHpPSQQttNZFwDq0tzGob5/uADfjE+SeOTNJ/8C5+kKUgtFi1IwSdpBD+MVXSeGZ1nht/Hgi5nLVGZjd4iPQuEbg8ASEnhoJ/muNuDu3VsrAAQrvthv59WkwhlU+HR3Bx3LqMNxMGDA+6i7lokcTMALldC5AUTMAAIzs7BAJDEDequtboR33bI4QUpSFnVIi+Y2H/bsLl9UU2XVvxP5wUzR1eVPH5KzAAAAABJRU5ErkJggg=="};
 const SPR={};for(const k in SPR_SRC){const _i=new Image();_i.src=SPR_SRC[k];SPR[k]=_i;}
 function drawSpr(name,x,y,size,alpha){
   const img=SPR[name];
@@ -148,6 +148,10 @@ const ETYPES=[
   {id:"skel",name:"骨将",hp:26,spd:62,dmg:6,r:12,gem:3,xp:4,color:"#eee"},
   {id:"elite",name:"妖将",hp:110,spd:38,dmg:10,r:20,gem:12,xp:25,color:"#d9a"},
   {id:"boss",name:"妖王",hp:480,spd:30,dmg:14,r:32,gem:60,xp:110,color:"#f4a"},
+  {id:"boss_lei",name:"雷罡妖王",hp:560,spd:26,dmg:12,r:32,gem:70,xp:130,color:"#a6f",ai:"lei",aiCd:4},
+  {id:"boss_xue",name:"血魔老祖",hp:640,spd:24,dmg:12,r:32,gem:80,xp:150,color:"#f66",ai:"xue",aiCd:6},
+  {id:"boss_bing",name:"玄冰巨蟒",hp:700,spd:22,dmg:14,r:34,gem:90,xp:170,color:"#6ee",ai:"bing",aiCd:5},
+  {id:"boss_mie",name:"灭世魔尊",hp:2800,spd:34,dmg:20,r:40,gem:666,xp:666,color:"#400",ai:"mie",aiCd:5},
 ];
 
 /* ================= 游戏状态 ================= */
@@ -180,7 +184,8 @@ function newGame(){
        spd:metaMul("spd",135),lv:1,xp:0,xpn:8,
        hurtCd:0,iframe:0,
        skills:{}}, // id -> {lv, a:0, b:0}
-    enemies:[],shots:[],orbs:[],items:[],fx:[],rerolls:5,recentOffers:[],
+    enemies:[],shots:[],orbs:[],items:[],fx:[],eshots:[],parts:[],
+    rerolls:5,recentOffers:[],finalSpawned:false,victory:false,jieWarn:0,jieCd:0,
     spawnT:0,eliteT:42, // 波次计时器：满 42 秒才进第 2 波，开局不会立刻跳波
   };
   grantSkill("sword");
@@ -215,7 +220,8 @@ function castSkills(dt){
           G.shots.push({kind:"sword",x:p.x,y:p.y,vx:Math.cos(a2)*440,vy:Math.sin(a2)*440,
             dmg:dmg*0.8,pierce,hitset:new Set(),r:6,life:1.2});
         }
-        fx(p.x,p.y,"#dce8ff",70);
+        fx(p.x,p.y,"#e6c86e",80);
+        spark(p.x,p.y,"#e6c86e",14,180); // 金色剑气迸发
       }
       p.skills.sword.t=cd;
     }
@@ -276,6 +282,7 @@ function castSkills(dt){
       if(s.evolved){
         G.enemies.forEach(x=>{if(dist(x,p)<200)x.stun=Math.max(x.stun||0,1);});
         fx(p.x,p.y,"#9ad8ff",200);
+        spark(p.x,p.y,"#cfeaff",16,200); // 冰晶四溅
       }
       s.t=cd;
     }
@@ -292,12 +299,14 @@ function castSkills(dt){
       if(s.evolved)p.iframe=Math.max(p.iframe,0.6);
       G.fx.push({x:p.x+rnd(-6,6),y:p.y-24,c:"#8fe08f",kind:"dmg",life:0.7,t:0.7,txt:"+"+Math.round(amt)});
       fx(p.x,p.y,"#8fe08f",18);
+      spark(p.x,p.y-6,"#a8e890",s.evolved?8:3,50,80); // 回春灵光上升
       s.t=cd;
     }
   }
 }
 function zap(e,p,dmg,chain){
   fx(e.x,e.y-30,"#8ef",10);hurtEnemy(e,dmg);
+  spark(e.x,e.y,"#bfe8ff",3,110);
   G.fx.push({x:e.x,y:e.y,kind:"burst",c:"#bfe8ff",size:26,life:0.22,t:0.22});
   G.fx.push({x:e.x,y:e.y-120,x2:e.x,y2:e.y,kind:"bolt",life:0.18,t:0.18});
 }
@@ -311,6 +320,7 @@ function qiTick(dt){
   s.ang=(s.ang||0)+dt*(2.2+(s.b||0)*1.32);
   const n=1+s.lv-1+(s.a||0)+(s.evolved?3:0); // 进化·玄武真罡：+3 球
   s.orbs=[];const R=46*(1+(s.b||0)*0.35)*(s.evolved?1.4:1);
+  s.ringR=R; // 供法阵绘制
   // 进化：罡内妖兽减速
   if(s.evolved)G.enemies.forEach(e=>{if(dist(e,p)<R+30)e.slowT=Math.max(e.slowT||0,0.3);});
   for(let i=0;i<n;i++){
@@ -326,6 +336,23 @@ function qiTick(dt){
 }
 function fx(x,y,c,r){G.fx.push({x,y,c,r:r||26,kind:"ring",life:0.3,t:0.3});}
 function banner(txt){G.fx.push({x:W/2,y:H*0.3,kind:"banner",life:1.6,t:1.6,txt});}
+/* 粒子：轻量发光点，总量封顶 */
+function spark(x,y,c,n,spd,rise){
+  if(G.parts.length>110)return;
+  for(let i=0;i<n;i++){
+    const a=rnd(0,Math.PI*2),v=rnd(spd*0.3,spd);
+    G.parts.push({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v-(rise||0),
+      life:rnd(0.3,0.7),t:0.7,c,size:rnd(2,4)});
+  }
+}
+function partsTick(dt){
+  for(const q of G.parts){
+    q.x+=q.vx*dt;q.y+=q.vy*dt;q.life-=dt;
+    q.vx*=0.96;q.vy=q.vy*0.96+30*dt*(q.vy>0?1:0.2);
+  }
+  G.parts=G.parts.filter(q=>q.life>0);
+  if(G.parts.length>110)G.parts.splice(0,G.parts.length-110);
+}
 
 /* ================= 道具系统 ================= */
 const ITEMS={
@@ -392,13 +419,13 @@ function spawnWave(dt){
   if(G.spawnT<=0){
     G.spawnT=Math.max(0.6,1.2-G.wave*0.06); // 基础刷怪速率 ×1.5
     const level=G.wave;
-    // 阶梯难度：5 波后血量/速度/伤害开始陡增
-    const hpMul=1+level*0.15+Math.max(0,level-5)*0.16;
+    // 阶梯难度：5 波后血量/速度/伤害开始陡增；15 波后再加一档（防后期站撸）
+    const hpMul=1+level*0.15+Math.max(0,level-5)*0.16+Math.max(0,level-15)*0.1;
     const spdMul=Math.min(2.0,1+Math.max(0,level-4)*0.03);
-    const dmgMul=Math.min(2.6,1+Math.max(0,level-3)*0.055);
+    const dmgMul=Math.min(3.5,1+Math.max(0,level-3)*0.055);
     if(G.enemies.length<60+Math.min(80,G.wave*6)){ // 场上限随波次增长（后期怪海封路）
-      // 怪池随波次扩容：3波+妖蝠，5波+妖蛛，7波+骨将
-      const pool=ETYPES.filter(t=>t.id!=="elite"&&t.id!=="boss"
+      // 怪池随波次扩容：3波+妖蝠，5波+妖蛛，7波+骨将（排除所有 boss 与精英）
+      const pool=ETYPES.filter(t=>!t.id.startsWith("boss")&&t.id!=="elite"
         && (t.id!=="bat"||level>=3) && (t.id!=="spider"||level>=5) && (t.id!=="skel"||level>=7));
       const t=pool[ri(0,pool.length-1)];
       for(let i=0;i<ri(2,3+Math.min(6,level/2.5|0));i++){ // 每批最多 9 只随波次增长
@@ -417,29 +444,31 @@ function spawnWave(dt){
   if(G.eliteT<=0){
     G.eliteT=35; // 波次更快
     G.wave++;
-    if(G.wave%5===0){ // boss 波（每 5 波）
+    if(G.wave%5===0){ // boss 波（每 5 波，四 Boss 轮换）
       const a=rnd(0,Math.PI*2),d=Math.max(W,H)*0.6;
       const bhp=1+G.wave*0.1;
       const bspd=Math.min(1.6,1+Math.max(0,G.wave-4)*0.025);
       const bdmg=Math.min(2.6,1+G.wave*0.03);
-      G.enemies.push(mkEnemy(ETYPES[4],W/2+Math.cos(a)*d,H/2+Math.sin(a)*d,bhp,bspd,bdmg));
-      if(G.wave>=10){ // 10 波后双 Boss
+      const bosses=["boss","boss_lei","boss_xue","boss_bing"];
+      const bt=ETYPES.find(t=>t.id===bosses[(Math.floor(G.wave/5)-1)%4]);
+      G.enemies.push(mkEnemy(bt,W/2+Math.cos(a)*d,H/2+Math.sin(a)*d,bhp,bspd,bdmg));
+      if(G.wave>=10){ // 10 波后双 Boss（第二只为基础妖王）
         const a2=rnd(0,Math.PI*2);
-        G.enemies.push(mkEnemy(ETYPES[4],W/2+Math.cos(a2)*d,H/2+Math.sin(a2)*d,bhp*0.7,bspd,bdmg));
+        G.enemies.push(mkEnemy(ETYPES.find(t=>t.id==="boss"),W/2+Math.cos(a2)*d,H/2+Math.sin(a2)*d,bhp*0.7,bspd,bdmg));
       }
-      banner("⚠ 妖王降世 ⚠");
+      banner(`⚠ ${bt.name} 降世 ⚠`);
     }else if(G.wave>1){
       const a=rnd(0,Math.PI*2),d=Math.max(W,H)*0.6;
       const ehp=1+G.wave*0.08+Math.max(0,G.wave-5)*0.1;
       const espd=Math.min(2.0,1+Math.max(0,G.wave-4)*0.03);
-      G.enemies.push(mkEnemy(ETYPES[3],W/2+Math.cos(a)*d,H/2+Math.sin(a)*d,ehp,espd,Math.min(2.6,1+G.wave*0.035)));
+      G.enemies.push(mkEnemy(ETYPES.find(t=>t.id==="elite"),W/2+Math.cos(a)*d,H/2+Math.sin(a)*d,ehp,espd,Math.min(2.6,1+G.wave*0.035)));
       if(G.wave>=7){ // 7 波后精英成对出现
         const a2=rnd(0,Math.PI*2);
-        G.enemies.push(mkEnemy(ETYPES[3],W/2+Math.cos(a2)*d,H/2+Math.sin(a2)*d,ehp*0.8,espd,Math.min(2.6,1+G.wave*0.035)));
+        G.enemies.push(mkEnemy(ETYPES.find(t=>t.id==="elite"),W/2+Math.cos(a2)*d,H/2+Math.sin(a2)*d,ehp*0.8,espd,Math.min(2.6,1+G.wave*0.035)));
       }
       if(G.wave>=12){ // 12 波后精英三连
         const a3=rnd(0,Math.PI*2);
-        G.enemies.push(mkEnemy(ETYPES[3],W/2+Math.cos(a3)*d,H/2+Math.sin(a3)*d,ehp*0.6,espd,Math.min(2.6,1+G.wave*0.035)));
+        G.enemies.push(mkEnemy(ETYPES.find(t=>t.id==="elite"),W/2+Math.cos(a3)*d,H/2+Math.sin(a3)*d,ehp*0.6,espd,Math.min(2.6,1+G.wave*0.035)));
       }
       banner(`第 ${G.wave} 波 · 妖将出击`);
     }
@@ -468,6 +497,7 @@ function hurtEnemy(e,dmg){
     if(e.type.id==="boss")dropItem(e.x,e.y,0.8);      // 妖王 80%
     else if(e.type.id==="elite")dropItem(e.x,e.y,0.12); // 妖将 12%
     else dropItem(e.x,e.y,0.006);                      // 普通怪 0.6%
+    if(e.type.id==="boss_mie")victory(); // 斩杀灭世魔尊 = 飞升结局
   }
 }
 function enemyTick(dt){
@@ -476,16 +506,100 @@ function enemyTick(dt){
     if(e.stun>0){e.stun-=dt;continue;}
     let sp=e.spd;
     if(e.slowT>0){e.slowT-=dt;sp*=0.45;}
-    const d=dist(e,p)||1;
-    e.x+=(p.x-e.x)/d*sp*dt;e.y+=(p.y-e.y)/d*sp*dt;
+    // Boss AI：特殊机制
+    if(e.type.ai)bossAI(e,dt);
+    // 冲刺中（玄冰巨蟒）
+    if(e.dashT>0){
+      e.dashT-=dt;
+      e.x+=e.dashVx*dt;e.y+=e.dashVy*dt;
+      // 冲刺路径留寒霜减速带
+      if(Math.random()<0.4)G.fx.push({x:e.x,y:e.y,c:"#6ee8",r:30,kind:"zone",life:1.2,t:1.2,dps:0,slowZone:true});
+      e.hitCd=Math.max(e.hitCd,0.3); // 冲刺贴身更疼
+    }else{
+      const d=dist(e,p)||1;
+      e.x+=(p.x-e.x)/d*sp*dt;e.y+=(p.y-e.y)/d*sp*dt;
+    }
     // 碰撞伤害
     e.hitCd-=dt;
     if(dist(e,p)<e.r+p.r&&e.hitCd<=0&&p.iframe<=0){
-      e.hitCd=1.0;p.hp-=e.dmg;p.iframe=0.55;fx(p.x,p.y,"#e06c6c",30);
+      const dmg=e.dashT>0?e.dmg*2:e.dmg; // 冲刺双倍
+      e.hitCd=1.0;p.hp-=dmg;p.iframe=0.55;fx(p.x,p.y,"#e06c6c",30);
       if(p.hp<=0)gameOver();
     }
   }
   G.enemies=G.enemies.filter(e=>!e.dead);
+  eshotTick(dt);
+}
+/* ================= Boss AI ================= */
+function bossAI(e,dt){
+  const p=G.p;
+  e.aiT=(e.aiT===undefined?2.5:e.aiT)-dt;
+  if(e.type.ai==="xue"&&dist(e,p)<320){ // 血魔老祖：近距离吸血
+    p.hp=Math.max(0,p.hp-4*dt);
+    e.hp=Math.min(e.maxhp,e.hp+3*dt);
+  }
+  if(e.aiT>0)return;
+  e.aiT=e.type.aiCd;
+  if(e.type.ai==="lei"){ // 雷罡妖王：环形弹幕
+    fx(e.x,e.y,"#a6f",40);
+    for(let i=0;i<10;i++){
+      const a=i*Math.PI/5+rnd(-0.06,0.06);
+      G.eshots.push({x:e.x,y:e.y,vx:Math.cos(a)*160,vy:Math.sin(a)*160,
+        dmg:Math.round(e.dmg*0.9),r:7,life:4,c:"#c8a8ff"});
+    }
+    for(let i=0;i<6;i++)spark(e.x,e.y,"#c8a8ff",1,120);
+  }else if(e.type.ai==="xue"){ // 血魔老祖：召唤妖蝠
+    fx(e.x,e.y,"#f66",44);
+    for(let i=0;i<4;i++){
+      const a=rnd(0,Math.PI*2);
+      if(G.enemies.length<75)G.enemies.push(mkEnemy(ETYPES.find(t=>t.id==="bat"),e.x+Math.cos(a)*50,e.y+Math.sin(a)*50,1+G.wave*0.1,1,1));
+    }
+  }else if(e.type.ai==="bing"){ // 玄冰巨蟒：锁定冲刺
+    const d=dist(e,p)||1;
+    e.dashT=0.55;e.dashVx=(p.x-e.x)/d*460;e.dashVy=(p.y-e.y)/d*460;
+    fx(e.x,e.y,"#6ee",50);
+  }else if(e.type.ai==="mie"){ // 灭世魔尊：弹幕 + 天劫倒计时
+    for(let ring=0;ring<2;ring++)
+      for(let i=0;i<12;i++){
+        const a=i*Math.PI/6+ring*0.26+G.t;
+        G.eshots.push({x:e.x,y:e.y,vx:Math.cos(a)*(150+ring*60),vy:Math.sin(a)*(150+ring*60),
+          dmg:Math.round(e.dmg*0.8),r:8,life:5,c:"#ff8080"});
+      }
+    if(G.jieCd<=0){G.jieCd=18;G.jieWarn=3;} // 启动天劫
+  }
+}
+/* 敌方弹幕 */
+function eshotTick(dt){
+  const p=G.p;
+  for(const s of G.eshots){
+    s.x+=s.vx*dt;s.y+=s.vy*dt;s.life-=dt;
+    if(dist(s,p)<s.r+p.r&&p.iframe<=0){
+      p.hp-=s.dmg;p.iframe=0.45;fx(p.x,p.y,"#e06c6c",26);
+      s.dead=true;
+      if(p.hp<=0)gameOver();
+    }
+    if(s.x<-40||s.x>W+40||s.y<-40||s.y>H+40)s.dead=true;
+  }
+  G.eshots=G.eshots.filter(s=>!s.dead&&s.life>0);
+}
+/* 天劫（灭世魔尊）：倒计时后全场秒杀（金身符可挡） */
+function jieTick(dt){
+  if(G.jieCd>0)G.jieCd-=dt;
+  if(G.jieWarn>0){
+    G.jieWarn-=dt;
+    if(G.jieWarn<=0){ // 天劫落下
+      const alive=G.enemies.find(e=>e.type.ai==="mie"&&!e.dead);
+      if(alive){ // 魔尊在场才降劫
+        for(let i=0;i<10;i++)G.fx.push({x:rnd(0,W),y:-60,x2:rnd(0,W),y2:rnd(0,H),kind:"bolt",life:0.35,t:0.35});
+        fx(G.p.x,G.p.y,"#ff4040",Math.max(W,H)*0.5);
+        if(G.p.iframe<=0){ // 金身符是唯一解
+          G.p.hp=-1;gameOver();
+          banner("💀 天劫·身死道消");
+        }else banner("✨ 金身护体·天劫不侵！");
+        G.jieCd=18;
+      }
+    }
+  }
 }
 
 /* ================= 弹道 ================= */
@@ -512,6 +626,7 @@ function shotTick(dt){
 function explode(s){
   fx(s.x,s.y,"#f94",s.radius);
   G.fx.push({x:s.x,y:s.y,kind:"burst",c:"#ffb066",size:s.radius*0.9,life:0.35,t:0.35});
+  spark(s.x,s.y,"#ffb066",8,160,60); // 火星升腾
   G.enemies.forEach(e=>{if(dist(e,s)<s.radius+e.r)hurtEnemy(e,s.dmg);});
   if(s.burn)G.fx.push({x:s.x,y:s.y,c:"#f74",r:s.radius,kind:"zone",life:2,t:2,dps:metaMul("atk",9)});
 }
@@ -736,20 +851,32 @@ function loop(ts){
 function tick(dt){
   G.t+=dt;
   const p=G.p;
-  // 移动（模拟量：死区 14%，幅度线性映射到速度）
+  // 移动（模拟量：死区 14%，幅度线性映射到速度）；玄冰寒霜带减速 45%
   let mx=input.x||(input.kx||0),my=input.y||(input.ky||0);
+  let frost=1;
+  for(const f of G.fx)if(f.kind==="zone"&&f.slowZone&&dist(p,{x:f.x,y:f.y})<f.r)frost=0.55;
   const mm=Math.hypot(mx,my);
   let mag=input.kx||input.ky ? 1 : (input.mag||mm);
   if(mm>0.01&&mag<DEAD)mag=0;
   if(mm>0.01&&mag>DEAD){
     const speedScale=Math.min(1,(mag-DEAD)/(1-DEAD)*1.15); // 过死区后快速到全速
-    const v=speedScale*p.spd;
+    const v=speedScale*p.spd*frost;
     p.x=clamp(p.x+mx/mm*v*dt,16,W-16);p.y=clamp(p.y+my/mm*v*dt,16,H-16);
   }
   p.iframe=Math.max(0,p.iframe-dt);
   p.hp=Math.min(p.maxhp,p.hp+(0.5+META.ups.regen*0.5)*dt); // 基础回血 0.5/秒
   castSkills(dt);qiTick(dt);
   spawnWave(dt);enemyTick(dt);shotTick(dt);orbTick(dt);itemTick(dt);
+  partsTick(dt);jieTick(dt);
+  // 30 分钟终局：灭世魔尊降世
+  if(G.t>=1800&&!G.finalSpawned&&!G.victory){
+    G.finalSpawned=true;
+    const a=rnd(0,Math.PI*2),d=Math.max(W,H)*0.4;
+    G.enemies.push(mkEnemy(ETYPES.find(t=>t.id==="boss_mie"),W/2+Math.cos(a)*d,H/2+Math.sin(a)*d,3,1.1,3));
+    banner("💀 天劫·灭世魔尊降世 💀");
+    log("撑过 30 分钟了……但真正的劫数才刚开始");
+    G.jieCd=12; // 12 秒后第一道天劫
+  }
   hudT=Math.max(0,hudT-dt);
   // 灵气球溢出保护：超 150 个时旧的自动飞向玩家（防堆积卡顿）
   if(G.orbs.length>150)for(let i=0;i<G.orbs.length-150;i++)G.orbs[i].magnet=true;
@@ -865,8 +992,42 @@ function draw(){
   const aura=ctx.createRadialGradient(p.x,p.y,2,p.x,p.y,p.r*2.6*pulse);
   aura.addColorStop(0,"rgba(230,200,110,.45)");aura.addColorStop(1,"rgba(230,200,110,0)");
   ctx.fillStyle=aura;ctx.beginPath();ctx.arc(p.x,p.y,p.r*2.6*pulse,0,7);ctx.fill();
+  // 玄武真罡：脚下旋转法阵
+  if(p.skills.qi&&p.skills.qi.evolved){
+    const R=p.skills.qi.ringR||64;
+    ctx.save();ctx.translate(p.x,p.y);ctx.rotate(G.t*0.8);
+    ctx.strokeStyle="rgba(138,187,255,.5)";ctx.lineWidth=2;ctx.setLineDash([10,7]);
+    ctx.beginPath();ctx.arc(0,0,R,0,7);ctx.stroke();
+    ctx.strokeStyle="rgba(190,220,255,.25)";ctx.setLineDash([4,9]);
+    ctx.beginPath();ctx.arc(0,0,R*0.6,0,7);ctx.stroke();
+    ctx.setLineDash([]);ctx.restore();
+  }
   drawSpr("player",p.x,p.y+Math.sin(G.t*6)*1.5,40,p.iframe>0&&(G.t*20|0)%2===0?0.45:1);
   drawItems();
+  // 敌方弹幕：发光法球
+  for(const s of G.eshots){
+    const g=ctx.createRadialGradient(s.x,s.y,1,s.x,s.y,s.r*2.2);
+    g.addColorStop(0,"#fff");g.addColorStop(0.35,s.c);g.addColorStop(1,"rgba(0,0,0,0)");
+    ctx.fillStyle=g;ctx.beginPath();ctx.arc(s.x,s.y,s.r*2.2,0,7);ctx.fill();
+  }
+  // 粒子
+  for(const q of G.parts){
+    ctx.globalAlpha=Math.max(0,q.life/q.t);
+    ctx.fillStyle=q.c;
+    ctx.beginPath();ctx.arc(q.x,q.y,q.size*(q.life/q.t),0,7);ctx.fill();
+  }
+  ctx.globalAlpha=1;
+  // 天劫预警：红屏渐强 + 倒计时
+  if(G.jieWarn>0){
+    const k=1-G.jieWarn/3;
+    const vg=ctx.createRadialGradient(W/2,H/2,Math.min(W,H)*0.25,W/2,H/2,Math.max(W,H)*0.7);
+    vg.addColorStop(0,"rgba(200,20,20,0)");vg.addColorStop(1,`rgba(200,20,20,${0.25+k*0.4})`);
+    ctx.fillStyle=vg;ctx.fillRect(0,0,W,H);
+    ctx.font="bold 42px 'Microsoft YaHei'";ctx.textAlign="center";
+    ctx.fillStyle="#ff6a6a";ctx.shadowColor="#f00";ctx.shadowBlur=16;
+    ctx.fillText(`天 劫 ${Math.ceil(G.jieWarn)}`,W/2,H*0.24);
+    ctx.shadowBlur=0;ctx.textAlign="left";
+  }
   // 特效
   for(const f of G.fx){
     const k=f.life/(f.t||0.3);
@@ -910,7 +1071,8 @@ function drawEmoji(em,x,y,size){
 }
 function drawEnemy(e){
   const t=e.type;
-  const spr={wolf:"wolf",boar:"boar",ghost:"ghost",bat:"bat",spider:"spider",skel:"skel",elite:"elite",boss:"boss"}[t.id]||"wolf";
+  const spr={wolf:"wolf",boar:"boar",ghost:"ghost",bat:"bat",spider:"spider",skel:"skel",elite:"elite",boss:"boss",
+    boss_lei:"boss_lei",boss_xue:"boss_xue",boss_bing:"boss_bing",boss_mie:"boss_mie"}[t.id]||"wolf";
   // 阴影（怪海时跳过，省一次椭圆填充）
   if(G.enemies.length<90){
     ctx.fillStyle="rgba(0,0,0,.3)";
@@ -965,6 +1127,22 @@ function log(msg){
   // 简易飘字
   if(G)G.fx.push({x:G.p.x,y:G.p.y-40,c:"#e6c86e",kind:"ring",r:20,life:1.2,t:1.2,msg});
   console.log("[御剑] "+msg);
+}
+function victory(){
+  if(G.victory||G.over)return;
+  G.victory=true;G.paused=true;
+  const bonus=500+G.kills;
+  META.gems+=bonus+(G.gemRun||0);saveMeta();
+  const box=document.getElementById("overlayBox");
+  box.innerHTML=`<h2 class="ot">羽 化 飞 升</h2>
+    <p style="text-align:center;color:#cdd6e4;margin:10px 0">斩灭世魔尊于 ${Math.floor(G.t/60)} 分${Math.floor(G.t%60)} 秒 · ${realmName(G.p.lv)} · 击杀 ${G.kills} · 波次 ${G.wave}</p>
+    <p style="text-align:center;font-size:22px;margin:14px 0;color:var(--hi);text-shadow:0 0 16px #e6c86e66">💎 灵石 +${bonus+(G.gemRun||0)}</p>
+    <p style="text-align:center;color:#8896ad;font-size:12px">此界再无敌手。轮回再战，可挑战更快飞升。</p>
+    <div style="display:flex;gap:12px;justify-content:center;margin-top:10px">
+      <button class="bigbtn" onclick="restart()">轮回再战</button>
+      <button class="bigbtn alt" onclick="showCave()">洞府修炼</button>
+    </div>`;
+  document.getElementById("overlay").style.display="flex";
 }
 function gameOver(){
   if(G.over)return;
