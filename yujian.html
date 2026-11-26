@@ -126,7 +126,7 @@ const SKILLS={
 const REALMS=["炼气一层","炼气三层","炼气六层","筑基","结丹","元婴","化神","炼虚","合体","大乘","渡劫","仙人"];
 
 /* ================= 精灵贴图（手绘 16x16 圆润像素风，base64 内嵌） ================= */
-const SPR_SRC={"player": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAwklEQVR42mNgoCUQEdP4LyKm8R+fGhZ8mqWklGDc/29e3WDEpo6JCM0MUlJKDLhcgtUFUlJKDIdmhKGI2WWsYnjz6gZxLjg0I4xBL2oWAwMDA5z+8OkDVq8y4gqDDycWoDhZwCKBkWgviIhp/P/07QCGGLaAZMSm+cq1M1hdpaNlwoBuCBO+OP51KYfh16UcBpLTwYFL76CsJggF5xNIB/icz8DAwHDl2hmM9MCCy3YrhjoU8WMMTUguIyLt42IPPgAAN9dKzUT7PcUAAAAASUVORK5CYII=", "wolf": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAhUlEQVR42mNgGDlAREzjv4iYxn/SJaHys1Yc+D9rxQEMdUwwRtukGQzYDBER0/jfNmkGTpcxMTAwMLx5dYOxKi8Dbggyhmn2+9GA1QAWdAFctm3iaMDtAkLOxAcwXHDhwgUUvoGBAZxdlZfB8ObVDUZkeUZiAwuXAVijEj1a8UUzE8MoAABj5D41nC/N+AAAAABJRU5ErkJggg==", "boar": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAo0lEQVR42mNgGPKAEZugiJjGf2zib17dwFDPgk3jlCQFrLblzGP4j24QE7LmKUkKDFw8Qjidy8UjxDAlSQHFhUzoirrC+HAagE2OCdn2TYduwSXwsZFdwYhsACkgZ94DhjevbjDCvXDpziuiXXDpzivMaBQR0/ifZsfFoKcihtPWS3deMcw69A0lFhixRWOaHRdWA2Yd+oYzPaAYAjMIF3uYAQAHy05+ZLWx4QAAAABJRU5ErkJggg==", "ghost": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAkklEQVR42mNgGPKAEZugiJjGf2zib17dYMRrAEzj7ktnsNrmqmeC0yAGETGN/+dffPl//sWX/3JKVnA2NjFkFzLCNOOyFRdw1TNhePPqBiMTPkX+Vm4M/lZueA1iwSe58dgugi6Bu+DknTdEOx9ZLRMuCWI0YxiQYaPAePLOGwYYNpTgweAzMDAw1AR5YI/KEQoAs4dXo3Bzp20AAAAASUVORK5CYII=", "elite": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAvUlEQVR42mNgoCYQEdP4LyKm8Z8UeSZkyTIXJoYyFyYGbIbgkmdBV9i15x9cAzZXdO35x/Dm1Q1GrAY8cFBgCHPA7cUHDAwMDHvuMWB4QURM439YixIDAwMDQx3bN6yaYeJhLUoormNCV9j0iwurAbjEWbAJKhx4wIDuNVwAqwH4NKADJgYGBoY3r24wrqq5R5SGVTX3UGIBJRAfXHuBV/ODay8wAhFrKuuK0vrfFaWFwSaUUrEmV6I0DW0AAFszTz0o1stRAAAAAElFTkSuQmCC", "boss": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAA0klEQVR42tVSvQnCQBT+cmSAK47jBkhxZcgEFikygQOIhBAcIGOkDCLW4gQWKZwgXGnhAIdYZIOzC+HlIkRtfNXj8b4/+IBfjJDaCandJ/9MSO3ahC8WbRMOIbVj9DBWKavalVXt6H0sGFLWtNNuvSmQmxOinQUA5IZjH9fufGxA3QY+VgCIDqthv2+vkwhp1+P5uAXhXEYfiIIHB9SFsT2yRg2AS2ERKz4BAwCj7BQMAFmjYGzvdcO+7VBAC9Im3KsWKz6x/7Zhc/uimi6t+J/OCw0rYF1uYstFAAAAAElFTkSuQmCC", "bat": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAlklEQVR42mNgGBRAREzjv4iYxn+y1IuIafyflnfi/7S8E0QZgq6eCVmyKWIBA8wQmC3ItomIafxviliAYiAjLgl84MaNcwzLLkxiePPqBiMTAwMDw5tXNxjrViTAFQQZVTAEGVVgaISJa2gYoboA2X/EuKRuRQLDm1c3GDEMQDfkxo1zDAwMDHAbkTWSFK2kRvMooDcAAM27SYGBKOooAAAAAElFTkSuQmCC", "spider": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAg0lEQVR42mNgGDRAREzjv4iYxn+y1cAkcCkgJI+hCBnj08iIrtlIwwinBedunGNgYGBgePPqBlwfE4yBLLgo6RmGZpgYsjoUA5BB3DwposRQvIDsFSkhMQYJMRm42ItXTxievXuFYTsDAwMDC7pmqCJ4gME0EopijFDGFucEDRkF5AEAODs/2CBo61AAAAAASUVORK5CYII=", "skel": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAkElEQVR42mNgoBAwoguIiGn8R+a/eXWDkWjTRMQ0/r948QEFoxuIDpiwCZpZecHpK5dOMBAyBK8riHaBiJgGTsXoco/2JfzH6oUrl04wXLl0gkFHz4IBXZykMCDkRawGvHl1gxFmM7qNEhICjLDoRI9WrC6QkBBglJAQICr+MQxA9j96WIiIafxHDsBRQCUAAOZ8S3QuZylNAAAAAElFTkSuQmCC", "boss_lei": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAxUlEQVR42mNgoAbg1xL8z68l+J8c9Uz8WoL/rV6cJNlSqxcnGfi1BP8zoQsg25I/PfV//vTU/+jiyBYyYTM1f3rqf6sXJxkmHpvKMPHYVAarFycZYAahu5YRm6kMDAwM270V4GzPrQ8wvHBMwpzh47X3jCy4/IhNE7pmuAvQXfHsxzmG/bzecA2On7cySHEYYWjGCANsmhkYGBj283ozPPtxDqtrmChNQ4zoCcTqxUmstklxGGE4H28Kw8UmKZmSmsSHKAAADcBnYIv/xe0AAAAASUVORK5CYII=", "boss_xue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAxElEQVR42mNgoAbgEVf7zyOu9p8c9Uw84mr/d77mJNnSna85GXjE1f4zoQsg2xJR1fE/oqrjP7o4soVM2EyNqOr4v/M1J0O/ygGGfpUDDDtfczLADEJ3LSM2UxkYGBiU5kjC2fdSnmN4wV30O8OXl7cYWXD5EZsmdM1wF6C74vLfHwwuOXfhGvZMUWbQZebA0IwRBtg0MzAwMLjk3GW4/PcHVtcwUZqGGNETyM7XnFht02XmwHA+3hSGi01SMiU1iQ9RAACnDGXSBk2YVwAAAABJRU5ErkJggg==", "boss_bing": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAwUlEQVR42tVSPQrCMBT+Gty6NLcwJW49hlBw7Bl6k96hdHqjIHiK0i1SvYWh0Pk5WUuSClUX3/R45PsLH/CL0UqyVpI/eS+0kmzJrBa1ZKCVZOEe5ip1VXJdleze54IixFpXJVsyaIcG7dDAksGTyHUbhVgBYH/cTvv5cPMiJMUOl+s92ixlDIFc8OTAdTH2HRLKX9GKE+I088DeH4TAAJBQjrHvgm7Etx2K3IJYMkG1OM08+28btrSvqunaiv/pPAC5yG5Yxkdy0AAAAABJRU5ErkJggg==", "boss_mie": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAwUlEQVR42tVSzQqCQBD+XEwPjosevRQYu3d9A5/c90gK6lDHpPSQQttNZFwDq0tzGob5/uADfjE+SeOTNJ/8C5+kKUgtFi1IwSdpBD+MVXSeGZ1nht/Hgi5nLVGZjd4iPQuEbg8ASEnhoJ/muNuDu3VsrAAQrvthv59WkwhlU+HR3Bx3LqMNxMGDA+6i7lokcTMALldC5AUTMAAIzs7BAJDEDequtboR33bI4QUpSFnVIi+Y2H/bsLl9UU2XVvxP5wUzR1eVPH5KzAAAAABJRU5ErkJggg=="};
+const SPR_SRC={"player": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAwklEQVR42mNgoCUQEdP4LyKm8R+fGhZ8mqWklGDc/29e3WDEpo6JCM0MUlJKDLhcgtUFUlJKDIdmhKGI2WWsYnjz6gZxLjg0I4xBL2oWAwMDA5z+8OkDVq8y4gqDDycWoDhZwCKBkWgviIhp/P/07QCGGLaAZMSm+cq1M1hdpaNlwoBuCBO+OP51KYfh16UcBpLTwYFL76CsJggF5xNIB/icz8DAwHDl2hmM9MCCy3YrhjoU8WMMTUguIyLt42IPPgAAN9dKzUT7PcUAAAAASUVORK5CYII=", "wolf": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAhUlEQVR42mNgGDlAREzjv4iYxn/SJaHys1Yc+D9rxQEMdUwwRtukGQzYDBER0/jfNmkGTpcxMTAwMLx5dYOxKi8Dbggyhmn2+9GA1QAWdAFctm3iaMDtAkLOxAcwXHDhwgUUvoGBAZxdlZfB8ObVDUZkeUZiAwuXAVijEj1a8UUzE8MoAABj5D41nC/N+AAAAABJRU5ErkJggg==", "boar": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAo0lEQVR42mNgGPKAEZugiJjGf2zib17dwFDPgk3jlCQFrLblzGP4j24QE7LmKUkKDFw8Qjidy8UjxDAlSQHFhUzoirrC+HAagE2OCdn2TYduwSXwsZFdwYhsACkgZ94DhjevbjDCvXDpziuiXXDpzivMaBQR0/ifZsfFoKcihtPWS3deMcw69A0lFhixRWOaHRdWA2Yd+oYzPaAYAjMIF3uYAQAHy05+ZLWx4QAAAABJRU5ErkJggg==", "ghost": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAkklEQVR42mNgGPKAEZugiJjGf2zib17dYMRrAEzj7ktnsNrmqmeC0yAGETGN/+dffPl//sWX/3JKVnA2NjFkFzLCNOOyFRdw1TNhePPqBiMTPkX+Vm4M/lZueA1iwSe58dgugi6Bu+DknTdEOx9ZLRMuCWI0YxiQYaPAePLOGwYYNpTgweAzMDAw1AR5YI/KEQoAs4dXo3Bzp20AAAAASUVORK5CYII=", "elite": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAvUlEQVR42mNgoCYQEdP4LyKm8Z8UeSZkyTIXJoYyFyYGbIbgkmdBV9i15x9cAzZXdO35x/Dm1Q1GrAY8cFBgCHPA7cUHDAwMDHvuMWB4QURM439YixIDAwMDQx3bN6yaYeJhLUoormNCV9j0iwurAbjEWbAJKhx4wIDuNVwAqwH4NKADJgYGBoY3r24wrqq5R5SGVTX3UGIBJRAfXHuBV/ODay8wAhFrKuuK0vrfFaWFwSaUUrEmV6I0DW0AAFszTz0o1stRAAAAAElFTkSuQmCC", "boss": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAA0klEQVR42tVSvQnCQBT+cmSAK47jBkhxZcgEFikygQOIhBAcIGOkDCLW4gQWKZwgXGnhAIdYZIOzC+HlIkRtfNXj8b4/+IBfjJDaCandJ/9MSO3ahC8WbRMOIbVj9DBWKavalVXt6H0sGFLWtNNuvSmQmxOinQUA5IZjH9fufGxA3QY+VgCIDqthv2+vkwhp1+P5uAXhXEYfiIIHB9SFsT2yRg2AS2ERKz4BAwCj7BQMAFmjYGzvdcO+7VBAC9Im3KsWKz6x/7Zhc/uimi6t+J/OCw0rYF1uYstFAAAAAElFTkSuQmCC", "bat": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAlklEQVR42mNgGBRAREzjv4iYxn+y1IuIafyflnfi/7S8E0QZgq6eCVmyKWIBA8wQmC3ItomIafxviliAYiAjLgl84MaNcwzLLkxiePPqBiMTAwMDw5tXNxjrViTAFQQZVTAEGVVgaISJa2gYoboA2X/EuKRuRQLDm1c3GDEMQDfkxo1zDAwMDHAbkTWSFK2kRvMooDcAAM27SYGBKOooAAAAAElFTkSuQmCC", "spider": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAg0lEQVR42mNgGDRAREzjv4iYxn+y1cAkcCkgJI+hCBnj08iIrtlIwwinBedunGNgYGBgePPqBlwfE4yBLLgo6RmGZpgYsjoUA5BB3DwposRQvIDsFSkhMQYJMRm42ItXTxievXuFYTsDAwMDC7pmqCJ4gME0EopijFDGFucEDRkF5AEAODs/2CBo61AAAAAASUVORK5CYII=", "skel": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAkElEQVR42mNgoBAwoguIiGn8R+a/eXWDkWjTRMQ0/r948QEFoxuIDpiwCZpZecHpK5dOMBAyBK8riHaBiJgGTsXoco/2JfzH6oUrl04wXLl0gkFHz4IBXZykMCDkRawGvHl1gxFmM7qNEhICjLDoRI9WrC6QkBBglJAQICr+MQxA9j96WIiIafxHDsBRQCUAAOZ8S3QuZylNAAAAAElFTkSuQmCC", "boss_lei": "data:image/png;base64,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", "boss_xue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAEqUlEQVR42uVaPWhUWRT+rgRZtRvYZYZ5KWQqQRFCnqTaFAlYCEq0mLGxcdrgwsqGVFsGAymCW46NEEwKDYoWQlIoCMILkSSC4DJkYWYY2WLKzZJi7xYz586595373ptYZeZWb+7vOed+5/eO0loj1j4pDNLUBLTehfKNAYDehUqal7BWAYBIJ4AxfEcj4g7DPNTEN4tQmqObvbkB9D+P4wzRt7RvLcih2uzQXkqp7jTOzBmc8qZ8ELKk6JHQYZgHAFyMvqGiQgDAuo641FELcgCArVbJjEuNzlAT0HwvWl9tdqC1Vr2rMLcwnDeglNJfdp/i65+fAQC3ysuWhLjkpUbj2+1j01dtdgAALzd+AwC839gzYysv3qYSehjmzXlaa6MPiRD69fZ1AMDP5au4VV5OPIBg89dcXmSMBEKEc6IrKvRCSxJMb3+VyADHOgAQM1kkxhmn9n5jL7aOYz1Lk/RheK2QZHVcSVCbKZw13xz3X66FmfCdFUL8fNKpgRmoBTnc/9hd/GSqzwiZyWeNCCrIRghByG1pzHCGTz2EMocSlgWYylmmkUtSBcDqwjQA4MGjd4mKSn0VFWK2WO8PtLIr91jWWEfEfDNOzOrCNB48epcIEXdstlg3EFyabGCm0Oj2t3OpHnx0IETWpaJCXIwi45wA4NLEPeubIHRh7cDAzCd5ulGS+nb72Eh9tljH0mT/Nty9ht8P8LjcNZc+XK4uTOPC2oGl5D4d4Ior+ZKtVsma4+iDygwhl2hi6PdXcQh9uPmLFzIuwxwq3AHyfmKMj48OhCRPfBjmjTQIIrzP9Q8EAckcpnniWpCzboDfzMChBHdIafkAzbWcUwb9cdcvTTYsfSCLtN0+NgyMBoSESoEYlSZZDknyUpjBqxWxEIPtSWsyJfVJiUUSniWYpOGeFxB4+uqa16GJRr1JfS2wAynpuqW+JKfnSt+1UKYsIxQQuBXiZ3odGY9PsBMaC7Ae8apD3YS/tCE/hEeZlIRwJrhZdHVFgs2Jg7nZYh37D6vdH+XlmFfk3hnoE1NtdlBRpcRATiKOK/FWS9aXoUnqx7KE0FutEoqsEOUGaa4nNtJl0HLxz82tCyG6zZlCA4s744kw8zKwuDNuDljXEfAinl5yRtOCLsL/s0ZkCgI8C+NQMX4GOaN7izsly1hQZW40qtNScs+lPVM4K4bDkjMjKNFNuOVI3QSONrv95+dlp0kKPFAwJxGelj8kBWyaFQSeTPVrTUebwLn53rmetTfUFfVGH+jht0JpZRXpJnicktbujvfhRLA5Nw8cPe5NmI9LPjMDrhtPszJZYOM20gMinmpN5wN/8gQABJ/RrAu5McwgsLHj+04fNnOwSpMuZE9sRn2R5SDVZBPf/wR9dzy0zKdFSCCX7nl+bSU+Qx8LdVO7jpakklVR3edZy9rMxaWfJYc4cVklaSOXIYvwy8/7B/x9R4RNWiVbOmc03si4I+P2OC2B18fP/Sf2bsH3DOU7ixezbqgr6vV/++mOjB6l/9jYw0r01jxU01tva9NTvP233ZXADwXtEk+E+x729h/ew4/0o7xs5hSvXcfLlav08G7+xXLqIfQ/HyFH04kUIzsAAAAASUVORK5CYII=", "boss_bing": "data:image/png;base64,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", "boss_mie": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAADPklEQVR42u1avZnbMAx9ui8DsHTJMqVGYDbQCBpBIyibuEypDY4jsEzJ0iU3YAoLPAgi9eOT853tY3OUZdEg8PDwCB1wzIgr9+LKd24ebwcYHruuk4ZGfq/rOrRti3ts4g0PPn4csUgIgTyMEMLsHgB47/EVIfSwEYgA0DQNAEApBaVUNjL38jyN6hbjjTHJcACga2k0N14phRACrLWf+e1jIvA+GvxrNIbjnm/g3Rj87nsAgGWbLFBv9ZI5UO3FvTEmQUZrnaBCUQghTOYcQvx7rWnTPX/2OON8k127IaSUmhiegxDlBuE+R6/6pNPcNQ4NmrSmcy5u3cjL0GgkyuSe5JEgdqHP1oY+afRDP3uGz8dIVIdAiFdUWV2dc2lujIFzbvYc5QbHPhkra0hmE0U4PT2EIgB0XTdJTJm8dV0nZsp5P+kl08LU1+/5y7zIyfm3FirlAkWD45snMUVoyZv+4ifY52vmdNUtG4iUTLIg8XDT/bquE4Toc66FCD4cOgS33Ea2MtLTQig2TYPm55X7+z998rD3fjKXic3n0ov+4icVGB7ZKn0IhOq6Toa0psXZfmgVJomzOZIrZpJ9JAuR0VrrXae4p4NQBIC+769sAJXK/rm7RsA6i8ENk1AvhZy8aZ2FPukEIR4BSQifzoEUQgLpBdkfW9M9nBIn2B8ldKhDlpG26qnnLmRL+l0FtZktaB190rDOzqAjvS5rwhqkshsgxUkPO7gJdqXh8loWOsoBf/4w3moLhPk5eg98ihuQlVRrjeHvsCqDl4YLDsGESRRzpzVOnePpDE8tp6ul3g+vrpwylyJQai3m/uY0U6Z4Vbd2JSKHDN+A5P8SlHIdilJSrkHlJc8DFY9CznM5DS9PYaWWS0lGW2vjkX2hasRl6krIY+MSX0vjtdZJyW6B1feRUspreR7g+mULI8nTHH+GPjfGEIw2JfTu3igpVQmlLdpda50omOt+2Xfa04J/va6Ec25WyEpSYEmmlBJ3jzzZ1RsdX6UWf2wLhHj+lFhoGIbSS5DqJV9wpNZiidsLnlsdpTX59cKa1S4IcXjksLvUpdiyJm57S1q91Duy+FVtr+74Xyr/xfEPD6F/71JTRngf9O8AAAAASUVORK5CYII="};
 const SPR={};for(const k in SPR_SRC){const _i=new Image();_i.src=SPR_SRC[k];SPR[k]=_i;}
 function drawSpr(name,x,y,size,alpha){
   const img=SPR[name];
@@ -184,11 +184,12 @@ function newGame(){
        spd:metaMul("spd",135),lv:1,xp:0,xpn:8,
        hurtCd:0,iframe:0,
        skills:{}}, // id -> {lv, a:0, b:0}
-    enemies:[],shots:[],orbs:[],items:[],fx:[],eshots:[],parts:[],
+    enemies:[],shots:[],orbs:[],items:[],fx:[],eshots:[],parts:[],hazards:[],rocks:[],
     rerolls:5,recentOffers:[],finalSpawned:false,victory:false,jieWarn:0,jieCd:0,
     spawnT:0,eliteT:42, // 波次计时器：满 42 秒才进第 2 波，开局不会立刻跳波
   };
   grantSkill("sword");
+  spawnRocks(); // 本局随机岩石地形
   showLevelTip();
 }
 function realmName(lv){return REALMS[Math.min(REALMS.length-1,Math.floor(lv/3))];}
@@ -357,7 +358,119 @@ function partsTick(dt){
   if(G.parts.length>70)G.parts.splice(0,G.parts.length-70);
 }
 
-/* ================= 道具系统 ================= */
+/* ================= 场景机关：落雷 / 钩索 / 岩石 ================= */
+function spawnRocks(){
+  G.rocks=[];
+  const n=ri(3,5);
+  for(let i=0;i<n;i++){
+    let x,y,tries=0;
+    do{ x=rnd(80,W-80); y=rnd(80,H-80); tries++; }
+    while(dist({x,y},G.p)<150 && tries<20); // 不压玩家出生点
+    G.rocks.push({x,y,r:rnd(20,30),seed:rnd(0,9)});
+  }
+}
+function hazardTick(dt){
+  const p=G.p;
+  // 落雷：4 波起，每 3.5 秒一道，预判玩家附近
+  if(G.wave>=4){
+    G.hzT=(G.hzT||2)-dt;
+    if(G.hzT<=0){
+      G.hzT=3.5;
+      G.hazards.push({kind:"thunder",x:p.x+rnd(-90,90),y:p.y+rnd(-90,90),r:58,tel:1.1});
+    }
+  }
+  // 钩索：8 波起，每 6 秒一发，从屏幕边缘射向玩家
+  if(G.wave>=8){
+    G.hookT=(G.hookT||3)-dt;
+    if(G.hookT<=0){
+      G.hookT=6;
+      const a=rnd(0,Math.PI*2),d=Math.max(W,H)*0.55;
+      const sx=p.x+Math.cos(a)*d,sy=p.y+Math.sin(a)*d;
+      const ang=Math.atan2(p.y-sy,p.x-sx);
+      G.hazards.push({kind:"hook",x:sx,y:sy,sx,sy,
+        vx:Math.cos(ang)*380,vy:Math.sin(ang)*380,dmg:8+G.wave});
+    }
+  }
+  for(const h of G.hazards){
+    if(h.kind==="thunder"){
+      h.tel-=dt;
+      if(h.tel<=0&&!h.done){
+        h.done=true;
+        // 落雷命中判定
+        if(dist(h,p)<h.r+p.r&&p.iframe<=0){
+          p.hp-=14+G.wave*1.5;p.iframe=0.4;fx(p.x,p.y,"#e06c6c",40);
+          G.shake=Math.max(G.shake||0,0.2);
+          if(p.hp<=0)gameOver();
+        }
+        G.fx.push({x:h.x,y:h.y-160,x2:h.x,y2:h.y,kind:"bolt",life:0.25,t:0.25});
+        fx(h.x,h.y,"#bfe8ff",h.r*0.7);
+        spark(h.x,h.y,"#bfe8ff",5,140);
+        h.dead=true;
+      }
+    }else if(h.kind==="hook"){
+      h.x+=h.vx*dt;h.y+=h.vy*dt;
+      h.life=(h.life||3)-dt;
+      if(dist(h,p)<18+p.r){
+        // 命中：拖拽玩家向钩子来向
+        if(p.iframe<=0){
+          p.hp-=h.dmg;p.iframe=0.5;
+          const m=Math.hypot(h.vx,h.vy)||1;
+          p.x=clamp(p.x+h.vx/m*180,16,W-16);
+          p.y=clamp(p.y+h.vy/m*180,16,H-16);
+          fx(p.x,p.y,"#e06c6c",34);
+          G.shake=Math.max(G.shake||0,0.25);
+          if(p.hp<=0)gameOver();
+        }
+        h.dead=true;
+      }
+      if(h.x<-80||h.x>W+80||h.y<-80||h.y>H+80||h.life<=0)h.dead=true;
+    }
+  }
+  G.hazards=G.hazards.filter(h=>!h.dead);
+}
+function drawHazards(){
+  // 岩石（挡地形）
+  for(const rk of G.rocks){
+    ctx.fillStyle="#2a2f3d";
+    ctx.beginPath();ctx.arc(rk.x,rk.y,rk.r,0,7);ctx.fill();
+    ctx.fillStyle="#3a4152";
+    ctx.beginPath();ctx.arc(rk.x-rk.r*0.25,rk.y-rk.r*0.28,rk.r*0.62,0,7);ctx.fill();
+    ctx.strokeStyle="#151822";ctx.lineWidth=2;ctx.stroke();ctx.lineWidth=1;
+  }
+  for(const h of G.hazards){
+    if(h.kind==="thunder"){ // 红圈预警 → 收缩闪烁
+      const k=1-h.tel/1.1;
+      ctx.fillStyle=`rgba(220,50,50,${0.10+k*0.16})`;
+      ctx.beginPath();ctx.arc(h.x,h.y,h.r,0,7);ctx.fill();
+      ctx.strokeStyle=`rgba(255,90,90,${0.5+k*0.4})`;
+      ctx.lineWidth=2+k*1.5;
+      ctx.beginPath();ctx.arc(h.x,h.y,h.r,0,7);ctx.stroke();
+      ctx.lineWidth=1;
+    }else if(h.kind==="hook"){ // 飞爪 + 锁链
+      const m=Math.hypot(h.vx,h.vy)||1;
+      ctx.strokeStyle="#8a94a8";ctx.lineWidth=2.5;
+      ctx.beginPath();ctx.moveTo(h.x-h.vx/m*46,h.y-h.vy/m*46);ctx.lineTo(h.x,h.y);ctx.stroke();
+      ctx.lineWidth=1;
+      ctx.fillStyle="#c8d2e8";
+      ctx.beginPath();ctx.arc(h.x,h.y,7,0,7);ctx.fill();
+      ctx.strokeStyle="#5a6478";ctx.stroke();
+    }
+  }
+}
+/* 岩石碰撞推离（玩家与怪通用） */
+function rockPush(o){
+  for(const rk of G.rocks){
+    let dx=o.x-rk.x,dy=o.y-rk.y;
+    const d=Math.hypot(dx,dy);
+    if(d<rk.r+(o.r||10)){
+      if(d<0.01){const a=rnd(0,Math.PI*2);dx=Math.cos(a);dy=Math.sin(a);}
+      else{dx/=d;dy/=d;}
+      const push=rk.r+(o.r||10)-Math.max(d,0.01);
+      o.x+=dx*push;o.y+=dy*push;
+    }
+  }
+}
+
 const ITEMS={
   magnet:{name:"聚灵珠",icon:"🧲",desc:"吸引全场灵气入体",c:"#a8e890"},
   invuln:{name:"金身符",icon:"✨",desc:"5 秒金身无敌",c:"#e6c86e"},
@@ -497,7 +610,7 @@ function hurtEnemy(e,dmg){
     e.dead=true;G.kills++;
     const n=e.type.gem;G.gemRun=(G.gemRun||0)+n;
     // 4% 掉落回血丹；道具另算（精英 12%，妖王 80%）
-    if(Math.random()<0.04)
+    if(Math.random()<0.02)
       G.orbs.push({x:e.x,y:e.y,pill:true});
     else if(e.type.id==="elite"||e.type.id.startsWith("boss")){
       // 精英/妖王：大经验珠（经验随波次成长）
@@ -663,7 +776,7 @@ function orbTick(dt){
     if(d<16){
       o.dead=true;
       if(o.pill){ // 回血丹：回复 25
-        const heal=Math.min(15,p.maxhp-p.hp);
+        const heal=Math.min(12,p.maxhp-p.hp);
         p.hp+=heal;
         G.fx.push({x:p.x+rnd(-6,6),y:p.y-24,c:"#8fe08f",kind:"dmg",life:0.7,t:0.7,txt:"+"+Math.round(heal)});
       } else gainXp(o.v);
@@ -886,10 +999,27 @@ function tick(dt){
     p.x=clamp(p.x+mx/mm*v*dt,16,W-16);p.y=clamp(p.y+my/mm*v*dt,16,H-16);
   }
   p.iframe=Math.max(0,p.iframe-dt);
-  p.hp=Math.min(p.maxhp,p.hp+(0.5+META.ups.regen*0.5)*dt); // 基础回血 0.5/秒
+  p.hp=Math.min(p.maxhp,p.hp+(0.2+META.ups.regen*0.5)*dt); // 基础回血 0.2/秒
   castSkills(dt);qiTick(dt);
   spawnWave(dt);enemyTick(dt);shotTick(dt);orbTick(dt);itemTick(dt);
-  partsTick(dt);jieTick(dt);
+  partsTick(dt);jieTick(dt);hazardTick(dt);
+  // 岩石阻挡玩家
+  rockPush(p);
+  // 15 分钟后精英持续增援（解决后期升级慢）
+  if(G.t>900){
+    G.eliteSpT=(G.eliteSpT||15)-dt;
+    if(G.eliteSpT<=0){
+      G.eliteSpT=G.t>1200?12:18;
+      const a=rnd(0,Math.PI*2),d=Math.max(W,H)*0.6;
+      G.enemies.push(mkEnemy(ETYPES.find(t=>t.id==="elite"),W/2+Math.cos(a)*d,H/2+Math.sin(a)*d,
+        1+G.wave*0.08,1,Math.min(2.6,1+G.wave*0.035)));
+      if(G.t>1200){ // 20 分钟后双精英增援
+        const a2=rnd(0,Math.PI*2);
+        G.enemies.push(mkEnemy(ETYPES.find(t=>t.id==="elite"),W/2+Math.cos(a2)*d,H/2+Math.sin(a2)*d,
+          1+G.wave*0.08,1,Math.min(2.6,1+G.wave*0.035)));
+      }
+    }
+  }
   // 30 分钟终局：灭世魔尊降世
   if(G.t>=1800&&!G.finalSpawned&&!G.victory){
     G.finalSpawned=true;
@@ -970,14 +1100,19 @@ function draw(){
       ctx.fillStyle="#e8ffd8";ctx.beginPath();ctx.arc(o.x,by-2,1.5,0,7);ctx.fill();
     }
   }
+  // 机关层（岩石/落雷预警/钩索）画在敌人下面
+  drawHazards();
   // 灼烧地带先画（在敌人下面）
   for(const f of G.fx)if(f.kind==="zone"){
     ctx.fillStyle=f.c;ctx.globalAlpha=0.16;
     ctx.beginPath();ctx.arc(f.x,f.y,f.r,0,7);ctx.fill();
     ctx.globalAlpha=0.5;ctx.strokeStyle=f.c;ctx.stroke();ctx.globalAlpha=1;
   }
-  // 敌人：按种类分形状
-  for(const e of G.enemies)drawEnemy(e);
+  // 敌人：按种类分形状（含岩石推离）
+  for(const e of G.enemies){
+    rockPush(e);
+    drawEnemy(e);
+  }
   // 弹幕：程序绘制，飞剑转向飞行方向（环形剑阵走轻量路径）
   for(const s of G.shots){
     const ang=Math.atan2(s.vy,s.vx);
