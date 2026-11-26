@@ -94,8 +94,22 @@
 /* ================= 工具 ================= */
 const cv=document.getElementById("cv"),ctx=cv.getContext("2d");
 let W=0,H=0,bgCv=null,bgOk=false;
-function resize(){W=cv.width=innerWidth;H=cv.height=innerHeight;renderBg();}
-addEventListener("resize",resize);resize();
+const VW=800,VH=600; // 固定逻辑分辨率：所有设备同一张地图，渲染像素恒定（手机不因高分屏多画）
+function resize(){
+  W=VW;H=VH;cv.width=VW;cv.height=VH;
+  // CSS 等比缩放适配屏幕（黑边 letterbox）
+  const s=Math.min(innerWidth/VW,innerHeight/VH);
+  cv.style.width=(VW*s)+"px";cv.style.height=(VH*s)+"px";
+  cv.style.position="absolute";
+  cv.style.left=((innerWidth-VW*s)/2)+"px";cv.style.top=((innerHeight-VH*s)/2)+"px";
+  renderBg();
+}
+// 触摸坐标 → 逻辑世界坐标
+function toWorld(clientX,clientY){
+  const r=cv.getBoundingClientRect();
+  return {x:(clientX-r.left)*(W/r.width),y:(clientY-r.top)*(H/r.height)};
+}
+addEventListener("resize",resize);resize(); // 立即执行一次适配
 const rnd=(a,b)=>Math.random()*(b-a)+a;
 const ri=(a,b)=>Math.floor(rnd(a,b+1));
 const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
@@ -128,6 +142,29 @@ const REALMS=["炼气一层","炼气三层","炼气六层","筑基","结丹","�
 /* ================= 精灵贴图（手绘 16x16 圆润像素风，base64 内嵌） ================= */
 const SPR_SRC={"player": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAwklEQVR42mNgoCUQEdP4LyKm8R+fGhZ8mqWklGDc/29e3WDEpo6JCM0MUlJKDLhcgtUFUlJKDIdmhKGI2WWsYnjz6gZxLjg0I4xBL2oWAwMDA5z+8OkDVq8y4gqDDycWoDhZwCKBkWgviIhp/P/07QCGGLaAZMSm+cq1M1hdpaNlwoBuCBO+OP51KYfh16UcBpLTwYFL76CsJggF5xNIB/icz8DAwHDl2hmM9MCCy3YrhjoU8WMMTUguIyLt42IPPgAAN9dKzUT7PcUAAAAASUVORK5CYII=", "wolf": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAhUlEQVR42mNgGDlAREzjv4iYxn/SJaHys1Yc+D9rxQEMdUwwRtukGQzYDBER0/jfNmkGTpcxMTAwMLx5dYOxKi8Dbggyhmn2+9GA1QAWdAFctm3iaMDtAkLOxAcwXHDhwgUUvoGBAZxdlZfB8ObVDUZkeUZiAwuXAVijEj1a8UUzE8MoAABj5D41nC/N+AAAAABJRU5ErkJggg==", "boar": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAo0lEQVR42mNgGPKAEZugiJjGf2zib17dwFDPgk3jlCQFrLblzGP4j24QE7LmKUkKDFw8Qjidy8UjxDAlSQHFhUzoirrC+HAagE2OCdn2TYduwSXwsZFdwYhsACkgZ94DhjevbjDCvXDpziuiXXDpzivMaBQR0/ifZsfFoKcihtPWS3deMcw69A0lFhixRWOaHRdWA2Yd+oYzPaAYAjMIF3uYAQAHy05+ZLWx4QAAAABJRU5ErkJggg==", "ghost": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAkklEQVR42mNgGPKAEZugiJjGf2zib17dYMRrAEzj7ktnsNrmqmeC0yAGETGN/+dffPl//sWX/3JKVnA2NjFkFzLCNOOyFRdw1TNhePPqBiMTPkX+Vm4M/lZueA1iwSe58dgugi6Bu+DknTdEOx9ZLRMuCWI0YxiQYaPAePLOGwYYNpTgweAzMDAw1AR5YI/KEQoAs4dXo3Bzp20AAAAASUVORK5CYII=", "elite": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAvUlEQVR42mNgoCYQEdP4LyKm8Z8UeSZkyTIXJoYyFyYGbIbgkmdBV9i15x9cAzZXdO35x/Dm1Q1GrAY8cFBgCHPA7cUHDAwMDHvuMWB4QURM439YixIDAwMDQx3bN6yaYeJhLUoormNCV9j0iwurAbjEWbAJKhx4wIDuNVwAqwH4NKADJgYGBoY3r24wrqq5R5SGVTX3UGIBJRAfXHuBV/ODay8wAhFrKuuK0vrfFaWFwSaUUrEmV6I0DW0AAFszTz0o1stRAAAAAElFTkSuQmCC", "boss": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAA0klEQVR42tVSvQnCQBT+cmSAK47jBkhxZcgEFikygQOIhBAcIGOkDCLW4gQWKZwgXGnhAIdYZIOzC+HlIkRtfNXj8b4/+IBfjJDaCandJ/9MSO3ahC8WbRMOIbVj9DBWKavalVXt6H0sGFLWtNNuvSmQmxOinQUA5IZjH9fufGxA3QY+VgCIDqthv2+vkwhp1+P5uAXhXEYfiIIHB9SFsT2yRg2AS2ERKz4BAwCj7BQMAFmjYGzvdcO+7VBAC9Im3KsWKz6x/7Zhc/uimi6t+J/OCw0rYF1uYstFAAAAAElFTkSuQmCC", "bat": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAlklEQVR42mNgGBRAREzjv4iYxn+y1IuIafyflnfi/7S8E0QZgq6eCVmyKWIBA8wQmC3ItomIafxviliAYiAjLgl84MaNcwzLLkxiePPqBiMTAwMDw5tXNxjrViTAFQQZVTAEGVVgaISJa2gYoboA2X/EuKRuRQLDm1c3GDEMQDfkxo1zDAwMDHAbkTWSFK2kRvMooDcAAM27SYGBKOooAAAAAElFTkSuQmCC", "spider": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAg0lEQVR42mNgGDRAREzjv4iYxn+y1cAkcCkgJI+hCBnj08iIrtlIwwinBedunGNgYGBgePPqBlwfE4yBLLgo6RmGZpgYsjoUA5BB3DwposRQvIDsFSkhMQYJMRm42ItXTxievXuFYTsDAwMDC7pmqCJ4gME0EopijFDGFucEDRkF5AEAODs/2CBo61AAAAAASUVORK5CYII=", "skel": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABAAAAAQCAYAAAAf8/9hAAAAkElEQVR42mNgoBAwoguIiGn8R+a/eXWDkWjTRMQ0/r948QEFoxuIDpiwCZpZecHpK5dOMBAyBK8riHaBiJgGTsXoco/2JfzH6oUrl04wXLl0gkFHz4IBXZykMCDkRawGvHl1gxFmM7qNEhICjLDoRI9WrC6QkBBglJAQICr+MQxA9j96WIiIafxHDsBRQCUAAOZ8S3QuZylNAAAAAElFTkSuQmCC", "boss_lei": "data:image/png;base64,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", "boss_xue": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAAEqUlEQVR42uVaPWhUWRT+rgRZtRvYZYZ5KWQqQRFCnqTaFAlYCEq0mLGxcdrgwsqGVFsGAymCW46NEEwKDYoWQlIoCMILkSSC4DJkYWYY2WLKzZJi7xYz586595373ptYZeZWb+7vOed+5/eO0loj1j4pDNLUBLTehfKNAYDehUqal7BWAYBIJ4AxfEcj4g7DPNTEN4tQmqObvbkB9D+P4wzRt7RvLcih2uzQXkqp7jTOzBmc8qZ8ELKk6JHQYZgHAFyMvqGiQgDAuo641FELcgCArVbJjEuNzlAT0HwvWl9tdqC1Vr2rMLcwnDeglNJfdp/i65+fAQC3ysuWhLjkpUbj2+1j01dtdgAALzd+AwC839gzYysv3qYSehjmzXlaa6MPiRD69fZ1AMDP5au4VV5OPIBg89dcXmSMBEKEc6IrKvRCSxJMb3+VyADHOgAQM1kkxhmn9n5jL7aOYz1Lk/RheK2QZHVcSVCbKZw13xz3X66FmfCdFUL8fNKpgRmoBTnc/9hd/GSqzwiZyWeNCCrIRghByG1pzHCGTz2EMocSlgWYylmmkUtSBcDqwjQA4MGjd4mKSn0VFWK2WO8PtLIr91jWWEfEfDNOzOrCNB48epcIEXdstlg3EFyabGCm0Oj2t3OpHnx0IETWpaJCXIwi45wA4NLEPeubIHRh7cDAzCd5ulGS+nb72Eh9tljH0mT/Nty9ht8P8LjcNZc+XK4uTOPC2oGl5D4d4Ior+ZKtVsma4+iDygwhl2hi6PdXcQh9uPmLFzIuwxwq3AHyfmKMj48OhCRPfBjmjTQIIrzP9Q8EAckcpnniWpCzboDfzMChBHdIafkAzbWcUwb9cdcvTTYsfSCLtN0+NgyMBoSESoEYlSZZDknyUpjBqxWxEIPtSWsyJfVJiUUSniWYpOGeFxB4+uqa16GJRr1JfS2wAynpuqW+JKfnSt+1UKYsIxQQuBXiZ3odGY9PsBMaC7Ae8apD3YS/tCE/hEeZlIRwJrhZdHVFgs2Jg7nZYh37D6vdH+XlmFfk3hnoE1NtdlBRpcRATiKOK/FWS9aXoUnqx7KE0FutEoqsEOUGaa4nNtJl0HLxz82tCyG6zZlCA4s744kw8zKwuDNuDljXEfAinl5yRtOCLsL/s0ZkCgI8C+NQMX4GOaN7izsly1hQZW40qtNScs+lPVM4K4bDkjMjKNFNuOVI3QSONrv95+dlp0kKPFAwJxGelj8kBWyaFQSeTPVrTUebwLn53rmetTfUFfVGH+jht0JpZRXpJnicktbujvfhRLA5Nw8cPe5NmI9LPjMDrhtPszJZYOM20gMinmpN5wN/8gQABJ/RrAu5McwgsLHj+04fNnOwSpMuZE9sRn2R5SDVZBPf/wR9dzy0zKdFSCCX7nl+bSU+Qx8LdVO7jpakklVR3edZy9rMxaWfJYc4cVklaSOXIYvwy8/7B/x9R4RNWiVbOmc03si4I+P2OC2B18fP/Sf2bsH3DOU7ixezbqgr6vV/++mOjB6l/9jYw0r01jxU01tva9NTvP233ZXADwXtEk+E+x729h/ew4/0o7xs5hSvXcfLlav08G7+xXLqIfQ/HyFH04kUIzsAAAAASUVORK5CYII=", "boss_bing": "data:image/png;base64,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", "boss_mie": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAADAAAAAwCAYAAABXAvmHAAADPklEQVR42u1avZnbMAx9ui8DsHTJMqVGYDbQCBpBIyibuEypDY4jsEzJ0iU3YAoLPAgi9eOT853tY3OUZdEg8PDwCB1wzIgr9+LKd24ebwcYHruuk4ZGfq/rOrRti3ts4g0PPn4csUgIgTyMEMLsHgB47/EVIfSwEYgA0DQNAEApBaVUNjL38jyN6hbjjTHJcACga2k0N14phRACrLWf+e1jIvA+GvxrNIbjnm/g3Rj87nsAgGWbLFBv9ZI5UO3FvTEmQUZrnaBCUQghTOYcQvx7rWnTPX/2OON8k127IaSUmhiegxDlBuE+R6/6pNPcNQ4NmrSmcy5u3cjL0GgkyuSe5JEgdqHP1oY+afRDP3uGz8dIVIdAiFdUWV2dc2lujIFzbvYc5QbHPhkra0hmE0U4PT2EIgB0XTdJTJm8dV0nZsp5P+kl08LU1+/5y7zIyfm3FirlAkWD45snMUVoyZv+4ifY52vmdNUtG4iUTLIg8XDT/bquE4Toc66FCD4cOgS33Ea2MtLTQig2TYPm55X7+z998rD3fjKXic3n0ov+4icVGB7ZKn0IhOq6Toa0psXZfmgVJomzOZIrZpJ9JAuR0VrrXae4p4NQBIC+769sAJXK/rm7RsA6i8ENk1AvhZy8aZ2FPukEIR4BSQifzoEUQgLpBdkfW9M9nBIn2B8ldKhDlpG26qnnLmRL+l0FtZktaB190rDOzqAjvS5rwhqkshsgxUkPO7gJdqXh8loWOsoBf/4w3moLhPk5eg98ihuQlVRrjeHvsCqDl4YLDsGESRRzpzVOnePpDE8tp6ul3g+vrpwylyJQai3m/uY0U6Z4Vbd2JSKHDN+A5P8SlHIdilJSrkHlJc8DFY9CznM5DS9PYaWWS0lGW2vjkX2hasRl6krIY+MSX0vjtdZJyW6B1feRUspreR7g+mULI8nTHH+GPjfGEIw2JfTu3igpVQmlLdpda50omOt+2Xfa04J/va6Ec25WyEpSYEmmlBJ3jzzZ1RsdX6UWf2wLhHj+lFhoGIbSS5DqJV9wpNZiidsLnlsdpTX59cKa1S4IcXjksLvUpdiyJm57S1q91Duy+FVtr+74Xyr/xfEPD6F/71JTRngf9O8AAAAASUVORK5CYII="};
 const SPR={};for(const k in SPR_SRC){const _i=new Image();_i.src=SPR_SRC[k];SPR[k]=_i;}
+/* 预渲染辉光贴图：径向渐变只创建一次，绘制走 drawImage（GitHub 常用 canvas 优化手法） */
+const GLOWS={};
+function glow(c){
+  if(GLOWS[c])return GLOWS[c];
+  const g=document.createElement("canvas");
+  const x=g.getContext?g.getContext("2d"):null;
+  if(!x)return null; // 无 canvas 环境（测试桩）
+  g.width=g.height=64;
+  const hex=c.replace("#","");
+  const rr=parseInt(hex.slice(0,2),16),gg=parseInt(hex.slice(2,4),16),bb=parseInt(hex.slice(4,6),16);
+  const gr=x.createRadialGradient(32,32,2,32,32,32);
+  gr.addColorStop(0,"rgba(255,255,255,0.95)");
+  gr.addColorStop(0.35,c);
+  gr.addColorStop(1,`rgba(${rr},${gg},${bb},0)`);
+  x.fillStyle=gr;x.fillRect(0,0,64,64);
+  GLOWS[c]=g;return g;
+}
+function drawGlow(c,x,y,r,a){
+  const g=glow(c);if(!g)return;
+  if(a!==undefined)ctx.globalAlpha=a;
+  ctx.drawImage(g,x-r,y-r,r*2,r*2);
+  if(a!==undefined)ctx.globalAlpha=1;
+}
 function drawSpr(name,x,y,size,alpha){
   const img=SPR[name];
   if(alpha!==undefined&&alpha<1){ // 仅半透明时才动用状态栈
@@ -189,7 +226,6 @@ function newGame(){
     spawnT:0,eliteT:42, // 波次计时器：满 42 秒才进第 2 波，开局不会立刻跳波
   };
   grantSkill("sword");
-  spawnRocks(); // 本局随机岩石地形
   showLevelTip();
 }
 function realmName(lv){return REALMS[Math.min(REALMS.length-1,Math.floor(lv/3))];}
@@ -358,16 +394,10 @@ function partsTick(dt){
   if(G.parts.length>70)G.parts.splice(0,G.parts.length-70);
 }
 
-/* ================= 场景机关：落雷 / 钩索 / 岩石 ================= */
-function spawnRocks(){
-  G.rocks=[];
-  const n=ri(3,5);
-  for(let i=0;i<n;i++){
-    let x,y,tries=0;
-    do{ x=rnd(80,W-80); y=rnd(80,H-80); tries++; }
-    while(dist({x,y},G.p)<150 && tries<20); // 不压玩家出生点
-    G.rocks.push({x,y,r:rnd(20,30),seed:rnd(0,9)});
-  }
+/* ================= 场景机关：落雷 / 钩索 / 临时地形（Boss 召唤） ================= */
+function summonRock(x,y,r,life,c){
+  if(G.rocks.length>12)return; // 地形上限
+  G.rocks.push({x,y,r,life,c:c||"#2a2f3d"});
 }
 function hazardTick(dt){
   const p=G.p;
@@ -391,6 +421,9 @@ function hazardTick(dt){
         vx:Math.cos(ang)*380,vy:Math.sin(ang)*380,dmg:8+G.wave});
     }
   }
+  // 临时地形寿命衰减
+  for(const rk of G.rocks)rk.life-=dt;
+  G.rocks=G.rocks.filter(rk=>rk.life>0);
   for(const h of G.hazards){
     if(h.kind==="thunder"){
       h.tel-=dt;
@@ -429,13 +462,15 @@ function hazardTick(dt){
   G.hazards=G.hazards.filter(h=>!h.dead);
 }
 function drawHazards(){
-  // 岩石（挡地形）
+  // 临时地形岩石（Boss 召唤，随寿命渐隐）
   for(const rk of G.rocks){
-    ctx.fillStyle="#2a2f3d";
+    ctx.globalAlpha=Math.min(1,rk.life/1.5);
+    ctx.fillStyle=rk.c;
     ctx.beginPath();ctx.arc(rk.x,rk.y,rk.r,0,7);ctx.fill();
-    ctx.fillStyle="#3a4152";
+    ctx.fillStyle=rk.c==="#3a6a8a"?"#5a9ac0":"#3a4152"; // 冰柱高光 / 石柱高光
     ctx.beginPath();ctx.arc(rk.x-rk.r*0.25,rk.y-rk.r*0.28,rk.r*0.62,0,7);ctx.fill();
     ctx.strokeStyle="#151822";ctx.lineWidth=2;ctx.stroke();ctx.lineWidth=1;
+    ctx.globalAlpha=1;
   }
   for(const h of G.hazards){
     if(h.kind==="thunder"){ // 红圈预警 → 收缩闪烁
@@ -513,10 +548,8 @@ function drawItems(){
     const pulse=1+Math.sin(G.t*6+it.x)*0.12;
     const blink=it.life<4&&(G.t*6|0)%2===0; // 快消失时闪烁
     if(blink)continue;
-    // 光环
-    const g=ctx.createRadialGradient(it.x,it.y,2,it.x,it.y,22*pulse);
-    g.addColorStop(0,info.c+"88");g.addColorStop(1,info.c+"00");
-    ctx.fillStyle=g;ctx.beginPath();ctx.arc(it.x,it.y,22*pulse,0,7);ctx.fill();
+    // 光环（辉光贴图）
+    drawGlow(info.c,it.x,it.y,22*pulse,0.85);
     // 法符方牌
     ctx.save();ctx.translate(it.x,it.y);ctx.rotate(Math.sin(G.t*2+it.y)*0.15);
     ctx.fillStyle="#1a2130";ctx.strokeStyle=info.c;ctx.lineWidth=1.5;
@@ -673,7 +706,7 @@ function bossAI(e,dt){
   }
   if(e.aiT>0)return;
   e.aiT=e.type.aiCd;
-  if(e.type.ai==="lei"){ // 雷罡妖王：环形弹幕
+  if(e.type.ai==="lei"){ // 雷罡妖王：环形弹幕 + 召唤石阵困杀
     fx(e.x,e.y,"#a6f",40);
     for(let i=0;i<10;i++){
       const a=i*Math.PI/5+rnd(-0.06,0.06);
@@ -681,16 +714,23 @@ function bossAI(e,dt){
         dmg:Math.round(e.dmg*0.9),r:7,life:4,c:"#c8a8ff"});
     }
     for(let i=0;i<6;i++)spark(e.x,e.y,"#c8a8ff",1,120);
+    // 在玩家周围立起石柱（6 秒后消失），逼你从缝里钻
+    const a0=rnd(0,Math.PI*2);
+    for(let i=0;i<3;i++){
+      const a=a0+i*2.09;
+      summonRock(clamp(p.x+Math.cos(a)*95,30,W-30),clamp(p.y+Math.sin(a)*95,30,H-30),rnd(16,22),6,"#2a2f3d");
+    }
   }else if(e.type.ai==="xue"){ // 血魔老祖：召唤妖蝠
     fx(e.x,e.y,"#f66",44);
     for(let i=0;i<4;i++){
       const a=rnd(0,Math.PI*2);
       if(G.enemies.length<75)G.enemies.push(mkEnemy(ETYPES.find(t=>t.id==="bat"),e.x+Math.cos(a)*50,e.y+Math.sin(a)*50,1+G.wave*0.1,1,1));
     }
-  }else if(e.type.ai==="bing"){ // 玄冰巨蟒：锁定冲刺
+  }else if(e.type.ai==="bing"){ // 玄冰巨蟒：锁定冲刺 + 沿途冰柱
     const d=dist(e,p)||1;
     e.dashT=0.55;e.dashVx=(p.x-e.x)/d*460;e.dashVy=(p.y-e.y)/d*460;
     fx(e.x,e.y,"#6ee",50);
+    summonRock(e.x,e.y,rnd(13,17),4,"#3a6a8a"); // 冰柱 4 秒
   }else if(e.type.ai==="mie"){ // 灭世魔尊：弹幕 + 天劫倒计时
     for(let ring=0;ring<2;ring++)
       for(let i=0;i<12;i++){
@@ -928,9 +968,10 @@ addEventListener("keyup",e=>{
 const stick=document.getElementById("stick"),knob=document.getElementById("stickKnob");
 let stickId=null,stickCX=0,stickCY=0;
 const STICK_R=52, KNOCK_R=29, DEAD=0.14; // 摇杆半径/旋钮复位/死区
-function stickCenter(cx,cy){ // 浮动摇杆：把底盘挪到手指落点
-  stickCX=cx;stickCY=cy;
-  stick.style.left=(cx-STICK_R)+"px";stick.style.top=(cy-STICK_R)+"px";
+function stickCenter(cx,cy){ // 浮动摇杆：把底盘挪到手指落点（换算到逻辑坐标）
+  const w=toWorld(cx,cy);
+  stickCX=w.x;stickCY=w.y;
+  stick.style.left=(cx-STICK_R)+"px";stick.style.top=(cy-STICK_R)+"px"; // DOM 用屏幕坐标
   stick.style.right="auto";stick.style.bottom="auto";
   stick.classList.add("live");
 }
@@ -942,7 +983,8 @@ function stickReset(){
   stick.style.right="20px";stick.style.bottom="26px"; // 回到右下待命位
 }
 function stickMove(t){
-  let dx=t.clientX-stickCX,dy=t.clientY-stickCY;
+  const w=toWorld(t.clientX,t.clientY);
+  let dx=w.x-stickCX,dy=w.y-stickCY;
   const m=Math.hypot(dx,dy);
   if(m>STICK_R){dx=dx/m*STICK_R;dy=dy/m*STICK_R;}
   knob.style.left=(KNOCK_R+dx)+"px";knob.style.top=(KNOCK_R+dy)+"px";
@@ -1087,11 +1129,9 @@ function draw(){
       ctx.fillStyle="#fff";ctx.beginPath();ctx.arc(o.x,by,6,0,7);ctx.fill();
       ctx.fillStyle="#d03838";
       ctx.fillRect(o.x-4,by-1.5,8,3);ctx.fillRect(o.x-1.5,by-4,3,8);
-    }else if(o.big){ // 大经验珠：金色脉动
+    }else if(o.big){ // 大经验珠：金色脉动（辉光贴图）
       const pu=1+Math.sin(G.t*6+o.x)*0.15;
-      const g=ctx.createRadialGradient(o.x,by,2,o.x,by,16*pu);
-      g.addColorStop(0,"#fffbe0");g.addColorStop(0.45,"#e6c86e");g.addColorStop(1,"rgba(230,200,110,0)");
-      ctx.fillStyle=g;ctx.beginPath();ctx.arc(o.x,by,16*pu,0,7);ctx.fill();
+      drawGlow("#e6c86e",o.x,by,15*pu,0.9);
       ctx.fillStyle="#fff6d0";ctx.beginPath();ctx.arc(o.x,by-2,4,0,7);ctx.fill();
     }else{
       ctx.fillStyle="#7bc96f44";ctx.beginPath();ctx.arc(o.x,by,9,0,7);ctx.fill();
@@ -1160,11 +1200,9 @@ function draw(){
       ctx.strokeStyle="#eaf3ff";ctx.stroke();
     }
   }
-  // 主角：修士贴图 + 灵光
+  // 主角：修士贴图 + 灵光（预渲染辉光）
   const pulse=1+Math.sin(G.t*4)*0.08;
-  const aura=ctx.createRadialGradient(p.x,p.y,2,p.x,p.y,p.r*2.6*pulse);
-  aura.addColorStop(0,"rgba(230,200,110,.45)");aura.addColorStop(1,"rgba(230,200,110,0)");
-  ctx.fillStyle=aura;ctx.beginPath();ctx.arc(p.x,p.y,p.r*2.6*pulse,0,7);ctx.fill();
+  drawGlow("#e6c86e",p.x,p.y,p.r*2.6*pulse,0.55);
   // 玄武真罡：脚下旋转法阵
   if(p.skills.qi&&p.skills.qi.evolved){
     const R=p.skills.qi.ringR||64;
@@ -1177,19 +1215,14 @@ function draw(){
   }
   drawSpr("player",p.x,p.y+Math.sin(G.t*6)*1.5,40,p.iframe>0&&(G.t*20|0)%2===0?0.45:1);
   drawItems();
-  // 敌方弹幕：发光法球
+  // 敌方弹幕：预渲染辉光贴图（不再逐帧建渐变）
   for(const s of G.eshots){
-    const g=ctx.createRadialGradient(s.x,s.y,1,s.x,s.y,s.r*2.2);
-    g.addColorStop(0,"#fff");g.addColorStop(0.35,s.c);g.addColorStop(1,"rgba(0,0,0,0)");
-    ctx.fillStyle=g;ctx.beginPath();ctx.arc(s.x,s.y,s.r*2.2,0,7);ctx.fill();
+    drawGlow(s.c,s.x,s.y,s.r*2.4);
   }
-  // 粒子
+  // 粒子：辉光贴图
   for(const q of G.parts){
-    ctx.globalAlpha=Math.max(0,q.life/q.t);
-    ctx.fillStyle=q.c;
-    ctx.beginPath();ctx.arc(q.x,q.y,q.size*(q.life/q.t),0,7);ctx.fill();
+    drawGlow(q.c,q.x,q.y,q.size*3.2,Math.max(0,q.life/q.t));
   }
-  ctx.globalAlpha=1;
   // 天劫预警：红屏渐强 + 倒计时
   if(G.jieWarn>0){
     const k=1-G.jieWarn/3;
