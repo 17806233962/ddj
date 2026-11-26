@@ -264,19 +264,19 @@ function castSkills(dt){
     if(s.t<=0&&G.enemies.length){
       const cd=(2.2-s.lv*0.1)*(1-(s.b||0)*0.3);
       const e=G.enemies[ri(0,G.enemies.length-1)];
-      zap(e,p,metaMul("atk",16+s.lv*5),s.a||0);
+      zap(e,p,metaMul("atk",11+s.lv*2.5),s.a||0);
       let cur=e,chain=s.a||0,used=new Set([e]);
       while(chain>0){
         const nx=G.enemies.filter(x=>!used.has(x)&&dist(x,cur)<160)[0];
         if(!nx)break;
-        zap(nx,p,metaMul("atk",13+s.lv*4),0);used.add(nx);cur=nx;chain--;
+        zap(nx,p,metaMul("atk",8+s.lv*2),0);used.add(nx);cur=nx;chain--;
       }
       if(s.b)G.enemies.forEach(x=>{if(dist(x,e)<90)x.stun=Math.max(x.stun||0,0.6);});
-      // 进化·九天雷劫：额外轰击 4 只随机妖兽
+      // 进化·九天雷劫：额外轰击 3 只随机妖兽
       if(s.evolved){
-        for(let i=0;i<4;i++){
+        for(let i=0;i<3;i++){
           const t2=G.enemies[ri(0,G.enemies.length-1)];
-          if(t2&&dist(t2,p)<420)zap(t2,p,metaMul("atk",11+s.lv*3),0);
+          if(t2&&dist(t2,p)<420)zap(t2,p,metaMul("atk",7+s.lv*1.8),0);
         }
       }
       s.t=cd;
