@@ -162,7 +162,9 @@ function glow(c){
 function drawGlow(c,x,y,r,a){
   const g=glow(c);if(!g)return;
   if(a!==undefined)ctx.globalAlpha=a;
+  ctx.globalCompositeOperation="lighter"; // 叠加混合：霓虹发光（GPU 快速路径）
   ctx.drawImage(g,x-r,y-r,r*2,r*2);
+  ctx.globalCompositeOperation="source-over";
   if(a!==undefined)ctx.globalAlpha=1;
 }
 function drawSpr(name,x,y,size,alpha){
@@ -250,22 +252,11 @@ function castSkills(dt){
         G.shots.push({kind:"sword",x:p.x,y:p.y,vx:Math.cos(ang)*420,vy:Math.sin(ang)*420,
           dmg,pierce,hitset:new Set(),r:6,life:1.2});
       }
-      // 进化·万剑归宗：6 剑环射全场（轻量绘制防卡顿）
-      if(p.skills.sword.evolved){
-        for(let i=0;i<6;i++){
-          const a2=i*Math.PI/3+rnd(-0.08,0.08);
-          G.shots.push({kind:"sword",x:p.x,y:p.y,vx:Math.cos(a2)*440,vy:Math.sin(a2)*440,
-            dmg:dmg*0.8,pierce,hitset:new Set(),r:6,life:1.2,ring:true});
-        }
-        if(!p.skills.sword.alt){ // 特效降频：隔次施放才出粒子环
-          fx(p.x,p.y,"#e6c86e",80);
-          spark(p.x,p.y,"#e6c86e",8,180);
-        }
-        p.skills.sword.alt=!p.skills.sword.alt;
-      }
+      // 进化·万剑归宗：绕体剑阵（常驻环绕，见 swordOrbitTick），施法照常
       p.skills.sword.t=cd;
     }
   }
+  if(p.skills.sword&&p.skills.sword.evolved)swordOrbitTick(dt);
   // 掌心雷：随机敌人落雷
   if(p.skills.thunder){
     const s=p.skills.thunder;
@@ -376,6 +367,40 @@ function qiTick(dt){
 }
 function fx(x,y,c,r){G.fx.push({x,y,c,r:r||26,kind:"ring",life:0.3,t:0.3});}
 function banner(txt){G.fx.push({x:W/2,y:H*0.3,kind:"banner",life:1.6,t:1.6,txt});}
+/* ================= 万剑归宗·绕体剑阵 ================= */
+function swordOrbitTick(dt){
+  const p=G.p,s=p.skills.sword;
+  s.oang=(s.oang||0)+dt*2.6; // 旋转角速度
+  const R=74+(s.b||0)*3;   // 环半径随万剑方向微涨
+  s.orbit={R,n:6};
+  s.opos=[];
+  const dmg=metaMul("atk",10+s.lv*3.2)*(1+(s.a||0)*0.25);
+  for(let i=0;i<6;i++){
+    const a=s.oang+i*Math.PI/3;
+    const ox=p.x+Math.cos(a)*R,oy=p.y+Math.sin(a)*R;
+    s.opos.push({x:ox,y:oy,a});
+    // 触敌伤害（每敌 0.35 秒结算一次）
+    G.enemies.forEach(e=>{
+      if(dist(e,{x:ox,y:oy})<e.r+13){
+        if(!e.swCd||e.swCd<=0){hurtEnemy(e,dmg);e.swCd=0.35;spark(ox,oy,"#e6c86e",1,90);}
+      }
+    });
+  }
+}
+function drawSwordOrbit(){
+  const p=G.p,s=p.skills.sword;
+  if(!s||!s.evolved||!s.opos)return;
+  for(const o of s.opos){
+    const ang=o.a+Math.PI/2; // 剑尖朝旋转切线方向
+    drawGlow("#e6c86e",o.x,o.y,16,0.5);
+    ctx.save();ctx.translate(o.x,o.y);ctx.rotate(ang);
+    ctx.fillStyle="#f2e2a0";
+    ctx.beginPath();ctx.moveTo(14,0);ctx.lineTo(2,-3.4);ctx.lineTo(-9,-2);ctx.lineTo(-9,2);ctx.lineTo(2,3.4);ctx.closePath();ctx.fill();
+    ctx.strokeStyle="#c9a24a";ctx.stroke();
+    ctx.fillStyle="#e6c86e";ctx.fillRect(-12,-4,4,8);
+    ctx.restore();
+  }
+}
 /* 粒子：轻量发光点，总量封顶 */
 function spark(x,y,c,n,spd,rise){
   if(G.parts.length>70)return; // 粒子上限收紧（移动端）
@@ -668,6 +693,7 @@ function hurtEnemy(e,dmg){
 function enemyTick(dt){
   const p=G.p;
   for(const e of G.enemies){
+    e.swCd=(e.swCd||0)-dt; // 剑阵结算冷却
     if(e.stun>0){e.stun-=dt;continue;}
     let sp=e.spd;
     if(e.slowT>0){e.slowT-=dt;sp*=0.45;}
@@ -1213,6 +1239,8 @@ function draw(){
     ctx.beginPath();ctx.arc(0,0,R*0.6,0,7);ctx.stroke();
     ctx.setLineDash([]);ctx.restore();
   }
+  // 万剑归宗·绕体剑阵（玩家身边）
+  drawSwordOrbit();
   drawSpr("player",p.x,p.y+Math.sin(G.t*6)*1.5,40,p.iframe>0&&(G.t*20|0)%2===0?0.45:1);
   drawItems();
   // 敌方弹幕：预渲染辉光贴图（不再逐帧建渐变）
